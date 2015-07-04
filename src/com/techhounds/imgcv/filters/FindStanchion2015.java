@@ -132,8 +132,10 @@ public final class FindStanchion2015 implements MatFilter {
      * @return A new {@link ColorRange} filter.
      */
     public static ColorRange createYellowColorRange() {
-            int[] keepMin = {10, 160, 70};
-            int[] keepMax = {60, 255, 240};
+            //int[] keepMin = {10, 160, 70};
+            //int[] keepMax = {60, 255, 240};
+            int[] keepMin = {10, 200, 70};
+            int[] keepMax = {40, 255, 240};
             return new ColorRange(keepMin, keepMax, true);
     }
 
@@ -160,11 +162,12 @@ public final class FindStanchion2015 implements MatFilter {
      */
     @Override
     public Mat process(Mat srcImage) {
-        int cropTop = 60;
-        int hImg = srcImage.rows() - cropTop;
+        int cropTop = 10;
+        int cropBot = 50;
+        int hImg = srcImage.rows();
         int wImg = srcImage.cols();
         int imgMid = hImg / 2;
-        Mat output = srcImage.submat(cropTop, srcImage.rows(), 0, wImg);
+        Mat output = srcImage.submat(cropTop, hImg - cropBot, 0, wImg);
 
         Mat hsvColors = _BgrToHsv.process(output.clone());
         Mat colorRange = _ColorRange.process(hsvColors);
