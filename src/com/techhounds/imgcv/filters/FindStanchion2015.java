@@ -70,6 +70,11 @@ public final class FindStanchion2015 implements MatFilter {
      * Used as color for overlays.
      */
     private final Scalar _Color;
+    
+    /**
+     * Will be true if processing image finds a stanchion.
+     */
+    private boolean _Found = false;
 
     /**
      * Thickness of lines used when drawing overlays.
@@ -162,6 +167,7 @@ public final class FindStanchion2015 implements MatFilter {
      */
     @Override
     public Mat process(Mat srcImage) {
+    	_Found = false;
         int cropTop = 10;
         int cropBot = 50;
         int hImg = srcImage.rows();
@@ -207,6 +213,7 @@ public final class FindStanchion2015 implements MatFilter {
 
             if ((w > 5) && (h > 15) && (hw > 50) && (hw < 800) && (pts >= 4) && (pts < 20) && (distFromTop > distFromMid) && (distFromTop < imgMid)) {
                 polygons.add(poly);
+                _Found = true;
 
                 System.out.println("Accepted: sides: " + pts + " ("
                                    + poly.getWidth() + ", " + poly.getHeight()
@@ -264,4 +271,8 @@ public final class FindStanchion2015 implements MatFilter {
 
         return output;
     }
+
+	public boolean foundStanchion() {
+		return _Found;
+	}
 }
