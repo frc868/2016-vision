@@ -1,0 +1,21 @@
+NOTE: This is under the assumption that the sliders are in BGR not RGB!
+
+For "Green_Image.png"
+
+B: 100 - 180
+G: 110 - 180
+R: 000 - 110
+
+For "Green_Far.png"
+
+B: 060 - 130
+G: 090 - 150
+R: 000 - 090
+
+For "Green_very_far.png" <-- This image does not end up purely with the strip
+
+B: 040 - 100
+G: 050 - 100
+R: 020 - 060
+
+FINAL RESULTS (involves absolute minimums)
