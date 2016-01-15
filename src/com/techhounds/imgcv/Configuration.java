@@ -73,6 +73,11 @@ public class Configuration {
 	 * Key used to look up name of last image URL (for grabbing images).
 	 */
 	private static final String IMAGE_SOURCE_URL = "LastUrl";
+	
+	/**
+	 * Key used to look up URL for video streams from IP camera.
+	 */
+	private static final String VIDEO_SOURCE_URL = "VideoUrl";
 
 	/**
 	 * Key used to look up name of last file opened.
@@ -283,6 +288,28 @@ public class Configuration {
 	 */
 	public void setImageUrl(String val) {
 		_Preferences.put(IMAGE_SOURCE_URL, val);
+	}
+
+	/**
+	 * Get the URL to use for retrieving video streams from IP cameras.
+	 * 
+	 * @param defVal
+	 *            Default value to return if not configured yet.
+	 * 
+	 * @return Either the value stored in the preferences or your default value.
+	 */
+	public String getVideoUrl(String defVal) {
+		return _Preferences.get(VIDEO_SOURCE_URL, defVal);
+	}
+
+	/**
+	 * Set the URL to use for retrieving video streams from IP cameras.
+	 * 
+	 * @param val
+	 *            The new value to store in the preferences.
+	 */
+	public void setVideoUrl(String val) {
+		_Preferences.put(VIDEO_SOURCE_URL, val);
 	}
 
 	/**
