@@ -67,9 +67,10 @@ public final class VisionTool2016 extends FilterToolGuiOpenCv {
 
     @Override
     protected void addControls() { //Adding controls and filters to the side bar.
-        super.addControls(); //Adds parent controls
-        addSeparator();
-        addImageProcessingButton("2016 Filter", new VisionFilter2016()); //adds the button for our 2016 filter (VisionFilter2016.java)
+    	//Adds parent controls
+    	super.addControls(); 
+        //adds the button for our 2016 filter (VisionFilter2016.java)
+        addImageProcessingButton("2016 Filter", new VisionFilter2016()); 
     }
 
     /**

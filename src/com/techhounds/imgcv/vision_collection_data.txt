@@ -18,4 +18,43 @@ B: 040 - 100
 G: 050 - 100
 R: 020 - 060
 
-FINAL RESULTS (involves absolute minimums)
+FINAL RESULTS (involves absolute minimums) (also accounts for personal adjustments after testing)
+
+B: 060 - 180
+G: 060 - 180
+R: 000 - 110
+
+******These images above are really trash, we should disregard them and collect new ones******
+
+New image data for HSV color range:
+
+For "new_green1"
+
+B: 070 - 090
+G: 110 - 255
+R: 020 - 255
+
+For "new_green2"
+
+B: 070 - 090
+G: 090 - 255
+R: 020 - 255
+
+For "new_green3"
+
+B: 070 - 090
+G: 090 - 255
+R: 025 - 255
+
+For "new_green4"
+
+B: 070 - 090
+G: 100 - 255
+R: 030 - 255
+
+For "all"
+
+B: 070 - 090
+G: 100 - 255
+R: 025 - 255
+
