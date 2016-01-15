@@ -34,6 +34,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -86,7 +87,7 @@ public class LiveViewGui {
 	 */
 	// private String _Url = "http://10.8.68.11/jpg/1/image.jpg";
 	// private String _Url = "http://admin:1234@192.168.1.25/mjpg/video.mjpg";
-	private String _Url = "file:///Users/pkb/Downloads/video.mjpg";
+	private String _Url = "rtsp://10.8.68.11:554/axis-media/media.amp?videocodec=h264";
 
 	/** ID of video device to use on the system. */
 	private int _DeviceId = 0;
@@ -162,18 +163,6 @@ public class LiveViewGui {
 
 		// A do nothing filter
 		_Filter = new Sequence();
-/*
-		_Timer = new Timer(100, new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ae) {
-				try {
-					setImage(_Filter.process(Conversion.urlToMat(_Url)));
-				} catch (IOException e) {
-					System.err.println(e);
-				}
-			}
-		});
-		*/
 
 		_CaptureTimer = new Timer(20, new ActionListener() {
 			@Override
@@ -188,6 +177,8 @@ public class LiveViewGui {
 					}
 					if (cnt >= 1) {
 						setImage(_Filter.process(img));
+					} else {
+						System.err.println("Failed to grab image. Open: " + _CaptureDev.isOpened() + "  URL: " + _Url + "  " + _CaptureDev);
 					}
 				}
 			}
@@ -426,8 +417,7 @@ public class LiveViewGui {
 				_DeviceId = _Config.getDeviceId(_DeviceId);
 				_FrameWidth = _Config.getFrameWidth(_FrameWidth);
 				_FrameHeight = _Config.getFrameHeight(_FrameWidth);
-				_Url = _Config.getImageUrl(_Url);
-
+				_Url = _Config.getVideoUrl(_Url);
 				startVideoFeed();
 			}
 		});
@@ -525,7 +515,7 @@ public class LiveViewGui {
 		final UseUrlCheckBox useUrl = new UseUrlCheckBox();
         
         options.setLayout(new BoxLayout(options, BoxLayout.Y_AXIS));
-        options.add(new JLabel("URL of image to grab:"));
+        options.add(new JLabel("URL of video feed:"));
 
         
         useUrl.setToolTipText("Select this option to retrieve video stream from remote URL instead of your own web cam");
@@ -544,7 +534,7 @@ public class LiveViewGui {
 
             private void updateValue(DocumentEvent e) {
                 _Url = url.getText();
-                _Config.setImageUrl(_Url);
+                _Config.setVideoUrl(_Url);
             }
 
             @Override
@@ -680,6 +670,13 @@ public class LiveViewGui {
 		_CaptureDev = new VideoCapture();
 		if (_UseUrl) {
 			_CaptureDev.open(_Url);
+			
+			if (_CaptureDev.isOpened()) {
+				System.err.println("Starting IP camera feed from: " + _Url);
+				_CaptureTimer.start();
+			} else {
+				JOptionPane.showMessageDialog(frame, "Failed to open IP camera video feed: " + _Url, "Failed to Open Video Feed", JOptionPane.ERROR_MESSAGE);
+			}
 		} else {
 			_CaptureDev.open(_DeviceId);
 
@@ -687,8 +684,14 @@ public class LiveViewGui {
 				_CaptureDev.set(Highgui.CV_CAP_PROP_FRAME_WIDTH, _FrameWidth);
 				_CaptureDev.set(Highgui.CV_CAP_PROP_FRAME_HEIGHT, _FrameHeight);
 			}
+			
+			if (_CaptureDev.isOpened()) {
+				System.err.println("Starting Video Feed using Web Cam: " + _DeviceId);
+				_CaptureTimer.start();
+			} else {
+				JOptionPane.showMessageDialog(frame, "Failed to open web camera: " + _DeviceId, "Failed to Open Web Cam", JOptionPane.ERROR_MESSAGE);
+			}			
 		}
-		_CaptureTimer.start();
 	}
 
 	public void stopVideoFeed() {
