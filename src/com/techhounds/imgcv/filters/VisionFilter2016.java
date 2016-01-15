@@ -44,14 +44,18 @@ import org.opencv.imgproc.Imgproc;
 public final class VisionFilter2016 implements MatFilter {
 
     private final MatFilter _ColorRange; //Used to filter image to a specific color range.
-    //private final GrayScale _GrayScale; //Used to convert image to a gray scale rendering.
-    //private final BlackWhite _BlackWhite; //Used to convert from gray scale to black and white.
+    private final Dilate    _Dilate;     //grows remaining parts of the images
+    private final Erode     _Erode;      //shrinks remaining parts of the images
+    private final GrayScale _GrayScale; //Used to convert image to a gray scale rendering.
+    private final BlackWhite _BlackWhite; //Used to convert from gray scale to black and white.
 
     //Constructs a new instance by pre-allocating all of our image filtering objects.
     public VisionFilter2016() { 
     	_ColorRange = createHsvColorRange();
-        //_GrayScale = new GrayScale();
-        //_BlackWhite = createBlackWhite();
+    	_Dilate 	= new Dilate(3); //higher erode/dilate values create smoother close images
+    	_Erode		= new Erode(4);  //but smaller and more broken far images
+        _GrayScale = new GrayScale();
+        _BlackWhite = createBlackWhite();
     }
 
     /**
@@ -85,13 +89,15 @@ public final class VisionFilter2016 implements MatFilter {
      */
     @Override
     public Mat process(Mat srcImage) {
+    	Mat output = srcImage.clone();
     	//takes previous filter '_ColorRange' and processes 'srcImage' with it
-        Mat colorRange = _ColorRange.process(srcImage); 
-        //Mat output = srcImage.clone();
-        //Mat gray = _GrayScale.process(colorRange);
-        //Mat bw = _BlackWhite.process(gray);
-        // Imgproc.cvtColor(colorRange, output, Imgproc.COLOR_BW2BGR);
+        Mat coloredImage = _ColorRange.process(srcImage); 
+        Mat dilatedImage = _Dilate.process(coloredImage); //what if we erode first?
+        Mat erodedImage  = _Erode.process(dilatedImage);
+        Mat grayedImage  = _GrayScale.process(erodedImage);
+        Mat bwImage      = _BlackWhite.process(grayedImage);
+        Imgproc.cvtColor(bwImage, output, Imgproc.COLOR_GRAY2BGR);
 	    
-        return colorRange;
+        return erodedImage;
     }
 }
