@@ -58,3 +58,10 @@ B: 070 - 090
 G: 100 - 255
 R: 025 - 255
 
+******Below begins data for Area to Distance measurements for Static Filtered Objects*****
+
+12' : 3100 units
+05' : 7000 units
+
+
+
