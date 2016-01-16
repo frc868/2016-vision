@@ -25,61 +25,37 @@
  */
 package com.techhounds.imgcv.tools;
 
-import com.techhounds.imgcv.FilterToolGuiOpenCv;
-import com.techhounds.imgcv.filters.CheeseButton;
-import com.techhounds.imgcv.filters.ColorRange;
-import com.techhounds.imgcv.filters.FindTarget2013;
+import org.opencv.core.Mat;
+
+import com.techhounds.imgcv.LiveViewGui;
+import com.techhounds.imgcv.filters.FindStanchion2015;
 import com.techhounds.imgcv.filters.MatFilter;
 import com.techhounds.imgcv.filters.TTTFilter;
 import com.techhounds.imgcv.filters.VisionFilter2016;
-import com.techhounds.imgcv.LiveViewGui;
-
-import java.awt.event.ActionEvent;
-
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JMenuItem;
-
-import org.opencv.core.Mat;
-import org.opencv.highgui.VideoCapture;
 
 /**
- * A more involved example of extending the filter tool for testing filters.
- *
- * <p>
- * In this second example, we exercise some more advanced features
- * including:</p>
- *
- * <ul>
- * <li>Adding preferences for some of our filters that are saved/loaded between
- * sessions.</li>
- * <li>Example of adding a filter implemented in-line.</li>
- * <li>Example of adding a composite filter (multiple filters chained
- * together).</li>
- * </ul>
+ * A simple example of leveraging the {@link LiveViewGui} class to quickly test
+ * a {@link MatFilter} against a stream of images.
  *
  * @author pkb
  */
-public final class VisionTool2016 extends FilterToolGuiOpenCv {
-
-    private VisionTool2016() { //Constructs a new instance of our example filter tool.
-        super("Vision Tool 2016");        
-    }
-
-    @Override
-    protected void addControls() { //Adding controls and filters to the side bar.
-        super.addControls(); //Adds parent controls
-        //adds the button for our 2016 filter (VisionFilter2016.java)
-        addImageProcessingButton("2016 Filter", new VisionFilter2016()); 
-    }
-
+public final class VisionView2016 {
     /**
-     * Main entry point which allows you to run the tool as a Java Application.
-     * @param args Array of command line arguments.
+     * Main entry point to this Java Application.
+     * 
+     * <ul>
+     * <li>Creates a new LiveViewGui object to fetch/display data.</li>
+     * <li>Sets the filter we want to apply to incoming images.</li>
+     * <li>Starts up the GUI (you will need to select File|Start from menu).</li>
+     * </ul>
+     *
+     * @param args Array of command line arguments (ignored).
      */
     public static void main(String[] args) {
-        // Create the GUI application and then start it's main routine
-    	final FilterToolGuiOpenCv frame = new VisionTool2016();
+        // Create the GUI application, set the filter then start up the GUI
+        final LiveViewGui frame = new LiveViewGui("2016 Vision Viewer");
+        frame.setFilter(new VisionFilter2016());
         frame.main();
     }
+
 }

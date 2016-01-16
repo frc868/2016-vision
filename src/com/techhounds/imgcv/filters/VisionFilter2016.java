@@ -53,7 +53,7 @@ public final class VisionFilter2016 implements MatFilter {
     public VisionFilter2016() { 
     	_ColorRange = createHsvColorRange();
     	_Dilate 	= new Dilate(3); //higher erode/dilate values create smoother close images
-    	_Erode		= new Erode(4);  //but smaller and more broken far images
+    	_Erode		= new Erode(5);  //but smaller and more broken far images
         _GrayScale = new GrayScale();
         _BlackWhite = createBlackWhite();
     }
