@@ -43,10 +43,10 @@ import org.opencv.imgproc.Imgproc;
  */
 public final class VisionFilter2016 implements MatFilter {
 
-    private final MatFilter _ColorRange; //Used to filter image to a specific color range.
-    private final Dilate    _Dilate;     //grows remaining parts of the images
-    private final Erode     _Erode;      //shrinks remaining parts of the images
-    private final GrayScale _GrayScale; //Used to convert image to a gray scale rendering.
+    private final MatFilter  _ColorRange; //Used to filter image to a specific color range.
+    private final Dilate     _Dilate;     //grows remaining parts of the images
+    private final Erode      _Erode;      //shrinks remaining parts of the images
+    private final GrayScale  _GrayScale; //Used to convert image to a gray scale rendering.
     private final BlackWhite _BlackWhite; //Used to convert from gray scale to black and white.
 
     //Constructs a new instance by pre-allocating all of our image filtering objects.
@@ -90,14 +90,60 @@ public final class VisionFilter2016 implements MatFilter {
     @Override
     public Mat process(Mat srcImage) {
     	Mat output = srcImage.clone();
-    	//takes previous filter '_ColorRange' and processes 'srcImage' with it
+    	Mat hierarchy = new Mat(); //used in contour detection
+    	
+    	PolygonCv target;
+    	List<MatOfPoint> contours = new ArrayList<>();
+        List<PolygonCv>  targets = new ArrayList<>();
+    	
+        int targetSides;
+        float targetHeight, targetWidth, targetRatio, targetArea, targetX, targetY;
+        
         Mat coloredImage = _ColorRange.process(srcImage); 
         Mat dilatedImage = _Dilate.process(coloredImage); //what if we erode first?
         Mat erodedImage  = _Erode.process(dilatedImage);
         Mat grayedImage  = _GrayScale.process(erodedImage);
         Mat bwImage      = _BlackWhite.process(grayedImage);
+        
         Imgproc.cvtColor(bwImage, output, Imgproc.COLOR_GRAY2BGR);
+        Imgproc.findContours(bwImage, contours, hierarchy, 
+        					 Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+        
+        for(int i = 0; i < contours.size(); i++) {
+        	target = PolygonCv.fromContour(contours.get(i), 5.0);
+        	
+        	targetSides  = target.size();
+        	targetHeight = target.getHeight();
+        	targetWidth  = target.getWidth();
+        	
+        	System.out.println("Height: " + targetHeight + " Width: " + targetWidth);
+        	System.out.println("Sides: " + targetSides);
+        	System.out.println();
+        	
+        	if(targetHeight > 10 && targetWidth > 50 && targetSides > 2) {
+        		targets.add(target);
+        	}
+        }
+        
+        if(targets.size() == 1) {
+        	target = targets.get(0);
+        	
+        	targetSides  = target.size();
+        	targetHeight = target.getHeight();
+        	targetWidth  = target.getWidth();
+        	targetRatio  = target.getBoundingAspectRatio();
+        	targetArea   = target.getBoundingArea();
+        	targetX		 = target.getCenterX();
+        	targetY		 = target.getCenterY();
+        	
+        	System.out.println("Found target at: " + targetX + ", " + targetY);
+        	System.out.println("Height: " + targetHeight + " Width: " + targetWidth);
+        	System.out.println("Sides: " + targetSides);
+        	System.out.println("Ratio: " + targetRatio + " Area: " + targetArea);
+        } else {
+        	System.out.println("Error finding target!");
+        }
 	    
-        return erodedImage;
+        return output;
     }
 }
