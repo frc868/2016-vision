@@ -31,6 +31,7 @@ import com.techhounds.imgcv.filters.ColorRange;
 import com.techhounds.imgcv.filters.ColorSpace;
 import com.techhounds.imgcv.filters.Contours;
 import com.techhounds.imgcv.filters.ContrastBrightness;
+import com.techhounds.imgcv.filters.CrossHair;
 import com.techhounds.imgcv.filters.Dilate;
 import com.techhounds.imgcv.filters.Erode;
 import com.techhounds.imgcv.filters.FillChannel;
@@ -773,6 +774,8 @@ public class FilterToolGuiOpenCv {
 
 		addMenuItem(editName,
 				createImageProcessingMenuItem("Contours", new Contours()));
+		
+		addMenuItem(editName, createImageProcessingMenuItem("Cross Hair", new CrossHair()));
 	}
 
 	/**

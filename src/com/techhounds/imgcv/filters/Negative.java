@@ -30,8 +30,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 
 /**
- * Image filter which converts a 3 channel RGB image to a single channel gray
- * scale image.
+ * Image filter which produces a "negative" of the source image.
  *
  * @author Paul Blankenbaker
  */
@@ -43,8 +42,7 @@ public final class Negative implements MatFilter {
      * @param srcImage - The source image to be processed (passing {@code null}
      * is not permitted).
      *
-     * @return The gray scale version of the image. NOTE: This method writes the
-     * results into the original srcImage (your srcImage will be modified).
+     * @return The negative version of the image. The source image is left unchanged
      */
     @Override
     public Mat process(Mat srcImage) {
