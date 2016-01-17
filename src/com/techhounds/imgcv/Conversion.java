@@ -29,7 +29,10 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLConnection;
+
 import javax.imageio.ImageIO;
+
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
@@ -157,7 +160,16 @@ public final class Conversion {
      * @throws IOException If we are unable to retrieve the image from the URL.
      */
     public static BufferedImage urlToBufferedImage(String url) throws IOException {
-        return ImageIO.read(new URL(url));
+    	int timeout = 1000;
+    	URLConnection c = null;
+    	BufferedImage img = null;
+
+    	URL u = new URL(url);
+    	c = u.openConnection();
+    	c.setConnectTimeout(timeout);
+    	c.setReadTimeout(timeout);
+        img = ImageIO.read(c.getInputStream());
+        return img;
     }
 
     /**

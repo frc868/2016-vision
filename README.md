@@ -46,3 +46,16 @@ Edimax IC-3100W
   
 Shield (Rosewell?)	SmartCam HD & Pan
   rtsp://admin:123456@cayenne.linux.bogus/
+  
+
+Image (not video feed) URLs
+
+Axis M1103
+  http://10.8.68.11/jpg/1/image.jpg (may need to configure)
+
+Edimax IC-3100W
+  http://192.168.1.25/image.jpg (set under Network|LoginFree menu)
+  
+Shield (Rosewell?)	SmartCam HD & Pan
+  rtsp://admin:123456@cayenne.linux.bogus/
+
