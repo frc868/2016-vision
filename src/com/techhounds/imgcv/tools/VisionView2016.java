@@ -29,8 +29,7 @@ import org.opencv.core.Mat;
 import com.techhounds.imgcv.LiveViewGui;
 import com.techhounds.imgcv.filters.MatFilter;
 import com.techhounds.imgcv.filters.VisionFilter2016;
-
-//import edu.wpi.first.wpilibj.networktables.NetworkTable;
+import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
 /**
  * A simple example of leveraging the {@link LiveViewGui} class to quickly test
@@ -53,12 +52,12 @@ public final class VisionView2016 {
     public static void main(String[] args) {
         // Create the GUI application, set the filter then start up the GUI
         final LiveViewGui frame = new LiveViewGui("2016 Vision Viewer");
-        //NetworkTable.setClientMode();
-        //NetworkTable.setIPAddress("10.8.68.2");
-        //NetworkTable.initialize();
-        //NetworkTable sd = NetworkTable.getTable("SmartDashboard");
+        NetworkTable.setClientMode();
+        NetworkTable.setIPAddress("10.8.68.2");
+        NetworkTable.initialize();
+        NetworkTable sd = NetworkTable.getTable("SmartDashboard");
         VisionFilter2016 filter = new VisionFilter2016();
-        //filter.setNetworkTable(sd);
+        filter.setNetworkTable(sd);
         frame.setFilter(filter);
         frame.main();
     }

@@ -27,11 +27,9 @@ package com.techhounds.imgcv.filters;
 
 import com.techhounds.imgcv.PolygonCv;
 
-//import edu.wpi.first.wpilibj.networktables.NetworkTable;
-
+import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.imgproc.Imgproc;
@@ -46,30 +44,31 @@ public final class VisionFilter2016 implements MatFilter {
 	
 	//Configurations
 	
-	private static int[]  colorFilterMin    = {60, 100, 20};
-	private static int[]  colorFilterMax    = {90, 255, 255};
-	private static int    blackWhiteThresh  = 40;
-	private static int    dilateFactor      = 3;
-	private static int    erodeFactor       = 5;
+	private static int[]	colorFilterMin    = {60, 100, 20};
+	private static int[]	colorFilterMax    = {90, 255, 255};
+	private static int		blackWhiteThresh  = 40;
+	private static int		dilateFactor      = 3;
+	private static int		erodeFactor       = 5;
 	
-	private static double polygonEpsilon    = 5.0; //used for detecting polygons from contours
-	private static double targetHeightMin   = 10.0; 
-	private static double targetWidthMin    = 50.0;
-	private static int    targetSidesMin    = 2; //ie at least 3 sides
+	private static double	polygonEpsilon    = 5.0; //used for detecting polygons from contours
+	private static double	targetHeightMin   = 10.0; 
+	private static double	targetWidthMin    = 50.0;
+	private static int		targetSidesMin    = 2; //ie at least 3 sides
 	
-	private static double   targetTapeWidth   = 24; //inches
-	private static double    cameraHorizFOV    = 67; //could be wrong
-	private static double    cameraResolutionX = 800;
+	private static double	targetTapeWidth   = 24; //inches
+	private static double	cameraHorizFOV    = 67; //could be wrong
+	private static double	cameraResolutionX = 800;
+
+	private NetworkTable	networkTable;
+	private int				frameCnt;
 	
 	//Processing Filters
 	
-    private final MatFilter  _ColorRange; //Used to filter image to a specific color range.
-    private final Dilate     _Dilate;     //grows remaining parts of the images
-    private final Erode      _Erode;      //shrinks remaining parts of the images
-    private final GrayScale  _GrayScale; //Used to convert image to a gray scale rendering.
-    private final BlackWhite _BlackWhite; //Used to convert from gray scale to black and white.
-	//private NetworkTable networkTable;
-	//private int frameCnt;
+    private final MatFilter		_ColorRange; //Used to filter image to a specific color range.
+    private final Dilate		_Dilate;     //grows remaining parts of the images
+    private final Erode			_Erode;      //shrinks remaining parts of the images
+    private final GrayScale		_GrayScale; //Used to convert image to a gray scale rendering.
+    private final BlackWhite	_BlackWhite; //Used to convert from gray scale to black and white.
 
     //Constructs a new instance by pre-allocating all of our image filtering objects.
     public VisionFilter2016() { 
@@ -109,10 +108,6 @@ public final class VisionFilter2016 implements MatFilter {
      */
     @Override
     public Mat process(Mat srcImage) {
-    	//frameCnt++;
-    	//if (networkTable != null) {
-    	//	networkTable.putNumber("TargetingFrame", frameCnt);
-    	//}
         Mat outputImage = srcImage.clone();
     	List<PolygonCv>  targets = new ArrayList<>();  //list of potential targets in image
         Mat processedImage = new Mat();
@@ -120,17 +115,16 @@ public final class VisionFilter2016 implements MatFilter {
         
         processedImage = primaryProcessing(srcImage);
         Imgproc.cvtColor(processedImage, outputImage, Imgproc.COLOR_GRAY2BGR);
+        
         targets = findTargets(processedImage);
         targetsFound = targets.size();
+        networkTable.putNumber("TargetsFound", targetsFound);
         
         if(targetsFound == 1) {	 //if we found only one target
         	targetAnalysis(targets.get(0)); //analyze that target
-        } else if (targetsFound > 1) {
-        	System.out.println("Error: Multiple Targets Found!");
-        } else { //targetsFound must equal 0
-        	System.out.println("Error: No Targets Found!");
         }
 	    
+        networkTable.putNumber("FrameCount", frameCnt++);
         return outputImage;
     }
     
@@ -150,27 +144,15 @@ public final class VisionFilter2016 implements MatFilter {
         List<PolygonCv>  targets  = new ArrayList<>();  //list of potential targets in image
         PolygonCv  		 currentTarget;
         
-        int targetSides;
-        float targetHeight, targetWidth;
-        
         Imgproc.findContours(inputImage, contours, hierarchy, 
         					 Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
         
         for(int i = 0; i < contours.size(); i++) { //for each 'contour' object
         	currentTarget = PolygonCv.fromContour(contours.get(i), polygonEpsilon); //create a polygon
         	
-        	targetSides  = currentTarget.size();
-        	targetHeight = currentTarget.getHeight();
-        	targetWidth  = currentTarget.getWidth();
-        	
-        	//possibly useful in VisionTool but unnecessary in VisionView
-        	System.out.println("Height: " + targetHeight + " Width: " + targetWidth);
-        	System.out.println("Sides: " + targetSides);
-        	System.out.println();
-        	
-        	if(targetHeight > targetHeightMin && 
-        	    targetWidth > targetWidthMin  && 
-        	    targetSides > targetSidesMin) {
+        	if(currentTarget.getHeight() 	> targetHeightMin && 
+        	   currentTarget.getWidth() 	> targetWidthMin  && 
+        	   currentTarget.size() 		> targetSidesMin) {
         		
         		targets.add(currentTarget); //if within range, add to list of potential targets
         	}
@@ -180,37 +162,24 @@ public final class VisionFilter2016 implements MatFilter {
     }
     
     private void targetAnalysis(PolygonCv foundTarget) {
-        int    targetSides;
-        float  targetHeight, targetWidth, targetRatio, targetArea, targetX, targetY;
-        double offCenterPixelsX, offCenterPercentX, offCenterDegreesX, targetDistance;
+        double offCenterDegreesX, targetDistance;
+        float targetWidth 	= foundTarget.getWidth();
+        float targetX		= foundTarget.getCenterX();
     	
-    	targetSides  = foundTarget.size();
-    	targetHeight = foundTarget.getHeight();
-    	targetWidth  = foundTarget.getWidth();
-    	targetRatio  = foundTarget.getBoundingAspectRatio();
-    	targetArea   = foundTarget.getBoundingArea();
-    	targetX		 = foundTarget.getCenterX();
-    	targetY      = foundTarget.getCenterY();
-    	
-    	System.out.print("Found target at: " + targetX + ", " + targetY);
-    	System.out.print(" Height: " + targetHeight + " Width: " + targetWidth);
-    	System.out.print(" Sides: " + targetSides);
-    	System.out.println(" Ratio: " + targetRatio + " Area: " + targetArea);
-    	
-    	offCenterPixelsX = targetX - (cameraResolutionX / 2);
-    	offCenterPercentX = offCenterPixelsX / (cameraResolutionX / 2); //actually decimal -1 to 1
-    	offCenterDegreesX = offCenterPercentX * (cameraHorizFOV / 2);
+    	offCenterDegreesX = ((targetX / (cameraResolutionX / 2)) - 1) * cameraHorizFOV;
     	
     	targetDistance = (targetTapeWidth / 2) / 
-    					 Math.tan(Math.toRadians((targetWidth / cameraResolutionX) * (cameraHorizFOV / 2)));
+    					 	Math.tan(
+    							 Math.toRadians(
+    									 (targetWidth / cameraResolutionX) * (cameraHorizFOV / 2)));
     	
-    	System.out.println("Off By " + offCenterDegreesX + " Degrees");
-    	System.out.println("Approx. Distance: " + targetDistance + "'");
+    	networkTable.putNumber("OffCenterDegreesX", offCenterDegreesX);
+    	networkTable.putNumber("DistanceToTarget",  targetDistance);
     }
 
-    //public void setNetworkTable(NetworkTable nt) {
-    //	networkTable = nt;
-    //}
+    public void setNetworkTable(NetworkTable nt) {
+    	networkTable = nt;
+    }
 }
 
 
