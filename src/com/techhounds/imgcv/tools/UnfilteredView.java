@@ -25,8 +25,6 @@
  */
 package com.techhounds.imgcv.tools;
 
-import org.opencv.core.Mat;
-
 import com.techhounds.imgcv.LiveViewGui;
 import com.techhounds.imgcv.filters.MatFilter;
 
@@ -51,15 +49,9 @@ public final class UnfilteredView {
     public static void main(String[] args) {
         // Create the GUI application, set the filter then start up the GUI
         final LiveViewGui frame = new LiveViewGui("Unfiltered View");
-        frame.setFilter(new MatFilter() {
-			
-			@Override
-			public Mat process(Mat srcImage) {
-				// Just return source image without changes
-				return srcImage;
-			}
-		});
         frame.main();
+        // Uncomment if you want to try to connect immediately
+        // frame.startVideoFeed();
     }
 
 }

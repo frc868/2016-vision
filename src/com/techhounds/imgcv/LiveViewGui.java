@@ -25,8 +25,9 @@
  */
 package com.techhounds.imgcv;
 
+import com.techhounds.imgcv.filters.DoNothingFilter;
+import com.techhounds.imgcv.filters.GrayScale;
 import com.techhounds.imgcv.filters.MatFilter;
-import com.techhounds.imgcv.filters.Sequence;
 
 import javax.swing.*;
 
@@ -34,6 +35,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.File;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -43,7 +45,6 @@ import javax.swing.event.DocumentListener;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.highgui.Highgui;
-import org.opencv.highgui.VideoCapture;
 
 /**
  * A base class that allows you to quickly build a test tool to exercise a
@@ -128,20 +129,15 @@ public class LiveViewGui {
 	private JDialog _Dialog;
 
 	/**
-	 * Timer used to make image requests.
+	 * Background thread to grab images from camera
 	 */
-	//private final Timer _Timer;
-
-	/**
-	 * Video capture device to get images from
-	 */
-	private VideoCapture _CaptureDev;
+	private FrameGrabber _FrameGrabber;
 
 	/**
 	 * Timer used for live video feed handling.
 	 */
 	private final Timer _CaptureTimer;
-
+	
 	/**
 	 * The filter to apply.
 	 */
@@ -162,27 +158,25 @@ public class LiveViewGui {
 		_Config.loadOpenCvLibrary();
 
 		// A do nothing filter
-		_Filter = new Sequence();
+		_Filter = new DoNothingFilter();
+		
+		_FrameGrabber = new FrameGrabber();
 
-		_CaptureTimer = new Timer(20, new ActionListener() {
+		_CaptureTimer = new Timer(10, new ActionListener() {
+			long lastFrame = 0;
+		
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Mat img = new Mat();
-				if (_CaptureDev != null) {
-					int cnt = 0;
-					if (_CaptureDev.grab()) {
-						if (_CaptureDev.retrieve(img)) {
-							cnt++;
-						}
-					}
-					if (cnt >= 1) {
-						setImage(_Filter.process(img));
-					} else {
-						System.err.println("Failed to grab image. Open: " + _CaptureDev.isOpened() + "  URL: " + _Url + "  " + _CaptureDev);
+				long frame = _FrameGrabber.getFrameCount();
+				if (frame != lastFrame) {
+					frame = lastFrame;
+					Mat img = _FrameGrabber.getLastImage();
+					if (img != null) {
+						MatFilter filter = _Filter;
+						setImage(filter.process(img));
 					}
 				}
 			}
-
 		});
 	}
 
@@ -265,9 +259,6 @@ public class LiveViewGui {
 		String fileMenu = "File";
 
 		addMenuItem(fileMenu, new JMenuItem(new AbstractAction("Start") {
-			/**
-			 * 
-			 */
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -277,9 +268,6 @@ public class LiveViewGui {
 		}));
 
 		addMenuItem(fileMenu, new JMenuItem(new AbstractAction("Stop") {
-			/**
-			 * 
-			 */
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -287,8 +275,65 @@ public class LiveViewGui {
 				stopVideoFeed();
 			}
 		}));
+		
+        // Action performed when "Open Image" button is pressed
+        addMenuItem(fileMenu, new JMenuItem(new AbstractAction("Save Image") {
+			private static final long serialVersionUID = 1L;
 
+			@Override
+            public void actionPerformed(final ActionEvent e) {
+                frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                try {
+                    saveImage();
+                } finally {
+                    frame.setCursor(Cursor.getDefaultCursor());
+                }
+            }
+        }));
+        
 		addMenuItem(fileMenu, new JMenuItem(createPreferencesAction()));
+		
+		addMenuItem(fileMenu, new JMenuItem(new AbstractAction("Exit") {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				_FrameGrabber.stop();
+				_CaptureTimer.stop();
+				System.exit(0);
+			}
+		}));
+
+		addFilter("Raw Feed", new DoNothingFilter());
+		addFilter("Gray Scale", new GrayScale());
+	}
+
+	/**
+	 * Method used to add filters to the set of choices in the live view window.
+	 * 
+	 * @param label	Name to associate with your filter.
+	 * @param filter The filter to apply when selected.
+	 */
+	protected void addFilter(String label, MatFilter filter) {
+		addMenuItem("Filter", createMenuFilterItem(label, filter));
+	}
+
+	/**
+	 * Creates a menu item which changes the filter when selected.
+	 * 
+	 * @param label The label for the filter.
+	 * @param filter The image filter to apply.
+	 * @return A new menu item that can be inserted into a menu.
+	 */
+	private JMenuItem createMenuFilterItem(String label, final MatFilter filter) {
+		JMenuItem mi = new JMenuItem(label);
+		mi.addActionListener(new ActionListener() {			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				setFilter(filter);
+			}
+		});
+		return mi;
 	}
 
 	/**
@@ -308,6 +353,38 @@ public class LiveViewGui {
 		JMenuItem subMenu = findCreateSubMenu(parentMenu);
 		subMenu.add(item);
 	}
+
+    /**
+     * Prompts user to select a file to save the image to and saves it out.
+     *
+     * <p>
+     * The user controls the format of the output file based on the file
+     * extension specified (.png, .jpg, etc) - as supported by the opencv
+     * library. NOTE: If there is not a image currently loaded, this method does
+     * nothing (just returns).</p>
+     */
+    private void saveImage() {
+        if (_Image == null) {
+            return;
+        }
+        JFileChooser fileChooser = new JFileChooser();
+        
+        String fname = _Config.getLastSavedFile(null);
+
+        // Ask user for the location of the image file
+        if (fname != null) {
+            fileChooser.setSelectedFile(new File(fname));
+        }
+        if (fileChooser.showSaveDialog(frame) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        // Load the image
+        File imgFile = fileChooser.getSelectedFile();
+        String path = imgFile.getAbsolutePath();
+        Highgui.imwrite(path, _Image);
+        _Config.setLastSavedFile(path);
+    }
 
 	/**
 	 * Finds sub-menu with specified name or creates it.
@@ -418,7 +495,6 @@ public class LiveViewGui {
 				_FrameWidth = _Config.getFrameWidth(_FrameWidth);
 				_FrameHeight = _Config.getFrameHeight(_FrameWidth);
 				_Url = _Config.getVideoUrl(_Url);
-				startVideoFeed();
 			}
 		});
 
@@ -667,40 +743,18 @@ public class LiveViewGui {
 		// _CaptureDev = new VideoCapture(0);
 		// String url = "http://10.8.68.11/mjpg/video.mjpg";
 		// url = "rtsp://10.8.68.11:554/axis-media/media.amp?videocodec=h264";
-		_CaptureDev = new VideoCapture();
 		if (_UseUrl) {
-			_CaptureDev.open(_Url);
-			
-			if (_CaptureDev.isOpened()) {
-				System.err.println("Starting IP camera feed from: " + _Url);
-				_CaptureTimer.start();
-			} else {
-				JOptionPane.showMessageDialog(frame, "Failed to open IP camera video feed: " + _Url, "Failed to Open Video Feed", JOptionPane.ERROR_MESSAGE);
-			}
+			_FrameGrabber.start(_Url);
+			_CaptureTimer.start();
 		} else {
-			_CaptureDev.open(_DeviceId);
-
-			if (_FrameWidth > 0 && _FrameHeight > 0) {
-				_CaptureDev.set(Highgui.CV_CAP_PROP_FRAME_WIDTH, _FrameWidth);
-				_CaptureDev.set(Highgui.CV_CAP_PROP_FRAME_HEIGHT, _FrameHeight);
-			}
-			
-			if (_CaptureDev.isOpened()) {
-				System.err.println("Starting Video Feed using Web Cam: " + _DeviceId);
-				_CaptureTimer.start();
-			} else {
-				JOptionPane.showMessageDialog(frame, "Failed to open web camera: " + _DeviceId, "Failed to Open Web Cam", JOptionPane.ERROR_MESSAGE);
-			}			
+			_FrameGrabber.start(_DeviceId, _FrameWidth, _FrameHeight);
+			_CaptureTimer.start();
 		}
 	}
 
 	public void stopVideoFeed() {
-		if (_CaptureDev != null) {
-			System.err.println("Stopping Video Feed");
-			_CaptureTimer.stop();
-			_CaptureDev.release();
-			_CaptureDev = null;
-		}
+		_FrameGrabber.stop();
+		_CaptureTimer.stop();
 	}
 
 }

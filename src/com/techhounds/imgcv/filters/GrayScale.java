@@ -48,7 +48,10 @@ public final class GrayScale implements MatFilter {
     @Override
     public Mat process(Mat srcImage) {
         Mat dst = srcImage;
-        Imgproc.cvtColor(srcImage, dst, Imgproc.COLOR_RGB2GRAY);
+    	int channels = srcImage.channels();
+    	if (channels == 3 || channels == 4) {
+        	Imgproc.cvtColor(srcImage, dst, Imgproc.COLOR_RGB2GRAY);
+        }
         return dst;
     }
 }
