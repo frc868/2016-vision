@@ -50,12 +50,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static javax.swing.JOptionPane.ERROR_MESSAGE;
 import static javax.swing.JOptionPane.showMessageDialog;
 
+import javax.swing.border.BevelBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -193,6 +192,8 @@ public class FilterToolGuiOpenCv {
 
 	private JLabel _PointerY;
 
+	private JScrollPane imageScrollPane;
+
 	/**
 	 * Constructs a new instance with a given title - you will override.
 	 *
@@ -217,7 +218,8 @@ public class FilterToolGuiOpenCv {
 		sidePanel = new JPanel(gbl);
 
 		botPanel = new JPanel();
-		new BoxLayout(botPanel, BoxLayout.X_AXIS);
+		botPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
+		botPanel.setLayout(new BoxLayout(botPanel, BoxLayout.X_AXIS));
 	}
 
 	/**
@@ -485,12 +487,10 @@ public class FilterToolGuiOpenCv {
 					if (image != null) {
 						_LastLoadedImage = image;
 						setImage(image);
-
 					}
 				} catch (IOException ex) {
-					// TODO: Pull up preferences or display error?
-					Logger.getLogger(FilterToolGuiOpenCv.class.getName()).log(
-							Level.SEVERE, null, ex);
+					String msg = "Failed to get image from: " + _Url;
+					JOptionPane.showMessageDialog(frame, msg, "Failed to Grab Image", JOptionPane.ERROR_MESSAGE);
 				} finally {
 					frame.setCursor(Cursor.getDefaultCursor());
 				}
@@ -606,6 +606,7 @@ public class FilterToolGuiOpenCv {
 		_LastWidth = -1;
 		_LastHeight = -1;
 		_LastChannel = -1;
+		_ImageInfo.setHorizontalAlignment(SwingConstants.LEFT);
 		addInfo(_ImageInfo);
 	}
 
@@ -614,10 +615,18 @@ public class FilterToolGuiOpenCv {
 	 */
 	protected void addCursorInfo() {
 		_PointerX = new JLabel("0");
+		Dimension minSize = new Dimension(40, 0);
+		_PointerX.setMinimumSize(minSize );
+		_PointerX.setHorizontalAlignment(SwingConstants.RIGHT);
 		_PointerY = new JLabel("0");
+		_PointerY.setMinimumSize(minSize);
+		_PointerY.setHorizontalAlignment(SwingConstants.RIGHT);
 		JPanel cursor = new JPanel();
 		new BoxLayout(cursor, BoxLayout.X_AXIS);
-		cursor.add(new JLabel("x:"));
+		JLabel xLabel = new JLabel("x:");
+		xLabel.setMinimumSize(minSize);
+		xLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+		cursor.add(xLabel);
 		cursor.add(_PointerX);
 		cursor.add(new JLabel("y:"));
 		cursor.add(_PointerY);
@@ -627,8 +636,17 @@ public class FilterToolGuiOpenCv {
 			
 			@Override
 			public void mouseMoved(MouseEvent e) {
-				_PointerX.setText(Integer.toString(e.getX()));
-				_PointerY.setText(Integer.toString(e.getY()));
+				int x = e.getX();
+				int y = e.getY();
+				if (_Image != null) {
+					int ih = _Image.rows();
+					int h = imageView.getHeight();
+					if (h > ih) {
+						y -= (h - ih) / 2;
+					}
+				}
+				_PointerX.setText(Integer.toString(x));
+				_PointerY.setText(Integer.toString(y));
 			}
 			
 			@Override
@@ -637,6 +655,11 @@ public class FilterToolGuiOpenCv {
 		});
 	}
 
+	/**
+	 * Method which adds information items to the bottom status line.
+	 * 
+	 * <p>You can override this method if you want to add your own set of information items.</p>
+	 */
 	protected void addInfoItems() {
 		addImageInfo();
 		addCursorInfo();
@@ -664,6 +687,50 @@ public class FilterToolGuiOpenCv {
 		};
 		return action;
 	}
+	
+	/**
+	 * Creates a action to exit the application (System.exit(0) invocation).
+	 * 
+	 * @return Action that will cause program to terminate.
+	 */
+	protected Action createExitAction() {
+		Action action = new AbstractAction("Exit") {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				System.exit(0);
+			}
+
+		};
+		return action;
+	}
+	
+	/**
+	 * Creates a action to "fit" the frame based on the current image size.
+	 * 
+	 * @return Action that will cause program to terminate.
+	 */
+	protected Action createFitAction() {
+		Action action = new AbstractAction("Fit") {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (_Image != null) {
+					// Don't like the "magic guess" at the size adjustment to
+					// prevent scroll bars from appearing
+					int width = _Image.cols() + 3;
+					int height = _Image.rows() + 3;
+					Dimension size = new Dimension(width, height);
+					imageScrollPane.setPreferredSize(size);
+					frame.pack();
+				}
+			}
+
+		};
+		return action;
+	}
 
 	/**
 	 * Adds all of the menu items to the main menu bar.
@@ -682,6 +749,8 @@ public class FilterToolGuiOpenCv {
 		addMenuItem(fileMenu, new JMenuItem(createRevertImageAction()));
 		addMenuItem(fileMenu, new JMenuItem(createSaveImageAction()));
 		addMenuItem(fileMenu, new JMenuItem(createPreferencesAction()));
+		addMenuItem(fileMenu, new JMenuItem(createFitAction()));
+		addMenuItem(fileMenu, new JMenuItem(createExitAction()));
 
 		String editName = "Edit";
 		addMenuItem(editName, new JMenuItem(createUndoImageAction()));
@@ -956,7 +1025,7 @@ public class FilterToolGuiOpenCv {
 			}
 
 			// Image display in the center
-			final JScrollPane imageScrollPane = new JScrollPane(imageView);
+			imageScrollPane = new JScrollPane(imageView);
 			imageScrollPane.setPreferredSize(new Dimension(640, 480));
 			frame.add(imageScrollPane, BorderLayout.CENTER);
 
