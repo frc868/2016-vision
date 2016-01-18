@@ -42,21 +42,7 @@ import org.opencv.imgproc.Imgproc;
  * @author Paul Blankenbaker
  */
 public final class VisionFilter2016 implements MatFilter {
-	
-	//Configurations
-	
-	private static int[]  colorFilterMin   = {70, 100, 25};
-	private static int[]  colorFilterMax   = {90, 255, 255};
-	private static int    blackWhiteThresh = 40;
-	private static int    dilateFactor     = 3;
-	private static int    erodeFactor      = 5;
-	private static double polygonEpsilon   = 5.0; //used for detecting polygons from contours
-	private static double targetHeightMin  = 10.0; 
-	private static double targetWidthMin   = 50.0;
-	private static int    targetSidesMin   = 2; //ie at least 3 sides
-	
-	//Processing Filters
-	
+
     private final MatFilter  _ColorRange; //Used to filter image to a specific color range.
     private final Dilate     _Dilate;     //grows remaining parts of the images
     private final Erode      _Erode;      //shrinks remaining parts of the images
@@ -66,8 +52,8 @@ public final class VisionFilter2016 implements MatFilter {
     //Constructs a new instance by pre-allocating all of our image filtering objects.
     public VisionFilter2016() { 
     	_ColorRange = createHsvColorRange();
-    	_Dilate 	= new Dilate(dilateFactor);  
-    	_Erode		= new Erode(erodeFactor); 
+    	_Dilate 	= new Dilate(3); //higher erode/dilate values create smoother close images
+    	_Erode		= new Erode(5);  //but smaller and more broken far images
         _GrayScale = new GrayScale();
         _BlackWhite = createBlackWhite();
     }
@@ -80,13 +66,15 @@ public final class VisionFilter2016 implements MatFilter {
      * white image.
      */
     public static BlackWhite createBlackWhite() {
-        return new BlackWhite(blackWhiteThresh, 255, false);
+        return new BlackWhite(40, 255, false);
     }
     
     public static MatFilter createHsvColorRange() {
         Sequence filter = new Sequence();
         filter.addFilter(ColorSpace.createBGRtoHSV());
-        filter.addFilter(new ColorRange(colorFilterMin, colorFilterMax, true));
+        int[] colorMin = {70, 100, 025};
+        int[] colorMax = {90, 255, 255};
+        filter.addFilter(new ColorRange(colorMin, colorMax, true));
         return filter;
     }
 
@@ -105,10 +93,10 @@ public final class VisionFilter2016 implements MatFilter {
     	Mat hierarchy = new Mat(); //used in contour detection
     	
     	PolygonCv target;
-    	List<MatOfPoint> contours = new ArrayList<>(); //list of objects in image
-        List<PolygonCv>  targets = new ArrayList<>();  //list of potential targets in image
+    	List<MatOfPoint> contours = new ArrayList<>();
+        List<PolygonCv>  targets = new ArrayList<>();
     	
-        int targetSides, targetsFound;
+        int targetSides;
         float targetHeight, targetWidth, targetRatio, targetArea, targetX, targetY;
         
         Mat coloredImage = _ColorRange.process(srcImage); 
@@ -121,30 +109,24 @@ public final class VisionFilter2016 implements MatFilter {
         Imgproc.findContours(bwImage, contours, hierarchy, 
         					 Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
         
-        for(int i = 0; i < contours.size(); i++) { //for each 'contour' object
-        	target = PolygonCv.fromContour(contours.get(i), polygonEpsilon); //create a polygon
+        for(int i = 0; i < contours.size(); i++) {
+        	target = PolygonCv.fromContour(contours.get(i), 5.0);
         	
         	targetSides  = target.size();
         	targetHeight = target.getHeight();
         	targetWidth  = target.getWidth();
         	
-        	//possibly useful in VisionTool but unnecessary in VisionView
-        	//System.out.println("Height: " + targetHeight + " Width: " + targetWidth);
-        	//System.out.println("Sides: " + targetSides);
-        	//System.out.println();
+        	System.out.println("Height: " + targetHeight + " Width: " + targetWidth);
+        	System.out.println("Sides: " + targetSides);
+        	System.out.println();
         	
-        	if(targetHeight > targetHeightMin && 
-        	    targetWidth > targetWidthMin  && 
-        	    targetSides > targetSidesMin) {
-        		
-        		targets.add(target); //if within range, add to list of potential targets
+        	if(targetHeight > 10 && targetWidth > 50 && targetSides > 2) {
+        		targets.add(target);
         	}
         }
         
-        targetsFound = targets.size();
-        
-        if(targetsFound == 1) {	 //if we found only one target
-        	target = targets.get(0); //select that target
+        if(targets.size() == 1) {
+        	target = targets.get(0);
         	
         	targetSides  = target.size();
         	targetHeight = target.getHeight();
@@ -154,15 +136,12 @@ public final class VisionFilter2016 implements MatFilter {
         	targetX		 = target.getCenterX();
         	targetY		 = target.getCenterY();
         	
-        	System.out.print("Found target at: " + targetX + ", " + targetY);
-        	System.out.print(" Height: " + targetHeight + " Width: " + targetWidth);
-        	System.out.print(" Sides: " + targetSides);
-        	System.out.print(" Ratio: " + targetRatio + " Area: " + targetArea);
-        	
-        } else if (targetsFound > 1) {
-        	System.out.println("Error: Multiple Targets Found!");
-        } else { //targetsFound must equal 0
-        	System.out.println("Error: No Targets Found!");
+        	System.out.println("Found target at: " + targetX + ", " + targetY);
+        	System.out.println("Height: " + targetHeight + " Width: " + targetWidth);
+        	System.out.println("Sides: " + targetSides);
+        	System.out.println("Ratio: " + targetRatio + " Area: " + targetArea);
+        } else {
+        	System.out.println("Error finding target!");
         }
 	    
         return output;
