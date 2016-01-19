@@ -26,7 +26,6 @@
 package com.techhounds.imgcv.filters;
 
 import com.techhounds.imgcv.PolygonCv;
-
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,14 +68,16 @@ public final class VisionFilter2016 implements MatFilter {
     private final Erode			_Erode;      //shrinks remaining parts of the images
     private final GrayScale		_GrayScale; //Used to convert image to a gray scale rendering.
     private final BlackWhite	_BlackWhite; //Used to convert from gray scale to black and white.
+    private final CrossHair     _CrossHair;  //used to draw a crosshair
 
     //Constructs a new instance by pre-allocating all of our image filtering objects.
     public VisionFilter2016() { 
     	_ColorRange = createHsvColorRange();
     	_Dilate 	= new Dilate(dilateFactor);  
     	_Erode		= new Erode(erodeFactor); 
-        _GrayScale = new GrayScale();
-        _BlackWhite = createBlackWhite();
+        _GrayScale  = new GrayScale();
+        _BlackWhite = createBlackWhite(); //TODO can we move these to separate filters?
+        _CrossHair  = new CrossHair();
     }
 
     /**
@@ -108,32 +109,36 @@ public final class VisionFilter2016 implements MatFilter {
      */
     @Override
     public Mat process(Mat srcImage) {
-        Mat outputImage = srcImage.clone();
+        Mat outputImage = new Mat();
     	List<PolygonCv>  targets = new ArrayList<>();  //list of potential targets in image
         Mat processedImage = new Mat();
         int targetsFound;
         
         processedImage = primaryProcessing(srcImage);
-        Imgproc.cvtColor(processedImage, outputImage, Imgproc.COLOR_GRAY2BGR);
+        //Imgproc.cvtColor(processedImage, outputImage, Imgproc.COLOR_GRAY2BGR);
         
         targets = findTargets(processedImage);
         targetsFound = targets.size();
-        networkTable.putNumber("TargetsFound", targetsFound);
         
-        if(targetsFound == 1) {	 //if we found only one target
-        	targetAnalysis(targets.get(0)); //analyze that target
+        if(targetsFound == 1 && networkTable != null) {	//if we found only one target & 
+        												//robo is connected   	
+        	targetAnalysis(targets.get(0)); 			//analyze that target
+        	networkTable.putNumber("FrameCount", frameCnt++); //used to know if info is recent
         }
-	    
-        networkTable.putNumber("FrameCount", frameCnt++);
+        
+        outputImage = drawTarget(srcImage, targets.get(0));
         return outputImage;
+        
     }
     
-    private Mat primaryProcessing(Mat inputImage) { //does basic color/erosion processing
+    private Mat primaryProcessing(Mat origImage) { //does basic color/erosion processing
+    	Mat inputImage   = origImage.clone();
     	Mat coloredImage = _ColorRange.process(inputImage); 
         Mat dilatedImage = _Dilate.process(coloredImage); //what if we erode first?
         Mat erodedImage  = _Erode.process(dilatedImage);
         Mat grayedImage  = _GrayScale.process(erodedImage);
         Mat bwImage      = _BlackWhite.process(grayedImage);
+        //blur is done via camera focus not here
         
         return bwImage;
     }
@@ -161,7 +166,7 @@ public final class VisionFilter2016 implements MatFilter {
         return targets;
     }
     
-    private void targetAnalysis(PolygonCv foundTarget) {
+    private void targetAnalysis(PolygonCv foundTarget) { //tells the robo info about the target
         double offCenterDegreesX, targetDistance;
         float targetWidth 	= foundTarget.getWidth();
         float targetX		= foundTarget.getCenterX();
@@ -177,6 +182,14 @@ public final class VisionFilter2016 implements MatFilter {
     	networkTable.putNumber("DistanceToTarget",  targetDistance);
     }
 
+    private Mat drawTarget(Mat origImage, PolygonCv target) {
+    	Mat inputImage = origImage.clone();
+    	
+    	//TODO draw scalar over image
+    	
+    	return _CrossHair.process(inputImage);
+    }
+    
     public void setNetworkTable(NetworkTable nt) {
     	networkTable = nt;
     }
