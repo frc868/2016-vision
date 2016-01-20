@@ -38,7 +38,9 @@ Getting the live streams working can be tricky. Even if your still image grabbin
 Following URLs have been successfully used (note factory default passwords are shown):
 
 Axis M1103
+  http://10.8.68.11/mjpg/video.mjpg (lower latency)
   rtsp://10.8.68.11:554/axis-media/media.amp?videocodec=h264
+  
 
 Edimax IC-3100W
   http://192.168.1.25/mjpg/video.mjpg (less lag than h264)

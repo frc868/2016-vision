@@ -143,6 +143,8 @@ public class LiveViewGui {
 	 */
 	private MatFilter _Filter;
 
+	private JScrollPane imageScrollPane;
+
 	/**
 	 * Constructs a new instance with a given title - you will override.
 	 *
@@ -244,6 +246,32 @@ public class LiveViewGui {
 		};
 		return action;
 	}
+	
+	/**
+	 * Creates a action to "fit" the frame based on the current image size.
+	 * 
+	 * @return Action that will cause program to terminate.
+	 */
+	protected Action createFitAction() {
+		Action action = new AbstractAction("Fit") {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (_Image != null) {
+					// Don't like the "magic guess" at the size adjustment to
+					// prevent scroll bars from appearing
+					int width = _Image.cols() + 3;
+					int height = _Image.rows() + 3;
+					Dimension size = new Dimension(width, height);
+					imageScrollPane.setPreferredSize(size);
+					frame.pack();
+				}
+			}
+
+		};
+		return action;
+	}
 
 	/**
 	 * Adds all of the menu items to the main menu bar.
@@ -292,6 +320,8 @@ public class LiveViewGui {
         }));
         
 		addMenuItem(fileMenu, new JMenuItem(createPreferencesAction()));
+        
+        addMenuItem(fileMenu, new JMenuItem(createFitAction()));
 		
 		addMenuItem(fileMenu, new JMenuItem(new AbstractAction("Exit") {
 			private static final long serialVersionUID = 1L;
@@ -467,7 +497,7 @@ public class LiveViewGui {
 			}
 
 			// Image display in the center
-			final JScrollPane imageScrollPane = new JScrollPane(imageView);
+			imageScrollPane = new JScrollPane(imageView);
 			imageScrollPane.setPreferredSize(new Dimension(660, 500));
 			frame.add(imageScrollPane, BorderLayout.CENTER);
 		}
