@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 /**
@@ -43,8 +44,10 @@ public final class VisionFilter2016 implements MatFilter {
 	
 	//Configurations
 	
-	private static int[]	colorFilterMin    = {60, 100, 20};
+	private static int[]	colorFilterMin    = {60, 100, 20}; //TODO make all final as well
 	private static int[]	colorFilterMax    = {90, 255, 255};
+	private static double[] scalarColors      = {100, 100, 255};
+	private static int      scalarThickness   = 1;
 	private static int		blackWhiteThresh  = 40;
 	private static int		dilateFactor      = 3;
 	private static int		erodeFactor       = 5;
@@ -59,7 +62,6 @@ public final class VisionFilter2016 implements MatFilter {
 	private static double	cameraResolutionX = 800;
 
 	private NetworkTable	networkTable;
-	private int				frameCnt;
 	
 	//Processing Filters
 	
@@ -69,6 +71,7 @@ public final class VisionFilter2016 implements MatFilter {
     private final GrayScale		_GrayScale; //Used to convert image to a gray scale rendering.
     private final BlackWhite	_BlackWhite; //Used to convert from gray scale to black and white.
     private final CrossHair     _CrossHair;  //used to draw a crosshair
+    private final Scalar        _TargetOverlay;
 
     //Constructs a new instance by pre-allocating all of our image filtering objects.
     public VisionFilter2016() { 
@@ -77,7 +80,16 @@ public final class VisionFilter2016 implements MatFilter {
     	_Erode		= new Erode(erodeFactor); 
         _GrayScale  = new GrayScale();
         _BlackWhite = createBlackWhite(); //TODO can we move these to separate filters?
-        _CrossHair  = new CrossHair();
+        _CrossHair  = new CrossHair();    //or possibly make our own methods for each of these?
+        _TargetOverlay = new Scalar(scalarColors);
+    }
+    
+    public static MatFilter createDilate() {
+    	return new Dilate(dilateFactor);
+    }
+    
+    public static MatFilter createErode() {
+    	return new Erode(erodeFactor);
     }
 
     /**
@@ -109,8 +121,8 @@ public final class VisionFilter2016 implements MatFilter {
      */
     @Override
     public Mat process(Mat srcImage) {
-        Mat outputImage = new Mat();
     	List<PolygonCv>  targets = new ArrayList<>();  //list of potential targets in image
+    	Mat outputImage = srcImage;
         Mat processedImage = new Mat();
         int targetsFound;
         
@@ -120,13 +132,16 @@ public final class VisionFilter2016 implements MatFilter {
         targets = findTargets(processedImage);
         targetsFound = targets.size();
         
-        if(targetsFound == 1 && networkTable != null) {	//if we found only one target & 
-        												//robo is connected   	
-        	targetAnalysis(targets.get(0)); 			//analyze that target
-        	networkTable.putNumber("FrameCount", frameCnt++); //used to know if info is recent
+        if(networkTable != null) {	//if we found only one target & 
+        	if(targetsFound == 1) {
+        		networkTable.putBoolean("FoundTarget", true);   	
+            	targetAnalysis(targets.get(0)); 			//analyze that target
+            	outputImage = drawTarget(srcImage, targets.get(0));
+        	} else {
+        		networkTable.putBoolean("FoundTarget", false);
+        	}        	
         }
         
-        outputImage = drawTarget(srcImage, targets.get(0));
         return outputImage;
         
     }
@@ -138,7 +153,7 @@ public final class VisionFilter2016 implements MatFilter {
         Mat erodedImage  = _Erode.process(dilatedImage);
         Mat grayedImage  = _GrayScale.process(erodedImage);
         Mat bwImage      = _BlackWhite.process(grayedImage);
-        //blur is done via camera focus not here
+        //blur is done via camera focus, not here
         
         return bwImage;
     }
@@ -184,10 +199,15 @@ public final class VisionFilter2016 implements MatFilter {
 
     private Mat drawTarget(Mat origImage, PolygonCv target) {
     	Mat inputImage = origImage.clone();
+    	List<MatOfPoint> contours = new ArrayList<>();
     	
-    	//TODO draw scalar over image
+    	contours.add(target.toContour());
+    	 	
+    	target.drawInfo(inputImage, _TargetOverlay);
+    	Imgproc.drawContours(inputImage, contours, -1, _TargetOverlay, scalarThickness); //TODO figure out what the -1 is for
+    	_CrossHair.process(inputImage);
     	
-    	return _CrossHair.process(inputImage);
+    	return inputImage;
     }
     
     public void setNetworkTable(NetworkTable nt) {

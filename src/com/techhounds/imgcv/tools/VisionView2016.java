@@ -25,9 +25,13 @@
  */
 package com.techhounds.imgcv.tools;
 
+import java.awt.HeadlessException;
+
 import org.opencv.core.Mat;
 import com.techhounds.imgcv.LiveViewGui;
+import com.techhounds.imgcv.filters.DoNothingFilter;
 import com.techhounds.imgcv.filters.MatFilter;
+import com.techhounds.imgcv.filters.Sequence;
 import com.techhounds.imgcv.filters.VisionFilter2016;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
@@ -37,8 +41,28 @@ import edu.wpi.first.wpilibj.networktables.NetworkTable;
  *
  * @author pkb
  */
-public final class VisionView2016 {
-    /**
+public final class VisionView2016 extends LiveViewGui {
+    VisionFilter2016 filter = new VisionFilter2016();
+    
+    public VisionView2016(String title) throws HeadlessException {
+		super(title);
+		setFilter(filter);
+	}
+    
+    protected void addMenuItems() {
+    	super.addMenuItems();
+    	
+    	addFilter("Main 2016 Step 1", VisionFilter2016.createDilate());
+    	Sequence step2 = new Sequence();
+    	step2.addFilter(VisionFilter2016.createDilate());
+    	step2.addFilter(VisionFilter2016.createErode());
+    	addFilter("Main 2016 Step 2", step2);
+    	
+
+        addFilter("Main 2016 Filter", filter);    	
+    }
+
+	/**
      * Main entry point to this Java Application.
      * 
      * <ul>
@@ -51,15 +75,16 @@ public final class VisionView2016 {
      */
     public static void main(String[] args) {
         // Create the GUI application, set the filter then start up the GUI
-        final LiveViewGui frame = new LiveViewGui("2016 Vision Viewer");
+        final VisionView2016 frame = new VisionView2016("2016 Vision Viewer");
         NetworkTable.setClientMode();
         NetworkTable.setIPAddress("10.8.68.2");
         NetworkTable.initialize();
         NetworkTable sd = NetworkTable.getTable("SmartDashboard");
-        VisionFilter2016 filter = new VisionFilter2016();
-        filter.setNetworkTable(sd);
-        frame.setFilter(filter);
+        //VisionFilter2016 filter = new VisionFilter2016();
+        frame.filter.setNetworkTable(sd);
+        //frame.setFilter(filter);
         frame.main();
+        //frame.startVideoFeed();
     }
 
 }
