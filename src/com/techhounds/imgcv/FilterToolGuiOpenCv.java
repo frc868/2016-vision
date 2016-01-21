@@ -638,15 +638,29 @@ public class FilterToolGuiOpenCv {
 			public void mouseMoved(MouseEvent e) {
 				int x = e.getX();
 				int y = e.getY();
+				double xRatio = 0.0;
+				double yRatio = 0.0;
+				String channelStr = "  []";
+				
 				if (_Image != null) {
 					int ih = _Image.rows();
 					int h = imageView.getHeight();
 					if (h > ih) {
 						y -= (h - ih) / 2;
 					}
+					int iw = _Image.cols();
+					
+					// If mouse pointer over pixel in image, update ratio and color
+					if ((iw > 0) && (ih > 0) && (x < iw) && (y < ih) && (y >= 0) && (x >= 0)) {
+						xRatio = x / ((double) iw);
+						yRatio = y / ((double) ih);
+						double[] channelVals = _Image.get(y, x);
+						channelStr = "  " + Conversion.channelsToString(channelVals);
+					}
 				}
-				_PointerX.setText(Integer.toString(x));
-				_PointerY.setText(Integer.toString(y));
+				String fmtStr = "%4d (%.3f)";
+				_PointerX.setText(String.format(fmtStr, x, xRatio));
+				_PointerY.setText(String.format(fmtStr, y, yRatio) + channelStr);
 			}
 			
 			@Override
