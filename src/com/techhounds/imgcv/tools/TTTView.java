@@ -25,10 +25,7 @@
  */
 package com.techhounds.imgcv.tools;
 
-import org.opencv.core.Mat;
-
 import com.techhounds.imgcv.LiveViewGui;
-import com.techhounds.imgcv.filters.FindStanchion2015;
 import com.techhounds.imgcv.filters.MatFilter;
 import com.techhounds.imgcv.filters.TTTFilter;
 

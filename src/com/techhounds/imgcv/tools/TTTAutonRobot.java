@@ -26,7 +26,6 @@
 package com.techhounds.imgcv.tools;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
-import com.techhounds.imgcv.filters.CheeseButton;
 import com.techhounds.imgcv.filters.ColorRange;
 import com.techhounds.imgcv.filters.FindTarget2013;
 import com.techhounds.imgcv.filters.MatFilter;
