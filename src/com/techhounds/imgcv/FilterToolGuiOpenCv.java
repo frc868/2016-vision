@@ -195,6 +195,13 @@ public class FilterToolGuiOpenCv {
 	private JScrollPane imageScrollPane;
 
 	/**
+	 * Used to detect when some other action has been applied while the color
+	 * range tool is up (used to let us know when to reload the base image for
+	 * the color range tool).
+	 */
+	private Mat _LastColorRangeImage;
+
+	/**
 	 * Constructs a new instance with a given title - you will override.
 	 *
 	 * @param title
@@ -490,7 +497,8 @@ public class FilterToolGuiOpenCv {
 					}
 				} catch (IOException ex) {
 					String msg = "Failed to get image from: " + _Url;
-					JOptionPane.showMessageDialog(frame, msg, "Failed to Grab Image", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(frame, msg,
+							"Failed to Grab Image", JOptionPane.ERROR_MESSAGE);
 				} finally {
 					frame.setCursor(Cursor.getDefaultCursor());
 				}
@@ -616,7 +624,7 @@ public class FilterToolGuiOpenCv {
 	protected void addCursorInfo() {
 		_PointerX = new JLabel("0");
 		Dimension minSize = new Dimension(40, 0);
-		_PointerX.setMinimumSize(minSize );
+		_PointerX.setMinimumSize(minSize);
 		_PointerX.setHorizontalAlignment(SwingConstants.RIGHT);
 		_PointerY = new JLabel("0");
 		_PointerY.setMinimumSize(minSize);
@@ -631,9 +639,9 @@ public class FilterToolGuiOpenCv {
 		cursor.add(new JLabel("y:"));
 		cursor.add(_PointerY);
 		addInfo(cursor);
-		
+
 		imageView.addMouseMotionListener(new MouseMotionListener() {
-			
+
 			@Override
 			public void mouseMoved(MouseEvent e) {
 				int x = e.getX();
@@ -641,7 +649,7 @@ public class FilterToolGuiOpenCv {
 				double xRatio = 0.0;
 				double yRatio = 0.0;
 				String channelStr = "  []";
-				
+
 				if (_Image != null) {
 					int ih = _Image.rows();
 					int h = imageView.getHeight();
@@ -649,20 +657,23 @@ public class FilterToolGuiOpenCv {
 						y -= (h - ih) / 2;
 					}
 					int iw = _Image.cols();
-					
-					// If mouse pointer over pixel in image, update ratio and color
-					if ((iw > 0) && (ih > 0) && (x < iw) && (y < ih) && (y >= 0) && (x >= 0)) {
+
+					// If mouse pointer over pixel in image, update ratio and
+					// color
+					if ((iw > 0) && (ih > 0) && (x < iw) && (y < ih)
+							&& (y >= 0) && (x >= 0)) {
 						xRatio = x / ((double) iw);
 						yRatio = y / ((double) ih);
 						double[] channelVals = _Image.get(y, x);
-						channelStr = "  " + Conversion.channelsToString(channelVals);
+						channelStr = "  "
+								+ Conversion.channelsToString(channelVals);
 					}
 				}
 				String fmtStr = "%4d (%.3f)";
 				_PointerX.setText(String.format(fmtStr, x, xRatio));
 				_PointerY.setText(String.format(fmtStr, y, yRatio) + channelStr);
 			}
-			
+
 			@Override
 			public void mouseDragged(MouseEvent e) {
 			}
@@ -672,7 +683,10 @@ public class FilterToolGuiOpenCv {
 	/**
 	 * Method which adds information items to the bottom status line.
 	 * 
-	 * <p>You can override this method if you want to add your own set of information items.</p>
+	 * <p>
+	 * You can override this method if you want to add your own set of
+	 * information items.
+	 * </p>
 	 */
 	protected void addInfoItems() {
 		addImageInfo();
@@ -701,7 +715,7 @@ public class FilterToolGuiOpenCv {
 		};
 		return action;
 	}
-	
+
 	/**
 	 * Creates a action to exit the application (System.exit(0) invocation).
 	 * 
@@ -719,7 +733,7 @@ public class FilterToolGuiOpenCv {
 		};
 		return action;
 	}
-	
+
 	/**
 	 * Creates a action to "fit" the frame based on the current image size.
 	 * 
@@ -790,8 +804,9 @@ public class FilterToolGuiOpenCv {
 				ColorSpace.createXYZtoRGB()));
 
 		addMenuItem(editName, new JMenuItem(getColorRangeAction()));
-		
-		addMenuItem(editName, createImageProcessingMenuItem("Negative", new Negative()));
+
+		addMenuItem(editName,
+				createImageProcessingMenuItem("Negative", new Negative()));
 
 		JMenu contrast = new JMenu("Contrast");
 		addMenuItem(editName, contrast);
@@ -857,8 +872,9 @@ public class FilterToolGuiOpenCv {
 
 		addMenuItem(editName,
 				createImageProcessingMenuItem("Contours", new Contours()));
-		
-		addMenuItem(editName, createImageProcessingMenuItem("Cross Hair", new CrossHair()));
+
+		addMenuItem(editName,
+				createImageProcessingMenuItem("Cross Hair", new CrossHair()));
 	}
 
 	/**
@@ -1200,15 +1216,20 @@ public class FilterToolGuiOpenCv {
 			_ColorRange.addListener(new ChangeListener() {
 				@Override
 				public void stateChanged(ChangeEvent e) {
-					setImage(_ColorRange.process(_ColorRangeImage.clone()));
+					// If some other filter applied, then reset our base image
+					// for applying
+					// color range tweaks
+					if (_LastColorRangeImage != _Image) {
+						_ColorRangeImage = _Image.clone();
+					}
+					_LastColorRangeImage = _ColorRange.process(_ColorRangeImage
+							.clone());
+					setImage(_LastColorRangeImage);
 				}
 			});
 		}
 
 		Action action = new AbstractAction("Color Range") {
-			/**
-			 * 
-			 */
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -1217,7 +1238,8 @@ public class FilterToolGuiOpenCv {
 				// and then display GUI tool to dynamically update the color
 				// range
 				_ColorRangeImage = getImage().clone();
-				setImage(_ColorRange.process(getImage()));
+				_LastColorRangeImage = _ColorRange.process(getImage().clone());
+				setImage(_LastColorRangeImage);
 				JFrame frame = new JFrame("Color Range");
 				frame.setMinimumSize(new Dimension(480, 200));
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
