@@ -57,8 +57,6 @@ public final class VisionView2016 extends LiveViewGui {
     	step2.addFilter(VisionFilter2016.createDilate());
     	step2.addFilter(VisionFilter2016.createErode());
     	addFilter("Main 2016 Step 2", step2);
-    	
-
         addFilter("Main 2016 Filter", filter);    	
     }
 
@@ -80,11 +78,9 @@ public final class VisionView2016 extends LiveViewGui {
         NetworkTable.setIPAddress("10.8.68.2");
         NetworkTable.initialize();
         NetworkTable sd = NetworkTable.getTable("SmartDashboard");
-        //VisionFilter2016 filter = new VisionFilter2016();
         frame.filter.setNetworkTable(sd);
-        //frame.setFilter(filter);
         frame.main();
-        //frame.startVideoFeed();
+        //frame.startVideoFeed(); //starts from incorrect source
     }
 
 }

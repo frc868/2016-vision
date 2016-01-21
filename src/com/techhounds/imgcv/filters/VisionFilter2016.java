@@ -46,8 +46,9 @@ public final class VisionFilter2016 implements MatFilter {
 	
 	private static int[]	colorFilterMin    = {60, 100, 20}; //TODO make all final as well
 	private static int[]	colorFilterMax    = {90, 255, 255};
-	private static double[] scalarColors      = {100, 100, 255};
-	private static int      scalarThickness   = 1;
+	private static double[] bestTargetColors  = {100, 100, 255};
+	private static double[] otherTargetColors = {255, 100, 100};
+	private static int      targetOutlineThickness   = 1;
 	private static int		blackWhiteThresh  = 40;
 	private static int		dilateFactor      = 3;
 	private static int		erodeFactor       = 5;
@@ -57,11 +58,17 @@ public final class VisionFilter2016 implements MatFilter {
 	private static double	targetWidthMin    = 50.0;
 	private static int		targetSidesMin    = 2; //ie at least 3 sides
 	
+	private static double   targetHeightIdeal = 30;
+	private static double   targetWidthIdeal  = 150;
+	private static double   targetRatioIdeal  = 0.15;
+	private static double   targetAreaIdeal   = 7500;
+	
 	private static double	targetTapeWidth   = 24; //inches
 	private static double	cameraHorizFOV    = 67; //could be wrong
 	private static double	cameraResolutionX = 800;
 
 	private NetworkTable	networkTable;
+	private double          frameCount        = 0;
 	
 	//Processing Filters
 	
@@ -71,7 +78,8 @@ public final class VisionFilter2016 implements MatFilter {
     private final GrayScale		_GrayScale; //Used to convert image to a gray scale rendering.
     private final BlackWhite	_BlackWhite; //Used to convert from gray scale to black and white.
     private final CrossHair     _CrossHair;  //used to draw a crosshair
-    private final Scalar        _TargetOverlay;
+    private final Scalar        _BestTargetOverlay;
+    private final Scalar		_OtherTargetOverlay;
 
     //Constructs a new instance by pre-allocating all of our image filtering objects.
     public VisionFilter2016() { 
@@ -81,7 +89,8 @@ public final class VisionFilter2016 implements MatFilter {
         _GrayScale  = new GrayScale();
         _BlackWhite = createBlackWhite(); //TODO can we move these to separate filters?
         _CrossHair  = new CrossHair();    //or possibly make our own methods for each of these?
-        _TargetOverlay = new Scalar(scalarColors);
+        _BestTargetOverlay = new Scalar(bestTargetColors);
+        _OtherTargetOverlay = new Scalar(otherTargetColors);
     }
     
     public static MatFilter createDilate() {
@@ -121,64 +130,86 @@ public final class VisionFilter2016 implements MatFilter {
      */
     @Override
     public Mat process(Mat srcImage) {
-    	List<PolygonCv>  targets = new ArrayList<>();  //list of potential targets in image
-    	Mat outputImage = srcImage;
-        Mat processedImage = new Mat();
+    	List<PolygonCv> targets = new ArrayList<>();  //list of potential targets in image
+        Mat processedImage      = new Mat();
+        PolygonCv bestTarget;
         int targetsFound;
         
-        processedImage = primaryProcessing(srcImage);
-        //Imgproc.cvtColor(processedImage, outputImage, Imgproc.COLOR_GRAY2BGR);
-        
-        targets = findTargets(processedImage);
+        processedImage = primaryProcessing(srcImage.clone()); //creates new color processed image
+        targets = findTargets(processedImage); //detects targets in new processed image
         targetsFound = targets.size();
         
-        if(networkTable != null) {	//if we found only one target & 
-        	if(targetsFound == 1) {
-        		networkTable.putBoolean("FoundTarget", true);   	
-            	targetAnalysis(targets.get(0)); 			//analyze that target
-            	outputImage = drawTarget(srcImage, targets.get(0));
-        	} else {
-        		networkTable.putBoolean("FoundTarget", false);
-        	}        	
-        }
-        
-        return outputImage;
-        
+        if(targetsFound > 0) {
+        	if(networkTable != null) { 
+        		targetAnalysis(targets.get(0)); //TODO pass BEST not FIRST polygon
+        		networkTable.putNumber("FrameCount", frameCount++); 
+        	}
+        	
+        	bestTarget = findBestTarget(targets);
+        	return drawTargets(srcImage.clone(), targets, bestTarget); //always draw targets if found
+        	
+         } else { //unnecessary
+         	return drawCrossHair(srcImage.clone()); //always draw crosshairs regardless
+         } //don't need to increment frameCount as no target (ie usable data) is detected
     }
     
-    private Mat primaryProcessing(Mat origImage) { //does basic color/erosion processing
-    	Mat inputImage   = origImage.clone();
-    	Mat coloredImage = _ColorRange.process(inputImage); 
-        Mat dilatedImage = _Dilate.process(coloredImage); //what if we erode first?
-        Mat erodedImage  = _Erode.process(dilatedImage);
-        Mat grayedImage  = _GrayScale.process(erodedImage);
-        Mat bwImage      = _BlackWhite.process(grayedImage);
+    private Mat primaryProcessing(Mat inputImage) { //does basic color/erosion processing
+    	_ColorRange.process(inputImage); 
+        _Dilate.process(inputImage); //what if we erode first?
+        _Erode.process(inputImage);
+        _GrayScale.process(inputImage);
+        _BlackWhite.process(inputImage);
         //blur is done via camera focus, not here
         
-        return bwImage;
+        return inputImage; //convenience sake, not necessary
     }
     
     private List<PolygonCv> findTargets(Mat inputImage) { //finds potential targets in an image
 	    Mat hierarchy 	          = new Mat();
 	    List<MatOfPoint> contours = new ArrayList<>(); //list of objects in image
-        List<PolygonCv>  targets  = new ArrayList<>();  //list of potential targets in image
+        List<PolygonCv>  targets  = new ArrayList<>(); //list of potential targets in image
         PolygonCv  		 currentTarget;
         
-        Imgproc.findContours(inputImage, contours, hierarchy, 
+        Imgproc.findContours(inputImage, contours, hierarchy, //doesn't modify inputImage
         					 Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
         
         for(int i = 0; i < contours.size(); i++) { //for each 'contour' object
         	currentTarget = PolygonCv.fromContour(contours.get(i), polygonEpsilon); //create a polygon
-        	
+        	        	
         	if(currentTarget.getHeight() 	> targetHeightMin && 
         	   currentTarget.getWidth() 	> targetWidthMin  && 
         	   currentTarget.size() 		> targetSidesMin) {
         		
         		targets.add(currentTarget); //if within range, add to list of potential targets
-        	}
+        	} //TODO is the array list necessary?
         }
         
         return targets;
+    }
+ 
+    private PolygonCv findBestTarget(List<PolygonCv> targetList) {
+    	PolygonCv bestTarget = null;
+    	PolygonCv currentTarget;
+    	int       bestTargetValue = 0;
+    	
+    	for(int i = 0; i < targetList.size(); i++) {
+    		currentTarget = targetList.get(i);
+    		
+    		if(getTargetRating(currentTarget) > bestTargetValue)  {
+    			bestTarget = currentTarget;
+    		}
+    	}
+    	
+    	return bestTarget;
+    }
+    
+    private int getTargetRating(PolygonCv inputTarget) {
+    	int targetRating = 1000;
+    	
+    	targetRating += -(Math.abs(inputTarget.getHeight() - targetHeightIdeal));
+    	targetRating += -(Math.abs(inputTarget.getWidth() - targetWidthIdeal));
+    	
+    	return targetRating;
     }
     
     private void targetAnalysis(PolygonCv foundTarget) { //tells the robo info about the target
@@ -197,17 +228,31 @@ public final class VisionFilter2016 implements MatFilter {
     	networkTable.putNumber("DistanceToTarget",  targetDistance);
     }
 
-    private Mat drawTarget(Mat origImage, PolygonCv target) {
-    	Mat inputImage = origImage.clone();
+    private Mat drawTargets(Mat inputImage, List<PolygonCv> targetList, PolygonCv bestTarget) {
     	List<MatOfPoint> contours = new ArrayList<>();
+    	List<MatOfPoint> bestContours = new ArrayList<>();
+    	PolygonCv        currentTarget; 
     	
-    	contours.add(target.toContour());
-    	 	
-    	target.drawInfo(inputImage, _TargetOverlay);
-    	Imgproc.drawContours(inputImage, contours, -1, _TargetOverlay, scalarThickness); //TODO figure out what the -1 is for
-    	_CrossHair.process(inputImage);
+    	bestContours.add(bestTarget.toContour());
     	
-    	return inputImage;
+    	for(int i = 0; i < targetList.size(); i++) {
+    		currentTarget = targetList.get(i);
+    		
+    		contours.add(currentTarget.toContour());
+    		currentTarget.drawInfo(inputImage, _OtherTargetOverlay);
+    	} //TODO avoid drawing best target twice, maybe remove from master target list
+    	
+    	Imgproc.drawContours(inputImage, contours, -1, _OtherTargetOverlay, targetOutlineThickness); 
+    	Imgproc.drawContours(inputImage, bestContours, -1, _BestTargetOverlay, targetOutlineThickness);
+    	//TODO figure out what the -1 is for
+    	
+    	drawCrossHair(inputImage);
+    	
+    	return inputImage; //again only for convenience, such as when clone is passed as argument
+    }
+    
+    private Mat drawCrossHair(Mat inputImage) {
+    	return _CrossHair.process(inputImage);
     }
     
     public void setNetworkTable(NetworkTable nt) {
