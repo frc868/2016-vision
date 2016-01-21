@@ -59,7 +59,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -180,18 +179,25 @@ public class FilterToolGuiOpenCv {
 	 */
 	private Mat _ColorRangeImage;
 
+	/** Label to display information about the image. */
 	private JLabel _ImageInfo;
 
+	/** Width of last image displayed. */
 	private int _LastWidth;
 
+	/** Height of last image displayed. */
 	private int _LastHeight;
 
+	/** Number of channels in last image displayed. */
 	private int _LastChannel;
 
+	/** Label for cursor X coordinate (position of mouse in image). */
 	private JLabel _PointerX;
 
+	/** Label for cursor Y coordinate (position of mouse in image). */
 	private JLabel _PointerY;
 
+	/** Where the image is displayed. */
 	private JScrollPane imageScrollPane;
 
 	/**
@@ -200,6 +206,11 @@ public class FilterToolGuiOpenCv {
 	 * the color range tool).
 	 */
 	private Mat _LastColorRangeImage;
+
+	/**
+	 * Reference to last filter applied/set.
+	 */
+	protected MatFilter _LastFilter;
 
 	/**
 	 * Constructs a new instance with a given title - you will override.
@@ -362,6 +373,7 @@ public class FilterToolGuiOpenCv {
 				try {
 					// Process and update image display if image is loaded
 					if (_Image != null) {
+						_LastFilter = processor;
 						setImage(processor.process(_Image.clone()));
 					} else {
 						showMessageDialog(frame,
@@ -465,6 +477,53 @@ public class FilterToolGuiOpenCv {
 			}
 		};
 		return openImageAction;
+	}
+
+	/**
+	 * A helper method to create a Action that can be associated with a GUI
+	 * widget (like a JButton) to is used to apply a filter to all of the
+	 * image files in a directory.
+	 *
+	 * @param label The label to apply to the batch processing command.
+	 * @param filter The specific filter to apply OR null if you want to apply the
+	 * last filter used.
+	 * 
+	 * @return A Action object you can then associate with a GUI control (like a
+	 *         JButton).
+	 */
+	protected Action createBatchProcessAction(String label, MatFilter filter) {
+
+		// Action performed when "Open Image" button is pressed
+		final Action batchAction = new AbstractAction(label) {
+			private static final long serialVersionUID = 1L;
+			
+			private MatFilter myFilter = filter;
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+				try {
+					JFileChooser chooser = new JFileChooser();
+					// Ask user for the location of the image file
+					if (lastFile != null) {
+						chooser.setSelectedFile(lastFile);
+					}
+					chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+					// If user picks directory, process all images in directory
+					if (chooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
+						File dir = chooser.getSelectedFile();
+						lastFile = dir;
+						MatFilter filter = (myFilter != null) ? myFilter : _LastFilter;
+						FilterView.showDirectory(dir, filter);
+					}
+
+				} finally {
+					frame.setCursor(Cursor.getDefaultCursor());
+				}
+			}
+		};
+		return batchAction;
 	}
 
 	/**
@@ -774,6 +833,7 @@ public class FilterToolGuiOpenCv {
 		String fileMenu = "File";
 		addMenuItem(fileMenu, new JMenuItem(createOpenImageAction()));
 		addMenuItem(fileMenu, new JMenuItem(createGrabImageAction()));
+		addMenuItem(fileMenu, new JMenuItem(createBatchProcessAction("Batch Last Filter", null)));
 		addMenuItem(fileMenu, new JMenuItem(createRevertImageAction()));
 		addMenuItem(fileMenu, new JMenuItem(createSaveImageAction()));
 		addMenuItem(fileMenu, new JMenuItem(createPreferencesAction()));
