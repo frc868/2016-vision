@@ -140,12 +140,13 @@ public final class VisionFilter2016 implements MatFilter {
         targetsFound = targets.size();
         
         if(targetsFound > 0) {
+        	bestTarget = findBestTarget(targets);
+        	
         	if(networkTable != null) { 
-        		targetAnalysis(targets.get(0)); //TODO pass BEST not FIRST polygon
+        		targetAnalysis(bestTarget); //TODO pass BEST not FIRST polygon
         		networkTable.putNumber("FrameCount", frameCount++); 
         	}
         	
-        	bestTarget = findBestTarget(targets);
         	return drawTargets(srcImage.clone(), targets, bestTarget); //always draw targets if found
         	
          } else { //unnecessary
