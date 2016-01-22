@@ -44,26 +44,30 @@ public final class VisionFilter2016 implements MatFilter {
 	
 	//Configurations
 	
-	private static int[]	colorFilterMin    = {60, 100, 20}; //TODO make all final as well
-	private static int[]	colorFilterMax    = {90, 255, 255};
+	private static int[]	colorFilterMin    = {50, 50, 40}; //TODO make all final as well
+	private static int[]	colorFilterMax    = {100, 255, 255};
 	private static double[] bestTargetColors  = {100, 100, 255};
 	private static double[] otherTargetColors = {255, 100, 100};
 	private static int      targetOutlineThickness   = 1;
 	private static int		blackWhiteThresh  = 40;
-	private static int		dilateFactor      = 3;
-	private static int		erodeFactor       = 5;
+	private static int		dilateFactor      = 0; //3
+	private static int		erodeFactor       = 0; //5
 	
 	private static double	polygonEpsilon    = 5.0; //used for detecting polygons from contours
-	private static double	targetHeightMin   = 10.0; 
-	private static double	targetWidthMin    = 50.0;
-	private static int		targetSidesMin    = 2; //ie at least 3 sides
+	private static int		targetSidesMin    = 4; //ie at least 3 sides
+	private static double   targetRatioMin    = 0.3;
+	private static double   targetRatioMax    = 3.0;
+	private static double   targetAreaMin     = 1000; //areas and sizes are of bounding box
+	private static double   targetAreaMax     = 15000;
 	
 	private static double   targetHeightIdeal = 30;
 	private static double   targetWidthIdeal  = 150;
-	private static double   targetRatioIdeal  = 0.15;
+	private static double   targetSidesIdeal  = 6;
+	private static double   targetRatioIdeal  = 0.85;
 	private static double   targetAreaIdeal   = 7500;
 	
 	private static double	targetTapeWidth   = 24; //inches
+	private static double   targetTowerHeight = 120; //inches
 	private static double	cameraHorizFOV    = 67; //could be wrong
 	private static double	cameraResolutionX = 800;
 
@@ -177,9 +181,11 @@ public final class VisionFilter2016 implements MatFilter {
         for(int i = 0; i < contours.size(); i++) { //for each 'contour' object
         	currentTarget = PolygonCv.fromContour(contours.get(i), polygonEpsilon); //create a polygon
         	        	
-        	if(currentTarget.getHeight() 	> targetHeightMin && 
-        	   currentTarget.getWidth() 	> targetWidthMin  && 
-        	   currentTarget.size() 		> targetSidesMin) {
+        	if(currentTarget.size() 		          > targetSidesMin &&
+        	   currentTarget.getBoundingAspectRatio() > targetRatioMin &&
+        	   currentTarget.getBoundingAspectRatio() < targetRatioMax &&
+        	   currentTarget.getBoundingArea()        > targetAreaMin  &&
+        	   currentTarget.getBoundingArea()        < targetAreaMax) {
         		
         		targets.add(currentTarget); //if within range, add to list of potential targets
         	} //TODO is the array list necessary?
@@ -191,7 +197,7 @@ public final class VisionFilter2016 implements MatFilter {
     private PolygonCv findBestTarget(List<PolygonCv> targetList) {
     	PolygonCv bestTarget = null;
     	PolygonCv currentTarget;
-    	int       bestTargetValue = 0;
+    	double    bestTargetValue = -100000;
     	
     	for(int i = 0; i < targetList.size(); i++) {
     		currentTarget = targetList.get(i);
@@ -204,17 +210,21 @@ public final class VisionFilter2016 implements MatFilter {
     	return bestTarget;
     }
     
-    private int getTargetRating(PolygonCv inputTarget) {
-    	int targetRating = 1000;
+    private double getTargetRating(PolygonCv inputTarget) {
+    	double targetRating = 1000;
     	
-    	targetRating += -(Math.abs(inputTarget.getHeight() - targetHeightIdeal));
-    	targetRating += -(Math.abs(inputTarget.getWidth() - targetWidthIdeal));
+    	targetRating -= Math.abs(inputTarget.getHeight() -  targetHeightIdeal); //TODO remove these?
+    	targetRating -= Math.abs(inputTarget.getWidth() -   targetWidthIdeal);
+    	targetRating -= 100 * Math.abs(inputTarget.size() - targetSidesIdeal);
+    	targetRating -= 1000 * Math.abs(inputTarget.getBoundingAspectRatio() - targetRatioIdeal);
+    	targetRating -= 0.03 * Math.abs(inputTarget.getBoundingArea() - targetAreaIdeal);
     	
     	return targetRating;
     }
     
     private void targetAnalysis(PolygonCv foundTarget) { //tells the robo info about the target
-        double offCenterDegreesX, targetDistance;
+        double offCenterDegreesX, targetDistance, baseDistance, cameraAngleElevation; //elevation in RADIANS
+        double cameraHorizRads = Math.toRadians(cameraHorizFOV);
         float targetWidth 	= foundTarget.getWidth();
         float targetX		= foundTarget.getCenterX();
     	
@@ -222,11 +232,14 @@ public final class VisionFilter2016 implements MatFilter {
     	
     	targetDistance = (targetTapeWidth / 2) / 
     					 	Math.tan(
-    							 Math.toRadians(
-    									 (targetWidth / cameraResolutionX) * (cameraHorizFOV / 2)));
+    								 (targetWidth / cameraResolutionX) * (cameraHorizRads / 2));
+    	
+    	cameraAngleElevation = Math.asin(targetTowerHeight / targetDistance);
+    	
+    	baseDistance = Math.cos(cameraAngleElevation) * targetDistance;
     	
     	networkTable.putNumber("OffCenterDegreesX", offCenterDegreesX);
-    	networkTable.putNumber("DistanceToTarget",  targetDistance);
+    	networkTable.putNumber("DistanceToBase",  baseDistance);
     }
 
     private Mat drawTargets(Mat inputImage, List<PolygonCv> targetList, PolygonCv bestTarget) {

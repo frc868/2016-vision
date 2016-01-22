@@ -1,67 +1,11 @@
-NOTE: This is under the assumption that the sliders are in BGR not RGB!
+***Begin Filter Data as of 1/22/2016***
 
-For "Green_Image.png"
+Files are named Arena_n.png where 'n' is a number
 
-B: 100 - 180
-G: 110 - 180
-R: 000 - 110
+Format: Bmin-bmax, gmin-gmax, rmin-rmax
+Colors could be wrong though
+Done in HSV, but without erode/dilate/blur
 
-For "Green_Far.png"
-
-B: 060 - 130
-G: 090 - 150
-R: 000 - 090
-
-For "Green_very_far.png" <-- This image does not end up purely with the strip
-
-B: 040 - 100
-G: 050 - 100
-R: 020 - 060
-
-FINAL RESULTS (involves absolute minimums) (also accounts for personal adjustments after testing)
-
-B: 060 - 180
-G: 060 - 180
-R: 000 - 110
-
-******These images above are really trash, we should disregard them and collect new ones******
-
-New image data for HSV color range:
-
-For "new_green1"
-
-B: 070 - 090
-G: 110 - 255
-R: 020 - 255
-
-For "new_green2"
-
-B: 070 - 090
-G: 090 - 255
-R: 020 - 255
-
-For "new_green3"
-
-B: 070 - 090
-G: 090 - 255
-R: 025 - 255
-
-For "new_green4"
-
-B: 070 - 090
-G: 100 - 255
-R: 030 - 255
-
-For "all"
-
-B: 070 - 090
-G: 100 - 255
-R: 025 - 255
-
-******Below begins data for Area to Distance measurements for Static Filtered Objects*****
-
-12' : 3100 units
-05' : 7000 units
-
-
-
+1: 20-100, 40-200, 60-100
+2: 50-210, 0-60, 45-90
+3:
