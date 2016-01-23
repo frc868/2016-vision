@@ -27,6 +27,7 @@ package com.techhounds.imgcv.tools;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
 import com.techhounds.imgcv.filters.ColorFilter2016;
+import com.techhounds.imgcv.filters.ProcessFilter2016;
 import com.techhounds.imgcv.filters.VisionFilter2016;
 import com.techhounds.imgcv.LiveViewGui;
 
@@ -66,8 +67,9 @@ public final class VisionTool2016 extends FilterToolGuiOpenCv {
     protected void addControls() { //Adding controls and filters to the side bar.
         super.addControls(); //Adds parent controls
         //adds the button for our 2016 filter (VisionFilter2016.java)
-        addImageProcessingButton("2016 Filter", new VisionFilter2016()); 
-        addImageProcessingButton("Color Only Filter", new ColorFilter2016());
+        addImageProcessingButton("2016 Targeting Filter", new VisionFilter2016()); 
+        addImageProcessingButton("Image Processing Filter", new ProcessFilter2016());
+        addImageProcessingButton("Color Processing Filter", new ColorFilter2016());
     }
 
     /**

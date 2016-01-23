@@ -40,15 +40,50 @@ import org.opencv.imgproc.Imgproc;
  *
  * @author Paul Blankenbaker
  */
-public final class ColorFilter2016 implements MatFilter {
+public final class ProcessFilter2016 implements MatFilter {
+	
+	//Configurations
 	
 	private static int[]	colorFilterMin    = {30, 10, 40}; //TODO make all final as well
 	private static int[]	colorFilterMax    = {95, 200, 120};
+	private static int		blackWhiteThresh  = 40;
+	private static int		dilateFactor      = 3;
+	private static int		erodeFactor       = 5;
+	
+	//Processing Filters
+	
     private final MatFilter		_ColorRange; //Used to filter image to a specific color range.
+    private final Dilate		_Dilate;     //grows remaining parts of the images
+    private final Erode			_Erode;      //shrinks remaining parts of the images
+    private final GrayScale		_GrayScale; //Used to convert image to a gray scale rendering.
+    private final BlackWhite	_BlackWhite; //Used to convert from gray scale to black and white.
 
     //Constructs a new instance by pre-allocating all of our image filtering objects.
-    public ColorFilter2016() { 
+    public ProcessFilter2016() { 
     	_ColorRange = createHsvColorRange();
+    	_Dilate 	= new Dilate(dilateFactor);  
+    	_Erode		= new Erode(erodeFactor); 
+        _GrayScale  = new GrayScale();
+        _BlackWhite = createBlackWhite(); //TODO can we move these to separate filters?
+    }
+    
+    public static MatFilter createDilate() {
+    	return new Dilate(dilateFactor);
+    }
+    
+    public static MatFilter createErode() {
+    	return new Erode(erodeFactor);
+    }
+
+    /**
+     * Helper method to provide a single location that creates the image filter
+     * used to go from a gray scale image to a black and white image.
+     *
+     * @return A image filter that converts a gray scale image to a black and
+     * white image.
+     */
+    public static BlackWhite createBlackWhite() {
+        return new BlackWhite(blackWhiteThresh, 255, false);
     }
     
     public static MatFilter createHsvColorRange() {
@@ -65,11 +100,22 @@ public final class ColorFilter2016 implements MatFilter {
      * is not permitted).
      *
      * @return The original image with overlay information applied (we do a lot
-     * of filtering and try to locate the target).
+     * of filtering and try to locate the 2013 FRC rectangular target regions).
      */
     @Override
     public Mat process(Mat srcImage) {       
-    	return _ColorRange.process(srcImage.clone());
+        return primaryProcessing(srcImage.clone()); //creates new color processed image
+    }
+        
+    private Mat primaryProcessing(Mat inputImage) { //does basic color/erosion processing
+    	_ColorRange.process(inputImage); 
+        _Dilate.process(inputImage); //what if we erode first?
+        _Erode.process(inputImage);
+        _GrayScale.process(inputImage);
+        _BlackWhite.process(inputImage);
+        //blur is done via camera focus, not here
+        
+        return inputImage; //convenience sake, not necessary
     }
 }
 

@@ -27,10 +27,13 @@ package com.techhounds.imgcv.filters;
 
 import com.techhounds.imgcv.PolygonCv;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
+import javafx.scene.shape.Circle;
+
 import java.util.ArrayList;
 import java.util.List;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
@@ -44,14 +47,14 @@ public final class VisionFilter2016 implements MatFilter {
 	
 	//Configurations
 	
-	private static int[]	colorFilterMin    = {50, 50, 40}; //TODO make all final as well
-	private static int[]	colorFilterMax    = {100, 255, 255};
+	private static int[]	colorFilterMin    = {30, 10, 40}; //TODO make all final as well
+	private static int[]	colorFilterMax    = {95, 200, 120};
 	private static double[] bestTargetColors  = {100, 100, 255};
 	private static double[] otherTargetColors = {255, 100, 100};
 	private static int      targetOutlineThickness   = 1;
 	private static int		blackWhiteThresh  = 40;
-	private static int		dilateFactor      = 0; //3
-	private static int		erodeFactor       = 0; //5
+	private static int		dilateFactor      = 3; 
+	private static int		erodeFactor       = 5; 
 	
 	private static double	polygonEpsilon    = 5.0; //used for detecting polygons from contours
 	private static int		targetSidesMin    = 4; //ie at least 3 sides
@@ -136,26 +139,27 @@ public final class VisionFilter2016 implements MatFilter {
     public Mat process(Mat srcImage) {
     	List<PolygonCv> targets = new ArrayList<>();  //list of potential targets in image
         Mat processedImage      = new Mat();
+        Mat outputImage         = srcImage.clone();
         PolygonCv bestTarget;
-        int targetsFound;
         
         processedImage = primaryProcessing(srcImage.clone()); //creates new color processed image
         targets = findTargets(processedImage); //detects targets in new processed image
-        targetsFound = targets.size();
         
-        if(targetsFound > 0) {
+        if(targets.size() > 0) {
         	bestTarget = findBestTarget(targets);
         	
         	if(networkTable != null) { 
-        		targetAnalysis(bestTarget); //TODO pass BEST not FIRST polygon
+        		targetAnalysis(bestTarget); 
         		networkTable.putNumber("FrameCount", frameCount++); 
-        	}
-        	
-        	return drawTargets(srcImage.clone(), targets, bestTarget); //always draw targets if found
-        	
-         } else { //unnecessary
-         	return drawCrossHair(srcImage.clone()); //always draw crosshairs regardless
-         } //don't need to increment frameCount as no target (ie usable data) is detected
+        	}	
+        	drawTargets(outputImage, targets); //always draw targets if found
+        	drawTarget(outputImage, bestTarget);
+        	drawReticle(outputImage, bestTarget);
+        }
+        
+        drawCrossHair(outputImage);
+        
+        return outputImage;
     }
     
     private Mat primaryProcessing(Mat inputImage) { //does basic color/erosion processing
@@ -242,12 +246,9 @@ public final class VisionFilter2016 implements MatFilter {
     	networkTable.putNumber("DistanceToBase",  baseDistance);
     }
 
-    private Mat drawTargets(Mat inputImage, List<PolygonCv> targetList, PolygonCv bestTarget) {
+    private Mat drawTargets(Mat inputImage, List<PolygonCv> targetList) {
     	List<MatOfPoint> contours = new ArrayList<>();
-    	List<MatOfPoint> bestContours = new ArrayList<>();
     	PolygonCv        currentTarget; 
-    	
-    	bestContours.add(bestTarget.toContour());
     	
     	for(int i = 0; i < targetList.size(); i++) {
     		currentTarget = targetList.get(i);
@@ -257,12 +258,25 @@ public final class VisionFilter2016 implements MatFilter {
     	} //TODO avoid drawing best target twice, maybe remove from master target list
     	
     	Imgproc.drawContours(inputImage, contours, -1, _OtherTargetOverlay, targetOutlineThickness); 
-    	Imgproc.drawContours(inputImage, bestContours, -1, _BestTargetOverlay, targetOutlineThickness);
     	//TODO figure out what the -1 is for
     	
-    	drawCrossHair(inputImage);
-    	
     	return inputImage; //again only for convenience, such as when clone is passed as argument
+    }
+    
+    private Mat drawTarget(Mat inputImage, PolygonCv bestTarget) {
+    	List<MatOfPoint> bestContours = new ArrayList<>();
+    	
+    	bestContours.add(bestTarget.toContour());
+    	
+    	Imgproc.drawContours(inputImage, bestContours, -1, _BestTargetOverlay, targetOutlineThickness);
+
+    	return inputImage;
+    }
+    
+    private Mat drawReticle(Mat inputImage, PolygonCv bestTarget){
+    	
+    	
+    	return inputImage;
     }
     
     private Mat drawCrossHair(Mat inputImage) {
