@@ -8,7 +8,7 @@ import org.opencv.highgui.VideoCapture;
  * Helper class that runs a background thread to fetch images as quickly as
  * possible from the video capture device.
  * 
- * @author pkb
+ * @author Paul Blankenbaker
  */
 public class FrameGrabber {
 
@@ -60,9 +60,22 @@ public class FrameGrabber {
 	 * 
 	 * @return Frame count since start.
 	 */
-	long getFrameCount() {
+	public long getFrameCount() {
 		CaptureThread ct = _CaptureThread;
 		return (ct == null) ? null : ct._FrameCount;
+	}
+	
+	/**
+	 * The frame rate retrieved from the source computed since started.
+	 * 
+	 * @return The frames per second we are getting from the source.
+	 */
+	public int getFps() {
+		CaptureThread ct = _CaptureThread;
+		if (ct == null) {
+			return 0;
+		}
+		return ct.getFps();
 	}
 
 	/**
@@ -182,6 +195,7 @@ public class FrameGrabber {
 	 * @author pkb
 	 */
 	private class CaptureThread extends Thread {
+		private static final long MIN_FRAMES_FOR_FPS = 150;
 		private int _DevId;
 		private String _Url;
 		private int _Width;
@@ -189,6 +203,8 @@ public class FrameGrabber {
 		private Mat _LastImage;
 		private long _FrameCount;
 		private boolean _Continue;
+		private long _FirstFrameTime;
+		private long _LastFrameTime;
 
 		CaptureThread(int devId, String url, int width, int height) {
 			_DevId = devId;
@@ -198,6 +214,22 @@ public class FrameGrabber {
 			_FrameCount = 0;
 			_LastImage = null;
 			_Continue = true;
+		}
+
+		/**
+		 * Returns the average FPS after we have at least two frames.
+		 * 
+		 * @return Frames Per Second (FPS).
+		 */
+		public int getFps() {
+			int fps = 0;
+			synchronized (this) {
+				long dur = _LastFrameTime - _FirstFrameTime;
+				if ((dur > 0) && (_FrameCount >= MIN_FRAMES_FOR_FPS)) {
+					fps = (int) ((_FrameCount - MIN_FRAMES_FOR_FPS + 1) * 1000 / dur);
+				}
+			}
+			return fps;
 		}
 
 		@Override
@@ -213,12 +245,23 @@ public class FrameGrabber {
 					synchronized (this) {
 						if (vc.retrieve(img)) {
 							_LastImage = img;
+							_LastFrameTime = System.currentTimeMillis();
+							if (_FrameCount == MIN_FRAMES_FOR_FPS) {
+								_FirstFrameTime = _LastFrameTime;
+							}
 							_FrameCount++;
 						}
 					}
+					/*
+					if (_FrameCount % 100 == 0) {
+						System.err.println("FPS from camera: " + getFps());
+					}
+					*/
 				}
 			}
 			System.err.println("Video Capture thread is stopping");
+			_FrameCount = 0;
+			_LastFrameTime = _FirstFrameTime = 0;
 			vc.release();
 		}
 

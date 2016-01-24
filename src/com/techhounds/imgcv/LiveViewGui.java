@@ -25,6 +25,7 @@
  */
 package com.techhounds.imgcv;
 
+import com.techhounds.imgcv.filters.ColorSpace;
 import com.techhounds.imgcv.filters.DoNothingFilter;
 import com.techhounds.imgcv.filters.GrayScale;
 import com.techhounds.imgcv.filters.MatFilter;
@@ -34,17 +35,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
 import java.io.File;
 
+import javax.swing.border.BevelBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.highgui.Highgui;
+import org.opencv.imgproc.Imgproc;
 
 /**
  * A base class that allows you to quickly build a test tool to exercise a
@@ -106,7 +107,7 @@ public class LiveViewGui {
 	/**
 	 * Main frame of the tool.
 	 */
-	private JFrame frame;
+	private JFrame _JFrame;
 
 	/**
 	 * Title to apply to the main frame.
@@ -116,7 +117,7 @@ public class LiveViewGui {
 	/**
 	 * Used to display the image.
 	 */
-	private final JLabel imageView = new JLabel();
+	private final JMat _ImageViewer = new JMat();
 
 	/**
 	 * Used for top menu bar.
@@ -137,13 +138,23 @@ public class LiveViewGui {
 	 * Timer used for live video feed handling.
 	 */
 	private final Timer _CaptureTimer;
-	
+
 	/**
 	 * The filter to apply.
 	 */
 	private MatFilter _Filter;
 
-	private JScrollPane imageScrollPane;
+	/** Displays the FPS of images coming in from the source. */
+	private JLabel _CameraFps;
+
+	/** Displays the estimated maximum FPS of the filter code. */
+	private JLabel _FilterFps;
+
+	/** Number of images processed. */
+	protected int _FilteredCount;
+
+	/** Total number of nanoseconds spent processing images. */
+	protected long _FilteredDur;
 
 	/**
 	 * Constructs a new instance with a given title - you will override.
@@ -161,25 +172,58 @@ public class LiveViewGui {
 
 		// A do nothing filter
 		_Filter = new DoNothingFilter();
-		
+
 		_FrameGrabber = new FrameGrabber();
 
 		_CaptureTimer = new Timer(10, new ActionListener() {
 			long lastFrame = 0;
-		
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				long frame = _FrameGrabber.getFrameCount();
 				if (frame != lastFrame) {
-					frame = lastFrame;
 					Mat img = _FrameGrabber.getLastImage();
 					if (img != null) {
+						_Image = img;
 						MatFilter filter = _Filter;
-						setImage(filter.process(img));
+
+						long start = System.nanoTime();
+						Mat results = filter.process(img);
+						long end = System.nanoTime();
+
+						_FilteredCount++;
+						_FilteredDur += (end - start);
+						if (_FilteredCount % 20 == 0) {
+							_FilterFps.setText("" + getFilterFps());
+						}
+
+						_ImageViewer.setMat(results);
+					}
+					if (lastFrame == 0) {
+						_ImageViewer.setSize(_ImageViewer.getPreferredSize());
+						_JFrame.pack();
+					}
+					lastFrame = frame;
+					if (frame % 10 == 0) {
+						_CameraFps.setText(Integer.toString(_FrameGrabber
+								.getFps()));
 					}
 				}
 			}
 		});
+	}
+
+	/**
+	 * Returns the estimated FPS rate that the filter is capable of on this
+	 * system (maximum images per second you could process).
+	 * 
+	 * @return Estimated maximum rate of your image filtering routine.
+	 */
+	public int getFilterFps() {
+		if (_FilteredDur > 0) {
+			return (int) (_FilteredCount * 1000000000L / _FilteredDur);
+		}
+		return 0;
 	}
 
 	/**
@@ -189,39 +233,9 @@ public class LiveViewGui {
 	 *            The filter to apply - must not be null.
 	 */
 	public void setFilter(MatFilter filter) {
+		_FilteredCount = 0;
+		_FilteredDur = 0;
 		_Filter = filter;
-	}
-
-	/**
-	 * Get a reference to the current image.
-	 *
-	 * @return A IplImage object (or null if not set).
-	 */
-	public Mat getImage() {
-		return _Image;
-	}
-
-	/**
-	 * Set the image that tool should display and work on.
-	 *
-	 * @param img
-	 *            The IplImage you want to display/use in the tool.
-	 */
-	public void setImage(Mat img) {
-		_Image = img;
-		BufferedImage iconImg = null;
-		if (img != null) {
-			if (img.type() == CvType.CV_8UC1) {
-				iconImg = Conversion.cvGrayToBufferedImage(img);
-			} else if (img.type() == CvType.CV_8UC3) {
-				iconImg = Conversion.cvRgbToBufferedImage(img);
-			}
-		}
-		if (iconImg != null) {
-			imageView.setIcon(new ImageIcon(iconImg));
-		} else {
-			imageView.setIcon(null);
-		}
 	}
 
 	/**
@@ -246,7 +260,7 @@ public class LiveViewGui {
 		};
 		return action;
 	}
-	
+
 	/**
 	 * Creates a action to "fit" the frame based on the current image size.
 	 * 
@@ -258,15 +272,8 @@ public class LiveViewGui {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (_Image != null) {
-					// Don't like the "magic guess" at the size adjustment to
-					// prevent scroll bars from appearing
-					int width = _Image.cols() + 3;
-					int height = _Image.rows() + 3;
-					Dimension size = new Dimension(width, height);
-					imageScrollPane.setPreferredSize(size);
-					frame.pack();
-				}
+				_ImageViewer.setSize(_ImageViewer.getPreferredSize());
+				_JFrame.pack();
 			}
 
 		};
@@ -303,26 +310,27 @@ public class LiveViewGui {
 				stopVideoFeed();
 			}
 		}));
-		
-        // Action performed when "Open Image" button is pressed
-        addMenuItem(fileMenu, new JMenuItem(new AbstractAction("Save Image") {
+
+		// Action performed when "Open Image" button is pressed
+		addMenuItem(fileMenu, new JMenuItem(new AbstractAction("Save Image") {
 			private static final long serialVersionUID = 1L;
 
 			@Override
-            public void actionPerformed(final ActionEvent e) {
-                frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                try {
-                    saveImage();
-                } finally {
-                    frame.setCursor(Cursor.getDefaultCursor());
-                }
-            }
-        }));
-        
+			public void actionPerformed(final ActionEvent e) {
+				_JFrame.setCursor(Cursor
+						.getPredefinedCursor(Cursor.WAIT_CURSOR));
+				try {
+					saveImage();
+				} finally {
+					_JFrame.setCursor(Cursor.getDefaultCursor());
+				}
+			}
+		}));
+
 		addMenuItem(fileMenu, new JMenuItem(createPreferencesAction()));
-        
-        addMenuItem(fileMenu, new JMenuItem(createFitAction()));
-		
+
+		addMenuItem(fileMenu, new JMenuItem(createFitAction()));
+
 		addMenuItem(fileMenu, new JMenuItem(new AbstractAction("Exit") {
 			private static final long serialVersionUID = 1L;
 
@@ -336,13 +344,16 @@ public class LiveViewGui {
 
 		addFilter("Raw Feed", new DoNothingFilter());
 		addFilter("Gray Scale", new GrayScale());
+		addFilter("HSV", new ColorSpace(Imgproc.COLOR_BGR2HSV));
 	}
 
 	/**
 	 * Method used to add filters to the set of choices in the live view window.
 	 * 
-	 * @param label	Name to associate with your filter.
-	 * @param filter The filter to apply when selected.
+	 * @param label
+	 *            Name to associate with your filter.
+	 * @param filter
+	 *            The filter to apply when selected.
 	 */
 	protected void addFilter(String label, MatFilter filter) {
 		addMenuItem("Filter", createMenuFilterItem(label, filter));
@@ -351,13 +362,15 @@ public class LiveViewGui {
 	/**
 	 * Creates a menu item which changes the filter when selected.
 	 * 
-	 * @param label The label for the filter.
-	 * @param filter The image filter to apply.
+	 * @param label
+	 *            The label for the filter.
+	 * @param filter
+	 *            The image filter to apply.
 	 * @return A new menu item that can be inserted into a menu.
 	 */
 	private JMenuItem createMenuFilterItem(String label, final MatFilter filter) {
 		JMenuItem mi = new JMenuItem(label);
-		mi.addActionListener(new ActionListener() {			
+		mi.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				setFilter(filter);
@@ -384,37 +397,38 @@ public class LiveViewGui {
 		subMenu.add(item);
 	}
 
-    /**
-     * Prompts user to select a file to save the image to and saves it out.
-     *
-     * <p>
-     * The user controls the format of the output file based on the file
-     * extension specified (.png, .jpg, etc) - as supported by the opencv
-     * library. NOTE: If there is not a image currently loaded, this method does
-     * nothing (just returns).</p>
-     */
-    private void saveImage() {
-        if (_Image == null) {
-            return;
-        }
-        JFileChooser fileChooser = new JFileChooser();
-        
-        String fname = _Config.getLastSavedFile(null);
+	/**
+	 * Prompts user to select a file to save the image to and saves it out.
+	 *
+	 * <p>
+	 * The user controls the format of the output file based on the file
+	 * extension specified (.png, .jpg, etc) - as supported by the opencv
+	 * library. NOTE: If there is not a image currently loaded, this method does
+	 * nothing (just returns).
+	 * </p>
+	 */
+	private void saveImage() {
+		if (_Image == null) {
+			return;
+		}
+		JFileChooser fileChooser = new JFileChooser();
 
-        // Ask user for the location of the image file
-        if (fname != null) {
-            fileChooser.setSelectedFile(new File(fname));
-        }
-        if (fileChooser.showSaveDialog(frame) != JFileChooser.APPROVE_OPTION) {
-            return;
-        }
+		String fname = _Config.getLastSavedFile(null);
 
-        // Load the image
-        File imgFile = fileChooser.getSelectedFile();
-        String path = imgFile.getAbsolutePath();
-        Highgui.imwrite(path, _Image);
-        _Config.setLastSavedFile(path);
-    }
+		// Ask user for the location of the image file
+		if (fname != null) {
+			fileChooser.setSelectedFile(new File(fname));
+		}
+		if (fileChooser.showSaveDialog(_JFrame) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+
+		// Load the image
+		File imgFile = fileChooser.getSelectedFile();
+		String path = imgFile.getAbsolutePath();
+		Highgui.imwrite(path, _Image);
+		_Config.setLastSavedFile(path);
+	}
 
 	/**
 	 * Finds sub-menu with specified name or creates it.
@@ -486,22 +500,57 @@ public class LiveViewGui {
 	 * @return Reference to the main JFrame associated with the application.
 	 */
 	public JFrame getMainFrame() {
-		if (frame == null) {
-			frame = new JFrame(title);
+		if (_JFrame == null) {
+			_JFrame = new JFrame(title);
 
 			// Layout frame contents
 			// Menubar at top (if present)
 			addMenuItems();
 			if (_Menu != null) {
-				frame.add(_Menu, BorderLayout.NORTH);
+				_JFrame.add(_Menu, BorderLayout.NORTH);
 			}
 
+			_JFrame.add(createStatusPanel(), BorderLayout.SOUTH);
+
 			// Image display in the center
-			imageScrollPane = new JScrollPane(imageView);
-			imageScrollPane.setPreferredSize(new Dimension(660, 500));
-			frame.add(imageScrollPane, BorderLayout.CENTER);
+			_JFrame.add(_ImageViewer, BorderLayout.CENTER);
 		}
-		return frame;
+		return _JFrame;
+	}
+
+	/**
+	 * Builds the status bar for bottom of window that is used to show FPS
+	 * values.
+	 * 
+	 * @return The newly created status bar widget.
+	 */
+	private Component createStatusPanel() {
+		JPanel statusPanel = new JPanel(new BorderLayout(4, 0));
+		statusPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
+		statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.X_AXIS));
+
+		JLabel fpsLabel = new JLabel("Camera FPS");
+
+		_CameraFps = new JLabel("-");
+		//_CameraFps.setHorizontalAlignment(SwingConstants.RIGHT);
+		//_CameraFps.setPreferredSize(new Dimension(24, 8));
+
+		JLabel fpsFilterLabel = new JLabel("Filter FPS");
+
+		_FilterFps = new JLabel("-");
+		//_FilterFps.setHorizontalAlignment(SwingConstants.RIGHT);
+		//_FilterFps.setPreferredSize(new Dimension(24, 8));
+
+		statusPanel.add(fpsLabel);
+		statusPanel.add(Box.createHorizontalStrut(10));
+		statusPanel.add(_CameraFps);
+		statusPanel.add(Box.createHorizontalStrut(30));
+		statusPanel.add(fpsFilterLabel);
+		statusPanel.add(Box.createHorizontalStrut(10));
+		statusPanel.add(_FilterFps);
+		statusPanel.add(Box.createHorizontalGlue());
+
+		return statusPanel;
 	}
 
 	/**
@@ -598,18 +647,21 @@ public class LiveViewGui {
 	 * @return A new JPanel that can be added to a GUI dialog box.
 	 */
 	protected JPanel createGrabPreferences() {
-        JPanel options = new JPanel();
-        final JTextField devId = new JTextField(Integer.toString(_DeviceId));
-        final JTextField url = new JTextField(_Url);
-        final JTextField frameWidth = new JTextField(Integer.toString(_FrameWidth));
-        final JTextField frameHeight = new JTextField(Integer.toString(_FrameHeight));
+		JPanel options = new JPanel();
+		final JTextField devId = new JTextField(Integer.toString(_DeviceId));
+		final JTextField url = new JTextField(_Url);
+		final JTextField frameWidth = new JTextField(
+				Integer.toString(_FrameWidth));
+		final JTextField frameHeight = new JTextField(
+				Integer.toString(_FrameHeight));
 
-        class UseUrlCheckBox extends JCheckBox {
+		class UseUrlCheckBox extends JCheckBox {
 			private static final long serialVersionUID = 1L;
 
 			UseUrlCheckBox() {
 				super("Use URL to get images", _UseUrl);
 			}
+
 			public void updateWhatIsEnabled() {
 				boolean useDev = !_UseUrl;
 				url.setEnabled(_UseUrl);
@@ -617,157 +669,163 @@ public class LiveViewGui {
 				frameWidth.setEnabled(useDev);
 				frameHeight.setEnabled(useDev);
 			}
-		};
+		}
+		;
 		final UseUrlCheckBox useUrl = new UseUrlCheckBox();
-        
-        options.setLayout(new BoxLayout(options, BoxLayout.Y_AXIS));
-        options.add(new JLabel("URL of video feed:"));
 
-        
-        useUrl.setToolTipText("Select this option to retrieve video stream from remote URL instead of your own web cam");
-        useUrl.addChangeListener(new ChangeListener() {
-			
+		options.setLayout(new BoxLayout(options, BoxLayout.Y_AXIS));
+		options.add(new JLabel("URL of video feed:"));
+
+		useUrl.setToolTipText("Select this option to retrieve video stream from remote URL instead of your own web cam");
+		useUrl.addChangeListener(new ChangeListener() {
+
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				_UseUrl = useUrl.isSelected();
-        		_Config.setVideoFeedFromUrl(_UseUrl);
-        		useUrl.updateWhatIsEnabled();
-			}			
-		});
-        
-        url.setToolTipText("Enter the URL of your robot's camera (like: http://10.8.68.11/jpg/1/image.jpg)");
-        url.getDocument().addDocumentListener(new DocumentListener() {
-
-            private void updateValue(DocumentEvent e) {
-                _Url = url.getText();
-                _Config.setVideoUrl(_Url);
-            }
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                updateValue(e);
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                updateValue(e);
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                updateValue(e);
-            }
-        });
-
-        devId.setToolTipText("Enter the video device number of the web cam on your laptop (typically 0)");
-        devId.getDocument().addDocumentListener(new DocumentListener() {
-
-            private void updateValue(DocumentEvent e) {
-            	try {
-            		_DeviceId = Integer.parseInt(devId.getText());
-            		_Config.setDeviceId(_DeviceId);
-            	} catch (NumberFormatException nfe) {
-            		
-            	}
-            }
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                updateValue(e);
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                updateValue(e);
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                updateValue(e);
-            }
-        });
-
-        frameWidth.setToolTipText("Specify the width of the local video feed or leave at 0 for default");
-        frameWidth.getDocument().addDocumentListener(new DocumentListener() {
-
-            private void updateValue(DocumentEvent e) {
-            	try {
-            		_FrameWidth = Integer.parseInt(frameWidth.getText());
-            		_Config.setFrameWidth(_FrameWidth);
-            	} catch (NumberFormatException nfe) {
-            		
-            	}
-            }
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                updateValue(e);
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                updateValue(e);
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                updateValue(e);
-            }
-        });
-
-        frameHeight.setToolTipText("Specify the Height of the local video feed or leave at 0 for default");
-        frameHeight.getDocument().addDocumentListener(new DocumentListener() {
-
-            private void updateValue(DocumentEvent e) {
-            	try {
-            		_FrameHeight = Integer.parseInt(frameHeight.getText());
-            		_Config.setFrameHeight(_FrameHeight);
-            	} catch (NumberFormatException nfe) {
-            		
-            	}
-            }
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                updateValue(e);
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                updateValue(e);
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                updateValue(e);
-            }
-        });
-        
-        useUrl.setToolTipText("Select this option to retrieve video stream from remote URL instead of your own web cam");
-        useUrl.addChangeListener(new ChangeListener() {
-			
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				_UseUrl = useUrl.isSelected();
-        		_Config.setVideoFeedFromUrl(_UseUrl);
+				_Config.setVideoFeedFromUrl(_UseUrl);
+				useUrl.updateWhatIsEnabled();
 			}
 		});
-		
-        options.add(useUrl);
-        options.add(new JLabel("Device ID"));
-        options.add(devId);
-        options.add(new JLabel("Desired Video Width"));
-        options.add(frameWidth);
-        options.add(new JLabel("Desired Video Height"));
-        options.add(frameHeight);
-        options.add(new JLabel("URL of Robot Video Feed"));
-        options.add(url);
-        
-        useUrl.updateWhatIsEnabled();
 
-        return options;
-    }
+		url.setToolTipText("Enter the URL of your robot's camera (like: http://10.8.68.11/jpg/1/image.jpg)");
+		url.getDocument().addDocumentListener(new DocumentListener() {
 
+			private void updateValue(DocumentEvent e) {
+				_Url = url.getText();
+				_Config.setVideoUrl(_Url);
+			}
+
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				updateValue(e);
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				updateValue(e);
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				updateValue(e);
+			}
+		});
+
+		devId.setToolTipText("Enter the video device number of the web cam on your laptop (typically 0)");
+		devId.getDocument().addDocumentListener(new DocumentListener() {
+
+			private void updateValue(DocumentEvent e) {
+				try {
+					_DeviceId = Integer.parseInt(devId.getText());
+					_Config.setDeviceId(_DeviceId);
+				} catch (NumberFormatException nfe) {
+
+				}
+			}
+
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				updateValue(e);
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				updateValue(e);
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				updateValue(e);
+			}
+		});
+
+		frameWidth
+				.setToolTipText("Specify the width of the local video feed or leave at 0 for default");
+		frameWidth.getDocument().addDocumentListener(new DocumentListener() {
+
+			private void updateValue(DocumentEvent e) {
+				try {
+					_FrameWidth = Integer.parseInt(frameWidth.getText());
+					_Config.setFrameWidth(_FrameWidth);
+				} catch (NumberFormatException nfe) {
+
+				}
+			}
+
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				updateValue(e);
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				updateValue(e);
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				updateValue(e);
+			}
+		});
+
+		frameHeight
+				.setToolTipText("Specify the Height of the local video feed or leave at 0 for default");
+		frameHeight.getDocument().addDocumentListener(new DocumentListener() {
+
+			private void updateValue(DocumentEvent e) {
+				try {
+					_FrameHeight = Integer.parseInt(frameHeight.getText());
+					_Config.setFrameHeight(_FrameHeight);
+				} catch (NumberFormatException nfe) {
+
+				}
+			}
+
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				updateValue(e);
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				updateValue(e);
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				updateValue(e);
+			}
+		});
+
+		useUrl.setToolTipText("Select this option to retrieve video stream from remote URL instead of your own web cam");
+		useUrl.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				_UseUrl = useUrl.isSelected();
+				_Config.setVideoFeedFromUrl(_UseUrl);
+			}
+		});
+
+		options.add(useUrl);
+		options.add(new JLabel("Device ID"));
+		options.add(devId);
+		options.add(new JLabel("Desired Video Width"));
+		options.add(frameWidth);
+		options.add(new JLabel("Desired Video Height"));
+		options.add(frameHeight);
+		options.add(new JLabel("URL of Robot Video Feed"));
+		options.add(url);
+
+		useUrl.updateWhatIsEnabled();
+
+		return options;
+	}
+
+	/**
+	 * Starts the background thread and timer that read and procees images off
+	 * the video stream.
+	 */
 	public void startVideoFeed() {
 		stopVideoFeed();
 		// _CaptureDev = new VideoCapture(0);
@@ -782,6 +840,10 @@ public class LiveViewGui {
 		}
 	}
 
+	/**
+	 * Stops the background thread and timer used to read and process images off
+	 * the video stream.
+	 */
 	public void stopVideoFeed() {
 		_FrameGrabber.stop();
 		_CaptureTimer.stop();
