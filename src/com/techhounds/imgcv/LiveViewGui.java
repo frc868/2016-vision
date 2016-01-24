@@ -26,9 +26,11 @@
 package com.techhounds.imgcv;
 
 import com.techhounds.imgcv.filters.ColorSpace;
+import com.techhounds.imgcv.filters.CrossHair;
 import com.techhounds.imgcv.filters.DoNothingFilter;
 import com.techhounds.imgcv.filters.GrayScale;
 import com.techhounds.imgcv.filters.MatFilter;
+import com.techhounds.imgcv.filters.Sequence;
 
 import javax.swing.*;
 
@@ -45,7 +47,6 @@ import javax.swing.event.DocumentListener;
 
 import org.opencv.core.Mat;
 import org.opencv.highgui.Highgui;
-import org.opencv.imgproc.Imgproc;
 
 /**
  * A base class that allows you to quickly build a test tool to exercise a
@@ -344,7 +345,8 @@ public class LiveViewGui {
 
 		addFilter("Raw Feed", new DoNothingFilter());
 		addFilter("Gray Scale", new GrayScale());
-		addFilter("HSV", new ColorSpace(Imgproc.COLOR_BGR2HSV));
+		addFilter("HSV", ColorSpace.createBGRtoHSV());
+		addFilter("Cross Hair", new CrossHair());
 	}
 
 	/**
@@ -357,6 +359,19 @@ public class LiveViewGui {
 	 */
 	protected void addFilter(String label, MatFilter filter) {
 		addMenuItem("Filter", createMenuFilterItem(label, filter));
+	}
+	
+	/**
+	 * Adds a new top level menu item with a set of filter representing each stage of a sequence.
+	 * 
+	 * @param label Label for menu item to add to menu bar.
+	 * @param seqFilter A {@link Sequence} filter with at least one stage added.
+	 */
+	protected void addSequence(String label, Sequence seqFilter) {
+		int n = seqFilter.steps();
+		for (int i = 0; i <= n; i++) {
+			addMenuItem(label, createMenuFilterItem("Stage " + i, seqFilter.createStepFilter(i)));
+		}
 	}
 
 	/**
