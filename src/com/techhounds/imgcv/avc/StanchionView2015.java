@@ -23,13 +23,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.tools;
+package com.techhounds.imgcv.avc;
 
 import java.awt.HeadlessException;
 
 import org.opencv.core.Mat;
+
 import com.techhounds.imgcv.LiveViewGui;
-import com.techhounds.imgcv.filters.FindStanchion2015;
 import com.techhounds.imgcv.filters.MatFilter;
 
 /**
