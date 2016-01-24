@@ -6,8 +6,10 @@ public abstract class Filter2016 implements MatFilter {
 
 	//CONFIGS
 	
-	private static int[]	colorFilterMin    = {30, 10, 40}; //TODO make all final as well
-	private static int[]	colorFilterMax    = {95, 200, 120};
+	//private static int[]	colorFilterMin    = {30, 10, 40}; //TODO make all final as well
+	//private static int[]	colorFilterMax    = {95, 200, 120};
+	private static int[]	colorFilterMin    = {50, 75, 70}; 
+	private static int[]	colorFilterMax    = {115, 255, 210};
 	private static int		blackWhiteThresh  = 40;
 	private static int		dilateFactor      = 3; 
 	private static int		erodeFactor       = 5; 

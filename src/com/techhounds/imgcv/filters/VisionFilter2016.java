@@ -47,10 +47,6 @@ public final class VisionFilter2016 extends Filter2016 {
 	
 	//Configurations
 	
-	//private static int[]	colorFilterMin    = {30, 10, 40}; //TODO make all final as well
-	//private static int[]	colorFilterMax    = {95, 200, 120};
-	private static int[]	colorFilterMin    = {50, 75, 70}; //TODO make all final as well
-	private static int[]	colorFilterMax    = {115, 255, 210};
 	private static double[] bestTargetColors  = {100, 100, 255};
 	private static double[] otherTargetColors = {255, 100, 100};
 	private static int      targetOutlineThickness   = 1;
