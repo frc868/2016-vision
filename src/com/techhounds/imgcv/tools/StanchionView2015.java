@@ -28,13 +28,9 @@ package com.techhounds.imgcv.tools;
 import java.awt.HeadlessException;
 
 import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
-
 import com.techhounds.imgcv.LiveViewGui;
-import com.techhounds.imgcv.filters.ColorSpace;
 import com.techhounds.imgcv.filters.FindStanchion2015;
 import com.techhounds.imgcv.filters.MatFilter;
-import com.techhounds.imgcv.filters.Sequence;
 
 /**
  * A simple example of leveraging the {@link LiveViewGui} class to quickly test
@@ -78,20 +74,13 @@ public final class StanchionView2015 extends LiveViewGui {
 	protected void addMenuItems() {
 		super.addMenuItems();
 		
-		Sequence yellow = new Sequence();
-		yellow.addFilter(new ColorSpace(Imgproc.COLOR_BGR2HSV));
-		yellow.addFilter(FindStanchion2015.createYellowColorRange());
-		addFilter("HSV Yellow", yellow);
-		
-		Sequence red = new Sequence();
-		red.addFilter(new ColorSpace(Imgproc.COLOR_BGR2HSV));
-		red.addFilter(FindStanchion2015.createRedColorRange());
-		addFilter("HSV Red", red);
-		
 		addFilter("Find Yellow", new FindStanchion2015(false));
 		addFilter("Find Red", new FindStanchion2015(true));
 		
 		addFilter("Find Yellow or Red", new FindYellowOrRed());
+		
+		addSequence("Yellow", FindStanchion2015.createSteps(false, true));
+		addSequence("Red", FindStanchion2015.createSteps(true, true));
 	}
 
     /**

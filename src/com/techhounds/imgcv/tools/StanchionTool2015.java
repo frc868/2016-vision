@@ -103,10 +103,13 @@ public final class StanchionTool2015 extends FilterToolGuiOpenCv {
         addMenuItem(label, createImageProcessingMenuItem("2015 Yel Filt", _YelRange));
         addMenuItem(label, createImageProcessingMenuItem("2015 Red Filt", _RedRange));
         addMenuItem(label, createImageProcessingMenuItem("B&W Tweaked", FindStanchion2015.createBlackWhite()));
-        addMenuItem(label, createImageProcessingMenuItem("2015 Yel", new FindStanchion2015(false)));
-        addMenuItem(label, createImageProcessingMenuItem("2015 Red", new FindStanchion2015(true)));
+        addMenuItem(label, createImageProcessingMenuItem("2015 Yel", new FindStanchion2015(false), true));
+        addMenuItem(label, createImageProcessingMenuItem("2015 Red", new FindStanchion2015(true), true));
         
         addMenuItem("Grab 10", new JMenuItem(grab10()));
+        
+		addSequence("Yellow", FindStanchion2015.createSteps(false, true));
+		addSequence("Red", FindStanchion2015.createSteps(true, true));
     }
 
     /**
