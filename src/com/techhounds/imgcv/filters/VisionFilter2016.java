@@ -51,8 +51,8 @@ public final class VisionFilter2016 extends Filter2016 {
 	private static double[] otherTargetColors = {255, 100, 100};
 	private static int      targetOutlineThickness   = 1;
 
-	private static double	polygonEpsilon    = 5.0; //used for detecting polygons from contours
-	private static int		targetSidesMin    = 4; //ie at least 3 sides
+	private static double   polygonEpsilon    = 5.0; //used for detecting polygons from contours
+	private static int      targetSidesMin    = 4; //ie at least 3 sides
 	private static double   targetRatioMin    = 0.3;
 	private static double   targetRatioMax    = 3.0;
 	private static double   targetAreaMin     = 1000; //areas and sizes are of bounding box
@@ -64,34 +64,35 @@ public final class VisionFilter2016 extends Filter2016 {
 	private static double   targetRatioIdeal  = 0.85;
 	private static double   targetAreaIdeal   = 7500;
 	
-	private static double	targetTapeWidth   = 24; //inches
+	private static double   targetTapeWidth   = 24; //inches
 	private static double   targetTowerHeight = 120; //inches
-	private static double	cameraHorizFOV    = 67; //could be wrong
-	private static double	cameraResolutionX = 800;
+	private static double   cameraHorizFOV    = 67; //could be wrong
+	private static double   cameraResolutionX = 800;
 
-	private NetworkTable	networkTable;
-	private double          frameCount        = 0;
+	private        double   frameCount        = 0;
+	private  NetworkTable   networkTable;
+	
 	
 	//Processing Filters
 	
-    private final MatFilter		_ColorRange; //Used to filter image to a specific color range.
-    private final Dilate		_Dilate;     //grows remaining parts of the images
-    private final Erode			_Erode;      //shrinks remaining parts of the images
-    private final GrayScale		_GrayScale; //Used to convert image to a gray scale rendering.
-    private final BlackWhite	_BlackWhite; //Used to convert from gray scale to black and white.
-    private final CrossHair     _CrossHair;  //used to draw a crosshair
-    private final Scalar        _BestTargetOverlay;
-    private final Scalar		_OtherTargetOverlay;
+    private final MatFilter   _ColorRange; //Used to filter image to a specific color range.
+    private final Dilate      _Dilate;     //grows remaining parts of the images
+    private final Erode       _Erode;      //shrinks remaining parts of the images
+    private final GrayScale   _GrayScale;  //Used to convert image to a gray scale rendering.
+    private final BlackWhite  _BlackWhite; //Used to convert from gray scale to black and white.
+    private final CrossHair   _CrossHair;  //used to draw a crosshair
+    private final Scalar      _BestTargetOverlay; 
+    private final Scalar      _OtherTargetOverlay;
 
     //Constructs a new instance by pre-allocating all of our image filtering objects.
     public VisionFilter2016() { 
-    	_ColorRange = super.createHsvColorRange();
-    	_Dilate 	= super.createDilate();
-    	_Erode		= super.createErode();
-        _GrayScale  = super.createGrayScale();
-        _BlackWhite = super.createBlackWhite(); 
-        _CrossHair  = new CrossHair();    
-        _BestTargetOverlay = new Scalar(bestTargetColors);
+    	_ColorRange         = super.createHsvColorRange();
+    	_Dilate 	        = super.createDilate();
+    	_Erode		        = super.createErode();
+        _GrayScale          = super.createGrayScale();
+        _BlackWhite         = super.createBlackWhite(); 
+        _CrossHair          = new CrossHair();    
+        _BestTargetOverlay  = new Scalar(bestTargetColors);
         _OtherTargetOverlay = new Scalar(otherTargetColors);
     }
 
@@ -106,23 +107,25 @@ public final class VisionFilter2016 extends Filter2016 {
      */
     @Override
     public Mat process(Mat srcImage) {
-    	List<PolygonCv> targets = new ArrayList<>();  //list of potential targets in image
-        Mat processedImage      = new Mat();
-        Mat outputImage         = srcImage.clone();
-        PolygonCv bestTarget;
+    	List<PolygonCv> targets             = new ArrayList<>();
+    	PolygonCv       bestTarget;
+        Mat             processedImage      = new Mat();
+        Mat             outputImage         = srcImage.clone();
+        
         
         processedImage = primaryProcessing(srcImage.clone()); //creates new color processed image
-        targets = findTargets(processedImage); //detects targets in new processed image
+        targets        = findTargets(processedImage); //detects targets in new processed image
         
         if(targets.size() > 0) {
         	bestTarget = findBestTarget(targets);
         	
         	if(networkTable != null) { 
-        		targetAnalysis(bestTarget); 
+        		targetAnalysis(bestTarget); //no return as it simply writes data to netTables 
         		networkTable.putNumber("FrameCount", frameCount++); 
         	}	
+        	
         	drawTargets(outputImage, targets); //always draw targets if found
-        	drawTarget(outputImage, bestTarget);
+        	drawTarget(outputImage,  bestTarget);
         	drawReticle(outputImage, bestTarget);
         }
         
@@ -133,13 +136,13 @@ public final class VisionFilter2016 extends Filter2016 {
     
     private Mat primaryProcessing(Mat inputImage) { //does basic color/erosion processing
     	_ColorRange.process(inputImage); 
-        _Dilate.process(inputImage); //what if we erode first?
-        _Erode.process(inputImage);
+    	_Erode.process(inputImage);
+        _Dilate.process(inputImage);
         _GrayScale.process(inputImage);
         _BlackWhite.process(inputImage);
         //blur is done via camera focus, not here
         
-        return inputImage; //convenience sake, not necessary
+        return inputImage; //convenience's sake, not necessary
     }
     
     private List<PolygonCv> findTargets(Mat inputImage) { //finds potential targets in an image
@@ -151,40 +154,40 @@ public final class VisionFilter2016 extends Filter2016 {
         Imgproc.findContours(inputImage, contours, hierarchy, //doesn't modify inputImage
         					 Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
         
-        for(int i = 0; i < contours.size(); i++) { //for each 'contour' object
-        	currentTarget = PolygonCv.fromContour(contours.get(i), polygonEpsilon); //create a polygon
+        for(int i = 0; i < contours.size(); i++) {            //for each 'contour' object
+        	currentTarget = PolygonCv.fromContour(
+        			        contours.get(i), polygonEpsilon); //create a polygon
         	        	
-        	if(currentTarget.size() 		          > targetSidesMin &&
-        	   currentTarget.getBoundingAspectRatio() > targetRatioMin &&
-        	   currentTarget.getBoundingAspectRatio() < targetRatioMax &&
+        	if(currentTarget.size() 		          > targetSidesMin && //filters out polygons 
+        	   currentTarget.getBoundingAspectRatio() > targetRatioMin && //that are obviously
+        	   currentTarget.getBoundingAspectRatio() < targetRatioMax && //not the target
         	   currentTarget.getBoundingArea()        > targetAreaMin  &&
         	   currentTarget.getBoundingArea()        < targetAreaMax) {
         		
         		targets.add(currentTarget); //if within range, add to list of potential targets
-        	} //TODO is the array list necessary?
-        }
-        
+        	}
+        }      
         return targets;
     }
  
     private PolygonCv findBestTarget(List<PolygonCv> targetList) {
     	PolygonCv bestTarget = null;
     	PolygonCv currentTarget;
-    	double    bestTargetValue = -100000;
+    	double    bestTargetValue = 0;
     	
     	for(int i = 0; i < targetList.size(); i++) {
     		currentTarget = targetList.get(i);
     		
-    		if(getTargetRating(currentTarget) > bestTargetValue)  {
-    			bestTarget = currentTarget;
-    		}
+    		if(getTargetRating(currentTarget) > bestTargetValue)  { //if this is better than
+    			bestTarget = currentTarget;                         //best so far
+    		}                                                       //becomes new best
     	}
     	
     	return bestTarget;
     }
     
     private double getTargetRating(PolygonCv inputTarget) {
-    	double targetRating = 1000;
+    	double targetRating = 1000000;
     	
     	targetRating -= Math.abs(inputTarget.getHeight() -  targetHeightIdeal); //TODO remove these?
     	targetRating -= Math.abs(inputTarget.getWidth() -   targetWidthIdeal);
@@ -198,8 +201,8 @@ public final class VisionFilter2016 extends Filter2016 {
     private void targetAnalysis(PolygonCv foundTarget) { //tells the robo info about the target
         double offCenterDegreesX, targetDistance, baseDistance, cameraAngleElevation; //elevation in RADIANS
         double cameraHorizRads = Math.toRadians(cameraHorizFOV);
-        float targetWidth 	= foundTarget.getWidth();
-        float targetX		= foundTarget.getCenterX();
+        float targetWidth 	   = foundTarget.getWidth();
+        float targetX		   = foundTarget.getCenterX();
     	
     	offCenterDegreesX = ((targetX / (cameraResolutionX / 2)) - 1) * cameraHorizFOV;
     	
@@ -236,14 +239,12 @@ public final class VisionFilter2016 extends Filter2016 {
     	List<MatOfPoint> bestContours = new ArrayList<>();
     	
     	bestContours.add(bestTarget.toContour());
-    	
     	Imgproc.drawContours(inputImage, bestContours, -1, _BestTargetOverlay, targetOutlineThickness);
 
     	return inputImage;
     }
     
     private Mat drawReticle(Mat inputImage, PolygonCv bestTarget){
-    	
     	
     	return inputImage;
     }
