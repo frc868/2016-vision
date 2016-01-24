@@ -44,12 +44,12 @@ import com.techhounds.imgcv.filters.Sequence;
  *
  * @author pkb
  */
-public final class UnfilteredView extends LiveViewGui {
+public final class Live extends LiveViewGui {
 	
 	/**
 	 * Constructor needs to set the title (we'll set the default filter too).
 	 */
-	private UnfilteredView() {
+	private Live() {
 		super("Live View Example");
 		
 		// A no-op filter, shows original
@@ -106,7 +106,7 @@ public final class UnfilteredView extends LiveViewGui {
      */
     public static void main(String[] args) {
         // Create the GUI application, set the filter then start up the GUI
-        final LiveViewGui frame = new UnfilteredView();
+        final LiveViewGui frame = new Live();
         frame.main();
         // Uncomment if you want to try to connect immediately at start
         // frame.startVideoFeed();
