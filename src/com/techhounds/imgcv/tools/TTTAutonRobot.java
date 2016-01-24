@@ -27,9 +27,9 @@ package com.techhounds.imgcv.tools;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
 import com.techhounds.imgcv.filters.ColorRange;
-import com.techhounds.imgcv.filters.FindTarget2013;
 import com.techhounds.imgcv.filters.MatFilter;
 import com.techhounds.imgcv.filters.TTTFilter;
+import com.techhounds.imgcv.frc2013.FindTarget2013;
 
 import java.awt.event.ActionEvent;
 

@@ -23,16 +23,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.tools;
+package com.techhounds.imgcv.frc2014;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
 import com.techhounds.imgcv.filters.ColorRange;
-import com.techhounds.imgcv.filters.FindTarget2013;
 import com.techhounds.imgcv.filters.MatFilter;
+import com.techhounds.imgcv.frc2013.FindTarget2013;
+
 import java.awt.event.ActionEvent;
+
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JMenuItem;
+
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
 
@@ -53,7 +56,7 @@ import org.opencv.highgui.VideoCapture;
  *
  * @author pkb
  */
-public final class FilterTool2013 extends FilterToolGuiOpenCv {
+public final class CheesyTool2014 extends FilterToolGuiOpenCv {
 
     /** Filter to look for 2013 "blue" color in image. */
     private final ColorRange _ColorRange;
@@ -64,7 +67,7 @@ public final class FilterTool2013 extends FilterToolGuiOpenCv {
     /**
      * Constructs a new instance of our example filter tool.
      */
-    private FilterTool2013() {
+    private CheesyTool2014() {
         super("Filter Tool 2013");
         _ColorRange = FindTarget2013.createColorRange();        
         _HsvRange = FindTarget2013.createHsvColorRange();
@@ -84,6 +87,7 @@ public final class FilterTool2013 extends FilterToolGuiOpenCv {
         addImageProcessingButton("2013 RGB Find", _ColorRange);
         addImageProcessingButton("2013 HSV Find", _HsvRange);
         addImageProcessingButton("2013 Target", new FindTarget2013());
+        addImageProcessingButton("2014 Cheesy", new CheeseButton());
     }
 
     /**
@@ -111,7 +115,7 @@ public final class FilterTool2013 extends FilterToolGuiOpenCv {
      */
     public static void main(String[] args) {
         // Create the GUI application and then start it's main routine
-        final FilterToolGuiOpenCv frame = new FilterTool2013();
+        final FilterToolGuiOpenCv frame = new CheesyTool2014();
         frame.main();
     }
 
@@ -122,7 +126,7 @@ public final class FilterTool2013 extends FilterToolGuiOpenCv {
 
 			@Override
             public void actionPerformed(ActionEvent e) {
-                VideoCapture vc = new VideoCapture("http://admin:1234@192.168.1.25/mjpg/video.mjpg");
+                VideoCapture vc = new VideoCapture("http://admin:1234@192.168.1.25/http:/192.168.1.25:/mjpg/video.mjpg");
                 
                 Mat mat = new Mat();
                 

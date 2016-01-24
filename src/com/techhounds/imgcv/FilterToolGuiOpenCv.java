@@ -88,7 +88,7 @@ import org.opencv.highgui.Highgui;
  * </ul>
  *
  * <p>
- * The {@link com.techhounds.imgcv.tools.FilterTool2013} class provides a
+ * The {@link com.techhounds.imgcv.frc2013.FilterTool2013} class provides a
  * example of extending this class.
  * </p>
  *

@@ -23,10 +23,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.tools;
+package com.techhounds.imgcv.frc2013;
 
 import com.techhounds.imgcv.LiveViewGui;
-import com.techhounds.imgcv.filters.CheeseButton;
 
 /**
  * A simple example of leveraging the {@link LiveViewGui} class to quickly test
@@ -34,7 +33,7 @@ import com.techhounds.imgcv.filters.CheeseButton;
  *
  * @author pkb
  */
-public final class CheesyView2014 {
+public final class FilterView2013 {
 
     /**
      * Main entry point to this Java Application.
@@ -49,8 +48,8 @@ public final class CheesyView2014 {
      */
     public static void main(String[] args) {
         // Create the GUI application, set the filter then start up the GUI
-        final LiveViewGui frame = new LiveViewGui("2014 Cheesy Button");
-        frame.setFilter(new CheeseButton());
+        final LiveViewGui frame = new LiveViewGui("2013 Targeting");
+        frame.setFilter(new FindTarget2013());
         //frame.setFilter(FindTarget2013.createHsvColorRange());
         frame.main();
     }
