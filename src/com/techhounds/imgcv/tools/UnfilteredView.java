@@ -26,7 +26,17 @@
 package com.techhounds.imgcv.tools;
 
 import com.techhounds.imgcv.LiveViewGui;
+import com.techhounds.imgcv.filters.BlackWhite;
+import com.techhounds.imgcv.filters.ColorRange;
+import com.techhounds.imgcv.filters.ColorSpace;
+import com.techhounds.imgcv.filters.Crop;
+import com.techhounds.imgcv.filters.Dilate;
+import com.techhounds.imgcv.filters.DoNothingFilter;
+import com.techhounds.imgcv.filters.Erode;
+import com.techhounds.imgcv.filters.GrayScale;
 import com.techhounds.imgcv.filters.MatFilter;
+import com.techhounds.imgcv.filters.Negative;
+import com.techhounds.imgcv.filters.Sequence;
 
 /**
  * A simple example of leveraging the {@link LiveViewGui} class to quickly test
@@ -34,7 +44,55 @@ import com.techhounds.imgcv.filters.MatFilter;
  *
  * @author pkb
  */
-public final class UnfilteredView {
+public final class UnfilteredView extends LiveViewGui {
+	
+	/**
+	 * Constructor needs to set the title (we'll set the default filter too).
+	 */
+	private UnfilteredView() {
+		super("Live View Example");
+		
+		// A no-op filter, shows original
+		setFilter(new DoNothingFilter());
+	}
+	
+	/**
+	 * Override the add menu items if you want to include additional filters.
+	 */
+	protected void addMenuItems() {
+		super.addMenuItems();
+		
+		// Example of adding an option to the filter menu
+		addFilter("Negative", new Negative());
+		
+		// Example of creating filter containing a sequence of filters
+		// added in a way that we can observe each step of the sequence
+		
+		Sequence seq = new Sequence();
+		// Take a vertical stripe of the original (50% of width down middle)
+		seq.addFilter(new Crop(.25, 0, .75, 1.0));
+		// Convert to HSV
+		seq.addFilter(ColorSpace.createBGRtoHSV());
+		
+		// Look for "yellow" pixels
+		int[] minVals = {20, 190, 120};
+		int[] maxVals = {50, 255, 255};
+		seq.addFilter(new ColorRange(minVals, maxVals, true));
+		
+		// Convert to gray scale
+		seq.addFilter(new GrayScale());
+		
+		// Look for bright pixels
+		seq.addFilter(new BlackWhite(150, 255, false));
+		
+		// Remove small stuff
+		seq.addFilter(new Dilate(5));
+		
+		// Grow it back
+		seq.addFilter(new Erode(5));
+		addSequence("Yellow Items", seq);	
+	}
+
     /**
      * Main entry point to this Java Application.
      * 
@@ -48,9 +106,9 @@ public final class UnfilteredView {
      */
     public static void main(String[] args) {
         // Create the GUI application, set the filter then start up the GUI
-        final LiveViewGui frame = new LiveViewGui("Unfiltered View");
+        final LiveViewGui frame = new UnfilteredView();
         frame.main();
-        // Uncomment if you want to try to connect immediately
+        // Uncomment if you want to try to connect immediately at start
         // frame.startVideoFeed();
     }
 
