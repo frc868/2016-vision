@@ -23,11 +23,23 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.filters;
+package com.techhounds.imgcv.avc;
 
 import com.techhounds.imgcv.PolygonCv;
+import com.techhounds.imgcv.filters.BitwiseOr;
+import com.techhounds.imgcv.filters.BlackWhite;
+import com.techhounds.imgcv.filters.ColorRange;
+import com.techhounds.imgcv.filters.ColorSpace;
+import com.techhounds.imgcv.filters.Crop;
+import com.techhounds.imgcv.filters.Dilate;
+import com.techhounds.imgcv.filters.Erode;
+import com.techhounds.imgcv.filters.GrayScale;
+import com.techhounds.imgcv.filters.MatFilter;
+import com.techhounds.imgcv.filters.Sequence;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Scalar;
@@ -41,30 +53,15 @@ import org.opencv.imgproc.Imgproc;
  */
 public final class FindStanchion2015 implements MatFilter {
 
-    /**
-     * Used to filter image to a specific color range.
-     */
-    private final MatFilter _ColorRange;
+	/**
+	 * How much to dialate the black and white image by.
+	 */
+    private static final int DILATE_FACTOR = 7;
 
     /**
-     * Used to convert image to a gray scale rendering.
+     * How much to erode the black and white image by.
      */
-    private final GrayScale _GrayScale;
-
-    /**
-     * Used to convert from gray scale to black and white.
-     */
-    private final BlackWhite _BlackWhite;
-
-    /**
-     * Grows pixels out a bit.
-     */
-    private final Dilate _Dilate;
-
-    /**
-     * Shrinks pixel areas back down a bit.
-     */
-    private final Erode _Erode;
+	private static final int ERODE_FACTOR = 5;
 
     /**
      * Used as color for overlays.
@@ -80,7 +77,15 @@ public final class FindStanchion2015 implements MatFilter {
      * Thickness of lines used when drawing overlays.
      */
     private final int _Thickness;
-    private final ColorSpace _BgrToHsv;
+
+    /** Set to true for lots of debug output dumped to the console. */
+	private boolean _Debug;
+
+	/** Used to crop image down to smaller region of interest before processing. */
+	private MatFilter _CropFilter;
+
+	/** Sequence of filters to apply to image to end up with BW to look for objects. */
+	private Sequence _Filter;
 
     /**
      * Constructs a new instance by pre-allocating all of our image filtering
@@ -89,12 +94,9 @@ public final class FindStanchion2015 implements MatFilter {
      * @param red Pass true to find red stanchion, false to find yellow
      */
     public FindStanchion2015(boolean red) {
-        _ColorRange = (red ? createRedColorRange() : createYellowColorRange());
-        _BgrToHsv = ColorSpace.createBGRtoHSV();
-        _GrayScale = new GrayScale();
-        _BlackWhite = createBlackWhite();
-        _Dilate = new Dilate(7);
-        _Erode = new Erode(5);
+        _CropFilter = createCropFilter();
+    	_Filter = createSteps(red, false);
+    	
         double[] colors = {100, 100, 250};
         _Color = new Scalar(colors);
         _Thickness = 1;
@@ -155,6 +157,36 @@ public final class FindStanchion2015 implements MatFilter {
     public static BlackWhite createBlackWhite() {
         return new BlackWhite(60, 255, false);
     }
+    
+    /**
+     * Filter to crop to the region where we expect to find the stanchions
+     * 
+     * @return A new crop filter for region where stanchions should be.
+     */
+    public static MatFilter createCropFilter() {
+    	return new Crop(0, 10, 320, 190);
+    }
+    
+    /**
+     * Creates a full sequence to reduce a source image to a black and white image we can use to search for stanchions.
+     * 
+     * @param red Pass true if you want to find red stanchions (false if not).
+     * @param crop Pass true if you want the initial crop applied.
+     * @return A sequence of steps to reduce a source image to a black and white image.
+     */
+    public static Sequence createSteps(boolean red, boolean crop) {
+    	Sequence seq = new Sequence();
+    	if (crop) {
+    		seq.addFilter(createCropFilter());
+    	}
+    	seq.addFilter(ColorSpace.createBGRtoHSV());
+    	seq.addFilter(red ? createRedColorRange() : createYellowColorRange());
+    	seq.addFilter(new GrayScale());
+    	seq.addFilter(createBlackWhite());
+    	seq.addFilter(new Erode(ERODE_FACTOR));
+    	seq.addFilter(new Dilate(DILATE_FACTOR));
+    	return seq;
+    }
 
     /**
      * Method to filter a source image and return the filtered results.
@@ -168,31 +200,15 @@ public final class FindStanchion2015 implements MatFilter {
     @Override
     public Mat process(Mat srcImage) {
     	_Found = false;
-        int cropTop = 10;
-        int cropBot = 50;
         int hImg = srcImage.rows();
-        int wImg = srcImage.cols();
         int imgMid = hImg / 2;
-        Mat output = srcImage.submat(cropTop, hImg - cropBot, 0, wImg);
+        Mat output = _CropFilter.process(srcImage);
 
-        Mat hsvColors = _BgrToHsv.process(output.clone());
-        Mat colorRange = _ColorRange.process(hsvColors);
+        Mat d1 = _Filter.process(output.clone());
 
-        //Mat output = colorRange.clone();
-        Mat gray = _GrayScale.process(colorRange);
-        Mat bw = _BlackWhite.process(gray);
-
-
-        // Uncomment to see black and white image being processed
-        // Imgproc.cvtColor(bw, output, Imgproc.COLOR_GRAY2BGR);
-        //Mat d1 = _Dilate.process(bw);
         // Uncomment to see final black and white image being processed
-        // Imgproc.cvtColor(d1, output, Imgproc.COLOR_GRAY2BGR);
-        Mat e1 = _Erode.process(bw);
-        Mat d1 = _Dilate.process(e1);
-        //Mat d2 = _Dilate.process(e1);
-        // Uncomment to see final black and white image being processed
-        //Imgproc.cvtColor(d2, output, Imgproc.COLOR_GRAY2BGR);
+        //Imgproc.cvtColor(d1, output, Imgproc.COLOR_GRAY2BGR);
+        
         List<MatOfPoint> contours = new ArrayList<>();
         List<PolygonCv> polygons = new ArrayList<>();
 
@@ -214,12 +230,13 @@ public final class FindStanchion2015 implements MatFilter {
             if ((w > 5) && (h > 15) && (hw > 50) && (hw < 800) && (pts >= 4) && (pts < 20) && (distFromTop > distFromMid) && (distFromTop < imgMid)) {
                 polygons.add(poly);
                 _Found = true;
-
+                if (_Debug) {
                 System.out.println("Accepted: sides: " + pts + " ("
                                    + poly.getWidth() + ", " + poly.getHeight()
                                    + ")  H/W: " + hw + "  distFromTop: " + distFromTop + "  distFromMid: " + distFromMid);
+                }
 
-            } else {
+            } else if (_Debug) {
                 System.out.println("Rejected: sides: " + pts + " ("
                                    + poly.getWidth() + ", " + poly.getHeight()
                                    + ")  H/W: " + hw + "  distFromTop: " + distFromTop + "  distFromMid: " + distFromMid);
@@ -272,6 +289,11 @@ public final class FindStanchion2015 implements MatFilter {
         return output;
     }
 
+    /**
+     * Returns true if we found a stanchion the last time we processed an image.
+     * 
+     * @return true if stanchion was found, false if not.
+     */
 	public boolean foundStanchion() {
 		return _Found;
 	}

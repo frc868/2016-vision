@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Paul Blankenbaker
+ * Copyright (c) 2015, Paul Blankenbaker
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,18 +23,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.tools;
+package com.techhounds.imgcv.avc;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
-import com.techhounds.imgcv.filters.ColorRange;
-import com.techhounds.imgcv.filters.FindTarget2013;
+import com.techhounds.imgcv.filters.ColorSpace;
+import com.techhounds.imgcv.filters.GrayScale;
 import com.techhounds.imgcv.filters.MatFilter;
-import java.awt.event.ActionEvent;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JMenuItem;
-import org.opencv.core.Mat;
-import org.opencv.highgui.VideoCapture;
 
 /**
  * A more involved example of extending the filter tool for testing filters.
@@ -53,21 +47,21 @@ import org.opencv.highgui.VideoCapture;
  *
  * @author pkb
  */
-public final class FilterTool2013 extends FilterToolGuiOpenCv {
+public final class StanchionTool2015 extends FilterToolGuiOpenCv {
 
     /** Filter to look for 2013 "blue" color in image. */
-    private final ColorRange _ColorRange;
+    private final MatFilter _RedRange;
     
     /** Alternative filter which looks for 2013 "blue" in HSV color space. */
-    private final MatFilter _HsvRange;
+    private final MatFilter _YelRange;
 
     /**
      * Constructs a new instance of our example filter tool.
      */
-    private FilterTool2013() {
-        super("Filter Tool 2013");
-        _ColorRange = FindTarget2013.createColorRange();        
-        _HsvRange = FindTarget2013.createHsvColorRange();
+    private StanchionTool2015() {
+        super("AVC Stanchion Tool 2015");
+        _RedRange = FindStanchion2015.createRedColorRange();
+        _YelRange = FindStanchion2015.createYellowColorRange();
     }
 
     /**
@@ -80,10 +74,13 @@ public final class FilterTool2013 extends FilterToolGuiOpenCv {
         addSeparator();
 
         // Let's add some of our quick access tools
-        addImageProcessingButton("B&W Tweaked", FindTarget2013.createBlackWhite());
-        addImageProcessingButton("2013 RGB Find", _ColorRange);
-        addImageProcessingButton("2013 HSV Find", _HsvRange);
-        addImageProcessingButton("2013 Target", new FindTarget2013());
+        addImageProcessingButton("BGR->HSV", ColorSpace.createBGRtoHSV());
+        addImageProcessingButton("2015 Yel Filt", _YelRange);
+        addImageProcessingButton("2015 Red Filt", _RedRange);
+        addImageProcessingButton("Gray Scale", new GrayScale());
+        addImageProcessingButton("B&W Tweaked", FindStanchion2015.createBlackWhite());
+        addImageProcessingButton("2015 Yel", new FindStanchion2015(false), true);
+        addImageProcessingButton("2015 Red", new FindStanchion2015(true), true);
     }
 
     /**
@@ -93,15 +90,9 @@ public final class FilterTool2013 extends FilterToolGuiOpenCv {
     protected void addMenuItems() {
         // Add parent base menu items
         super.addMenuItems();
-
-        // Add some of our custom 2013 filters to a pull down menu as well
-        String label = "2013";
-        addMenuItem(label, createImageProcessingMenuItem("B&W Tweaked", FindTarget2013.createBlackWhite()));
-        addMenuItem(label, createImageProcessingMenuItem("2013 RGB Find", _ColorRange));
-        addMenuItem(label, createImageProcessingMenuItem("2013 HSV Find", _HsvRange));
-        addMenuItem(label, createImageProcessingMenuItem("Find Target", new FindTarget2013()));
         
-        addMenuItem("Grab 10", new JMenuItem(grab10()));
+		addSequence("Yellow", FindStanchion2015.createSteps(false, true));
+		addSequence("Red", FindStanchion2015.createSteps(true, true));
     }
 
     /**
@@ -111,29 +102,7 @@ public final class FilterTool2013 extends FilterToolGuiOpenCv {
      */
     public static void main(String[] args) {
         // Create the GUI application and then start it's main routine
-        final FilterToolGuiOpenCv frame = new FilterTool2013();
+        final FilterToolGuiOpenCv frame = new StanchionTool2015();
         frame.main();
     }
-
-    private Action grab10() {
-        
-        return new AbstractAction("Grab 10") {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-            public void actionPerformed(ActionEvent e) {
-                VideoCapture vc = new VideoCapture("http://admin:1234@192.168.1.25/mjpg/video.mjpg");
-                
-                Mat mat = new Mat();
-                
-                for (int i = 0; i < 10; i++) {
-                    if (vc.read(mat)) {
-                        setImage(mat);
-                        System.out.println("Got image: " + i);
-                    }
-                }
-            }
-        };
-    }
-
 }

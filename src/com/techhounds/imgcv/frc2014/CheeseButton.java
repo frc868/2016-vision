@@ -23,12 +23,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.filters;
+package com.techhounds.imgcv.frc2014;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
+
+import com.techhounds.imgcv.filters.MatFilter;
 
 /**
  * A image filter which performs all of the operations in an attempt to locate

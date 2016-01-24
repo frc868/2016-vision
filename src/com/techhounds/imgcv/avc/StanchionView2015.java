@@ -23,10 +23,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.tools;
+package com.techhounds.imgcv.avc;
+
+import java.awt.HeadlessException;
+
+import org.opencv.core.Mat;
 
 import com.techhounds.imgcv.LiveViewGui;
-import com.techhounds.imgcv.filters.CheeseButton;
+import com.techhounds.imgcv.filters.MatFilter;
 
 /**
  * A simple example of leveraging the {@link LiveViewGui} class to quickly test
@@ -34,7 +38,50 @@ import com.techhounds.imgcv.filters.CheeseButton;
  *
  * @author pkb
  */
-public final class CheesyView2014 {
+public final class StanchionView2015 extends LiveViewGui {
+	
+	/**
+	 * Constructs a new instance of our viewer.
+	 * 
+	 * @throws HeadlessException If run on console without GUI support.
+	 */
+	public StanchionView2015() throws HeadlessException {
+		super("2015 AVC Stanchion Viewer");
+        setFilter(new FindYellowOrRed());
+	}
+	
+	/**
+	 * Our version of the filter which looks for the yellow stanchions first then for red stanchions.
+	 */
+	class FindYellowOrRed implements MatFilter {
+		private FindStanchion2015 yelFilter = new FindStanchion2015(false);
+		private FindStanchion2015 redFilter = new FindStanchion2015(true);
+
+		@Override
+		public Mat process(Mat srcImage) {
+			Mat results = yelFilter.process(srcImage);
+			if (!yelFilter.foundStanchion()) {
+				results = redFilter.process(srcImage);
+			}
+			return results;
+		}
+		
+	}
+	
+	/**
+	 * Update the list of live filters the user can choose to run.
+	 */
+	protected void addMenuItems() {
+		super.addMenuItems();
+		
+		addFilter("Find Yellow", new FindStanchion2015(false));
+		addFilter("Find Red", new FindStanchion2015(true));
+		
+		addFilter("Find Yellow or Red", new FindYellowOrRed());
+		
+		addSequence("Yellow", FindStanchion2015.createSteps(false, true));
+		addSequence("Red", FindStanchion2015.createSteps(true, true));
+	}
 
     /**
      * Main entry point to this Java Application.
@@ -49,8 +96,7 @@ public final class CheesyView2014 {
      */
     public static void main(String[] args) {
         // Create the GUI application, set the filter then start up the GUI
-        final LiveViewGui frame = new LiveViewGui("2014 Cheesy Button");
-        frame.setFilter(new CheeseButton());
+        final LiveViewGui frame = new StanchionView2015();
         //frame.setFilter(FindTarget2013.createHsvColorRange());
         frame.main();
     }

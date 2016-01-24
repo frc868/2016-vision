@@ -38,6 +38,7 @@ import com.techhounds.imgcv.filters.FillChannel;
 import com.techhounds.imgcv.filters.GrayScale;
 import com.techhounds.imgcv.filters.Negative;
 import com.techhounds.imgcv.filters.MatFilter;
+import com.techhounds.imgcv.filters.Sequence;
 
 import javax.swing.*;
 
@@ -59,6 +60,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -86,7 +88,7 @@ import org.opencv.highgui.Highgui;
  * </ul>
  *
  * <p>
- * The {@link com.techhounds.imgcv.tools.FilterTool2013} class provides a
+ * The {@link com.techhounds.imgcv.frc2013.FilterTool2013} class provides a
  * example of extending this class.
  * </p>
  *
@@ -324,14 +326,33 @@ public class FilterToolGuiOpenCv {
 	 * @param processor
 	 *            The filter that should be applied to the current image when
 	 *            the Action is fired.
+	 * @param revert
+	 *            Pass true if you want to revert the image prior to applying
+	 *            the filter, false if not.
+	 * @return The button that was created and added to the side panel.
+	 */
+	protected JButton addImageProcessingButton(String name,
+			final MatFilter processor, boolean revert) {
+		JButton button = new JButton(createImageProcessingAction(name,
+				processor, revert));
+		addControl(button);
+		return button;
+	}
+
+	/**
+	 * Adds a image filter button to the side panel (does not revert prior to
+	 * applying filter).
+	 *
+	 * @param name
+	 *            ASCII name to appear on the button.
+	 * @param processor
+	 *            The filter that should be applied to the current image when
+	 *            the Action is fired.
 	 * @return The button that was created and added to the side panel.
 	 */
 	protected JButton addImageProcessingButton(String name,
 			final MatFilter processor) {
-		JButton button = new JButton(createImageProcessingAction(name,
-				processor));
-		addControl(button);
-		return button;
+		return addImageProcessingButton(name, processor, false);
 	}
 
 	/**
@@ -345,7 +366,7 @@ public class FilterToolGuiOpenCv {
 	 *
 	 * <pre>
 	 * <code>
-	 * Action makeGray = createImageProcessingAction("To Gray", new GrayScale());
+	 * Action makeGray = createImageProcessingAction("To Gray", new GrayScale(), true);
 	 * JButton grayButton = new JButton(makeGray);
 	 * </code>
 	 * </pre>
@@ -354,12 +375,16 @@ public class FilterToolGuiOpenCv {
 	 *            ASCII name to associate with the action.
 	 * @param processor
 	 *            The filter that should be applied to the current image when
-	 *            the Action is fired. ß
+	 *            the Action is fired.
+	 * @param revert
+	 *            Pass true if you want to revert the image prior to applying
+	 *            the filter, false if not.
+	 * 
 	 * @return A Action object you can then associate with a GUI control (like a
 	 *         JButton).
 	 */
 	protected Action createImageProcessingAction(String name,
-			final MatFilter processor) {
+			final MatFilter processor, final boolean revert) {
 		final Action processAction = new AbstractAction(name) {
 
 			/**
@@ -371,6 +396,10 @@ public class FilterToolGuiOpenCv {
 			public void actionPerformed(ActionEvent ae) {
 				frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 				try {
+					// If revert flag set, then load last original image
+					if (revert && (_LastLoadedImage != null)) {
+						setImage(_LastLoadedImage);
+					}
 					// Process and update image display if image is loaded
 					if (_Image != null) {
 						_LastFilter = processor;
@@ -399,7 +428,38 @@ public class FilterToolGuiOpenCv {
 	}
 
 	/**
-	 * Helper method to create a {@link JMenuItem} when building filter menus.
+	 * A helper method to create a Action that can be associated with a GUI
+	 * widget (like a JButton) to trigger the application of your specified
+	 * image filter (does not revert current image prior to applying).
+	 *
+	 * <p>
+	 * A quick example:
+	 * </p>
+	 *
+	 * <pre>
+	 * <code>
+	 * Action makeGray = createImageProcessingAction("To Gray", new GrayScale());
+	 * JButton grayButton = new JButton(makeGray);
+	 * </code>
+	 * </pre>
+	 *
+	 * @param name
+	 *            ASCII name to associate with the action.
+	 * @param processor
+	 *            The filter that should be applied to the current image when
+	 *            the Action is fired.
+	 * 
+	 * @return A Action object you can then associate with a GUI control (like a
+	 *         JButton).
+	 */
+	protected Action createImageProcessingAction(String name,
+			final MatFilter processor) {
+		return createImageProcessingAction(name, processor, false);
+	}
+
+	/**
+	 * Helper method to create a {@link JMenuItem} when building filter menus
+	 * (does not revert first).
 	 *
 	 * @param name
 	 *            The label you want to see in the menu for the filter.
@@ -409,8 +469,26 @@ public class FilterToolGuiOpenCv {
 	 */
 	protected JMenuItem createImageProcessingMenuItem(String name,
 			MatFilter imgproc) {
+		return createImageProcessingMenuItem(name, imgproc, false);
+	}
+
+	/**
+	 * Helper method to create a {@link JMenuItem} when building filter menus
+	 * with the option to revert the image prior to applying the filter.
+	 *
+	 * @param name
+	 *            The label you want to see in the menu for the filter.
+	 * @param imgproc
+	 *            The filter to apply when the user selects the item.
+	 * @param revert
+	 *            Pass true if you want to revert the image prior to applying
+	 *            the filter.
+	 * @return A new {@link JMenuItem} you can add to a menu.
+	 */
+	protected JMenuItem createImageProcessingMenuItem(String name,
+			MatFilter imgproc, final boolean revert) {
 		JMenuItem item = new JMenuItem(createImageProcessingAction(name,
-				imgproc));
+				imgproc, revert));
 		item.setName(name);
 		return item;
 	}
@@ -481,12 +559,14 @@ public class FilterToolGuiOpenCv {
 
 	/**
 	 * A helper method to create a Action that can be associated with a GUI
-	 * widget (like a JButton) to is used to apply a filter to all of the
-	 * image files in a directory.
+	 * widget (like a JButton) to is used to apply a filter to all of the image
+	 * files in a directory.
 	 *
-	 * @param label The label to apply to the batch processing command.
-	 * @param filter The specific filter to apply OR null if you want to apply the
-	 * last filter used.
+	 * @param label
+	 *            The label to apply to the batch processing command.
+	 * @param filter
+	 *            The specific filter to apply OR null if you want to apply the
+	 *            last filter used.
 	 * 
 	 * @return A Action object you can then associate with a GUI control (like a
 	 *         JButton).
@@ -496,7 +576,7 @@ public class FilterToolGuiOpenCv {
 		// Action performed when "Open Image" button is pressed
 		final Action batchAction = new AbstractAction(label) {
 			private static final long serialVersionUID = 1L;
-			
+
 			private MatFilter myFilter = filter;
 
 			@Override
@@ -514,7 +594,8 @@ public class FilterToolGuiOpenCv {
 					if (chooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
 						File dir = chooser.getSelectedFile();
 						lastFile = dir;
-						MatFilter filter = (myFilter != null) ? myFilter : _LastFilter;
+						MatFilter filter = (myFilter != null) ? myFilter
+								: _LastFilter;
 						FilterView.showDirectory(dir, filter);
 					}
 
@@ -833,7 +914,10 @@ public class FilterToolGuiOpenCv {
 		String fileMenu = "File";
 		addMenuItem(fileMenu, new JMenuItem(createOpenImageAction()));
 		addMenuItem(fileMenu, new JMenuItem(createGrabImageAction()));
-		addMenuItem(fileMenu, new JMenuItem(createBatchProcessAction("Batch Last Filter", null)));
+		addMenuItem(
+				fileMenu,
+				new JMenuItem(createBatchProcessAction("Batch Last Filter",
+						null)));
 		addMenuItem(fileMenu, new JMenuItem(createRevertImageAction()));
 		addMenuItem(fileMenu, new JMenuItem(createSaveImageAction()));
 		addMenuItem(fileMenu, new JMenuItem(createPreferencesAction()));
@@ -953,6 +1037,25 @@ public class FilterToolGuiOpenCv {
 		}
 		JMenuItem subMenu = findCreateSubMenu(parentMenu);
 		subMenu.add(item);
+	}
+
+	/**
+	 * Adds a new top level menu item with a set of filter representing each
+	 * stage of a sequence.
+	 * 
+	 * @param label
+	 *            Label for menu item to add to menu bar.
+	 * @param seqFilter
+	 *            A {@link Sequence} filter with at least one stage added.
+	 */
+	protected void addSequence(String label, Sequence seqFilter) {
+		int n = seqFilter.steps();
+		for (int i = 0; i <= n; i++) {
+			String stepLabel = "Stage " + i;
+			MatFilter filter = seqFilter.createStepFilter(i);
+			JMenuItem menuItem = createImageProcessingMenuItem(stepLabel, filter, true);
+			addMenuItem(label, menuItem);
+		}
 	}
 
 	/**

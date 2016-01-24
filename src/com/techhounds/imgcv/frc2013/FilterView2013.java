@@ -23,13 +23,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.tools;
-
-import org.opencv.core.Mat;
+package com.techhounds.imgcv.frc2013;
 
 import com.techhounds.imgcv.LiveViewGui;
-import com.techhounds.imgcv.filters.FindStanchion2015;
-import com.techhounds.imgcv.filters.MatFilter;
 
 /**
  * A simple example of leveraging the {@link LiveViewGui} class to quickly test
@@ -37,21 +33,8 @@ import com.techhounds.imgcv.filters.MatFilter;
  *
  * @author pkb
  */
-public final class StanchionView2015 {
-	class FindYellowOrRed implements MatFilter {
-		private FindStanchion2015 yelFilter = new FindStanchion2015(false);
-		private FindStanchion2015 redFilter = new FindStanchion2015(true);
+public final class FilterView2013 {
 
-		@Override
-		public Mat process(Mat srcImage) {
-			Mat results = yelFilter.process(srcImage);
-			if (!yelFilter.foundStanchion()) {
-				results = redFilter.process(srcImage);
-			}
-			return results;
-		}
-		
-	}
     /**
      * Main entry point to this Java Application.
      * 
@@ -65,8 +48,8 @@ public final class StanchionView2015 {
      */
     public static void main(String[] args) {
         // Create the GUI application, set the filter then start up the GUI
-        final LiveViewGui frame = new LiveViewGui("2015 AVC Stanchion Viewer");
-        frame.setFilter(new FindStanchion2015(false));
+        final LiveViewGui frame = new LiveViewGui("2013 Targeting");
+        frame.setFilter(new FindTarget2013());
         //frame.setFilter(FindTarget2013.createHsvColorRange());
         frame.main();
     }

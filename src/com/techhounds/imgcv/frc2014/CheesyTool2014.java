@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Paul Blankenbaker
+ * Copyright (c) 2013, Paul Blankenbaker
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,17 +23,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.tools;
+package com.techhounds.imgcv.frc2014;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
-import com.techhounds.imgcv.filters.ColorSpace;
-import com.techhounds.imgcv.filters.FindStanchion2015;
-import com.techhounds.imgcv.filters.GrayScale;
+import com.techhounds.imgcv.filters.ColorRange;
 import com.techhounds.imgcv.filters.MatFilter;
+import com.techhounds.imgcv.frc2013.FindTarget2013;
+
 import java.awt.event.ActionEvent;
+
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JMenuItem;
+
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
 
@@ -54,21 +56,21 @@ import org.opencv.highgui.VideoCapture;
  *
  * @author pkb
  */
-public final class StanchionTool2015 extends FilterToolGuiOpenCv {
+public final class CheesyTool2014 extends FilterToolGuiOpenCv {
 
     /** Filter to look for 2013 "blue" color in image. */
-    private final MatFilter _RedRange;
+    private final ColorRange _ColorRange;
     
     /** Alternative filter which looks for 2013 "blue" in HSV color space. */
-    private final MatFilter _YelRange;
+    private final MatFilter _HsvRange;
 
     /**
      * Constructs a new instance of our example filter tool.
      */
-    private StanchionTool2015() {
-        super("AVC Stanchion Tool 2015");
-        _RedRange = FindStanchion2015.createRedColorRange();
-        _YelRange = FindStanchion2015.createYellowColorRange();
+    private CheesyTool2014() {
+        super("Filter Tool 2013");
+        _ColorRange = FindTarget2013.createColorRange();        
+        _HsvRange = FindTarget2013.createHsvColorRange();
     }
 
     /**
@@ -81,13 +83,11 @@ public final class StanchionTool2015 extends FilterToolGuiOpenCv {
         addSeparator();
 
         // Let's add some of our quick access tools
-        addImageProcessingButton("BGR->HSV", ColorSpace.createBGRtoHSV());
-        addImageProcessingButton("2015 Yel Filt", _YelRange);
-        addImageProcessingButton("2015 Red Filt", _RedRange);
-        addImageProcessingButton("Gray Scale", new GrayScale());
-        addImageProcessingButton("B&W Tweaked", FindStanchion2015.createBlackWhite());
-        addImageProcessingButton("2015 Yel", new FindStanchion2015(false));
-        addImageProcessingButton("2015 Red", new FindStanchion2015(true));
+        addImageProcessingButton("B&W Tweaked", FindTarget2013.createBlackWhite());
+        addImageProcessingButton("2013 RGB Find", _ColorRange);
+        addImageProcessingButton("2013 HSV Find", _HsvRange);
+        addImageProcessingButton("2013 Target", new FindTarget2013());
+        addImageProcessingButton("2014 Cheesy", new CheeseButton());
     }
 
     /**
@@ -100,11 +100,10 @@ public final class StanchionTool2015 extends FilterToolGuiOpenCv {
 
         // Add some of our custom 2013 filters to a pull down menu as well
         String label = "2013";
-        addMenuItem(label, createImageProcessingMenuItem("2015 Yel Filt", _YelRange));
-        addMenuItem(label, createImageProcessingMenuItem("2015 Red Filt", _RedRange));
-        addMenuItem(label, createImageProcessingMenuItem("B&W Tweaked", FindStanchion2015.createBlackWhite()));
-        addMenuItem(label, createImageProcessingMenuItem("2015 Yel", new FindStanchion2015(false)));
-        addMenuItem(label, createImageProcessingMenuItem("2015 Red", new FindStanchion2015(true)));
+        addMenuItem(label, createImageProcessingMenuItem("B&W Tweaked", FindTarget2013.createBlackWhite()));
+        addMenuItem(label, createImageProcessingMenuItem("2013 RGB Find", _ColorRange));
+        addMenuItem(label, createImageProcessingMenuItem("2013 HSV Find", _HsvRange));
+        addMenuItem(label, createImageProcessingMenuItem("Find Target", new FindTarget2013()));
         
         addMenuItem("Grab 10", new JMenuItem(grab10()));
     }
@@ -116,7 +115,7 @@ public final class StanchionTool2015 extends FilterToolGuiOpenCv {
      */
     public static void main(String[] args) {
         // Create the GUI application and then start it's main routine
-        final FilterToolGuiOpenCv frame = new StanchionTool2015();
+        final FilterToolGuiOpenCv frame = new CheesyTool2014();
         frame.main();
     }
 
@@ -127,7 +126,7 @@ public final class StanchionTool2015 extends FilterToolGuiOpenCv {
 
 			@Override
             public void actionPerformed(ActionEvent e) {
-                VideoCapture vc = new VideoCapture("http://admin:1234@192.168.1.25/mjpg/video.mjpg");
+                VideoCapture vc = new VideoCapture("http://admin:1234@192.168.1.25/http:/192.168.1.25:/mjpg/video.mjpg");
                 
                 Mat mat = new Mat();
                 
