@@ -43,19 +43,14 @@ import org.opencv.imgproc.Imgproc;
  *
  * @author Paul Blankenbaker
  */
-public final class VisionFilter2016 implements MatFilter {
+public final class VisionFilter2016 extends Filter2016 {
 	
 	//Configurations
 	
-	private static int[]	colorFilterMin    = {30, 10, 40}; //TODO make all final as well
-	private static int[]	colorFilterMax    = {95, 200, 120};
 	private static double[] bestTargetColors  = {100, 100, 255};
 	private static double[] otherTargetColors = {255, 100, 100};
 	private static int      targetOutlineThickness   = 1;
-	private static int		blackWhiteThresh  = 40;
-	private static int		dilateFactor      = 3; 
-	private static int		erodeFactor       = 5; 
-	
+
 	private static double	polygonEpsilon    = 5.0; //used for detecting polygons from contours
 	private static int		targetSidesMin    = 4; //ie at least 3 sides
 	private static double   targetRatioMin    = 0.3;
@@ -90,40 +85,14 @@ public final class VisionFilter2016 implements MatFilter {
 
     //Constructs a new instance by pre-allocating all of our image filtering objects.
     public VisionFilter2016() { 
-    	_ColorRange = createHsvColorRange();
-    	_Dilate 	= new Dilate(dilateFactor);  
-    	_Erode		= new Erode(erodeFactor); 
-        _GrayScale  = new GrayScale();
-        _BlackWhite = createBlackWhite(); //TODO can we move these to separate filters?
-        _CrossHair  = new CrossHair();    //or possibly make our own methods for each of these?
+    	_ColorRange = super.createHsvColorRange();
+    	_Dilate 	= super.createDilate();
+    	_Erode		= super.createErode();
+        _GrayScale  = super.createGrayScale();
+        _BlackWhite = super.createBlackWhite(); 
+        _CrossHair  = new CrossHair();    
         _BestTargetOverlay = new Scalar(bestTargetColors);
         _OtherTargetOverlay = new Scalar(otherTargetColors);
-    }
-    
-    public static MatFilter createDilate() {
-    	return new Dilate(dilateFactor);
-    }
-    
-    public static MatFilter createErode() {
-    	return new Erode(erodeFactor);
-    }
-
-    /**
-     * Helper method to provide a single location that creates the image filter
-     * used to go from a gray scale image to a black and white image.
-     *
-     * @return A image filter that converts a gray scale image to a black and
-     * white image.
-     */
-    public static BlackWhite createBlackWhite() {
-        return new BlackWhite(blackWhiteThresh, 255, false);
-    }
-    
-    public static MatFilter createHsvColorRange() {
-        Sequence filter = new Sequence();
-        filter.addFilter(ColorSpace.createBGRtoHSV());
-        filter.addFilter(new ColorRange(colorFilterMin, colorFilterMax, true));
-        return filter;
     }
 
     /**

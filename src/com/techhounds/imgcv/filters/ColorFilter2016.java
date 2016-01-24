@@ -40,22 +40,13 @@ import org.opencv.imgproc.Imgproc;
  *
  * @author Paul Blankenbaker
  */
-public final class ColorFilter2016 implements MatFilter {
+public final class ColorFilter2016 extends Filter2016 {
 	
-	private static int[]	colorFilterMin    = {30, 10, 40}; //TODO make all final as well
-	private static int[]	colorFilterMax    = {95, 200, 120};
     private final MatFilter		_ColorRange; //Used to filter image to a specific color range.
 
     //Constructs a new instance by pre-allocating all of our image filtering objects.
     public ColorFilter2016() { 
-    	_ColorRange = createHsvColorRange();
-    }
-    
-    public static MatFilter createHsvColorRange() {
-        Sequence filter = new Sequence();
-        filter.addFilter(ColorSpace.createBGRtoHSV());
-        filter.addFilter(new ColorRange(colorFilterMin, colorFilterMax, true));
-        return filter;
+    	_ColorRange = super.createHsvColorRange();
     }
 
     /**

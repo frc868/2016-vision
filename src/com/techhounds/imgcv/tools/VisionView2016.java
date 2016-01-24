@@ -29,8 +29,10 @@ import java.awt.HeadlessException;
 
 import org.opencv.core.Mat;
 import com.techhounds.imgcv.LiveViewGui;
+import com.techhounds.imgcv.filters.ColorFilter2016;
 import com.techhounds.imgcv.filters.DoNothingFilter;
 import com.techhounds.imgcv.filters.MatFilter;
+import com.techhounds.imgcv.filters.ProcessFilter2016;
 import com.techhounds.imgcv.filters.Sequence;
 import com.techhounds.imgcv.filters.VisionFilter2016;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
@@ -52,12 +54,18 @@ public final class VisionView2016 extends LiveViewGui {
     protected void addMenuItems() {
     	super.addMenuItems();
     	
+    	/*
     	addFilter("Main 2016 Step 1", VisionFilter2016.createDilate());
     	Sequence step2 = new Sequence();
     	step2.addFilter(VisionFilter2016.createDilate());
     	step2.addFilter(VisionFilter2016.createErode());
     	addFilter("Main 2016 Step 2", step2);
-        addFilter("Main 2016 Filter", filter);    	
+        addFilter("Main 2016 Filter", filter);
+        */    	
+    	
+    	addFilter("Color Filter", new ColorFilter2016());
+    	addFilter("Process Filter", new ProcessFilter2016());
+    	addFilter("Targeting", new VisionFilter2016());
     }
 
 	/**

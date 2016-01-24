@@ -40,15 +40,7 @@ import org.opencv.imgproc.Imgproc;
  *
  * @author Paul Blankenbaker
  */
-public final class ProcessFilter2016 implements MatFilter {
-	
-	//Configurations
-	
-	private static int[]	colorFilterMin    = {30, 10, 40}; //TODO make all final as well
-	private static int[]	colorFilterMax    = {95, 200, 120};
-	private static int		blackWhiteThresh  = 40;
-	private static int		dilateFactor      = 3;
-	private static int		erodeFactor       = 5;
+public final class ProcessFilter2016 extends Filter2016 {
 	
 	//Processing Filters
 	
@@ -60,37 +52,11 @@ public final class ProcessFilter2016 implements MatFilter {
 
     //Constructs a new instance by pre-allocating all of our image filtering objects.
     public ProcessFilter2016() { 
-    	_ColorRange = createHsvColorRange();
-    	_Dilate 	= new Dilate(dilateFactor);  
-    	_Erode		= new Erode(erodeFactor); 
-        _GrayScale  = new GrayScale();
-        _BlackWhite = createBlackWhite(); //TODO can we move these to separate filters?
-    }
-    
-    public static MatFilter createDilate() {
-    	return new Dilate(dilateFactor);
-    }
-    
-    public static MatFilter createErode() {
-    	return new Erode(erodeFactor);
-    }
-
-    /**
-     * Helper method to provide a single location that creates the image filter
-     * used to go from a gray scale image to a black and white image.
-     *
-     * @return A image filter that converts a gray scale image to a black and
-     * white image.
-     */
-    public static BlackWhite createBlackWhite() {
-        return new BlackWhite(blackWhiteThresh, 255, false);
-    }
-    
-    public static MatFilter createHsvColorRange() {
-        Sequence filter = new Sequence();
-        filter.addFilter(ColorSpace.createBGRtoHSV());
-        filter.addFilter(new ColorRange(colorFilterMin, colorFilterMax, true));
-        return filter;
+    	_ColorRange = super.createHsvColorRange();
+    	_Dilate 	= super.createDilate();  
+    	_Erode		= super.createErode();
+        _GrayScale  = super.createGrayScale();
+        _BlackWhite = super.createBlackWhite();
     }
 
     /**
