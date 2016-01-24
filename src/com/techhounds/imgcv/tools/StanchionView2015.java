@@ -25,11 +25,16 @@
  */
 package com.techhounds.imgcv.tools;
 
+import java.awt.HeadlessException;
+
 import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import com.techhounds.imgcv.LiveViewGui;
+import com.techhounds.imgcv.filters.ColorSpace;
 import com.techhounds.imgcv.filters.FindStanchion2015;
 import com.techhounds.imgcv.filters.MatFilter;
+import com.techhounds.imgcv.filters.Sequence;
 
 /**
  * A simple example of leveraging the {@link LiveViewGui} class to quickly test
@@ -37,7 +42,21 @@ import com.techhounds.imgcv.filters.MatFilter;
  *
  * @author pkb
  */
-public final class StanchionView2015 {
+public final class StanchionView2015 extends LiveViewGui {
+	
+	/**
+	 * Constructs a new instance of our viewer.
+	 * 
+	 * @throws HeadlessException If run on console without GUI support.
+	 */
+	public StanchionView2015() throws HeadlessException {
+		super("2015 AVC Stanchion Viewer");
+        setFilter(new FindYellowOrRed());
+	}
+	
+	/**
+	 * Our version of the filter which looks for the yellow stanchions first then for red stanchions.
+	 */
 	class FindYellowOrRed implements MatFilter {
 		private FindStanchion2015 yelFilter = new FindStanchion2015(false);
 		private FindStanchion2015 redFilter = new FindStanchion2015(true);
@@ -52,6 +71,29 @@ public final class StanchionView2015 {
 		}
 		
 	}
+	
+	/**
+	 * Update the list of live filters the user can choose to run.
+	 */
+	protected void addMenuItems() {
+		super.addMenuItems();
+		
+		Sequence yellow = new Sequence();
+		yellow.addFilter(new ColorSpace(Imgproc.COLOR_BGR2HSV));
+		yellow.addFilter(FindStanchion2015.createYellowColorRange());
+		addFilter("HSV Yellow", yellow);
+		
+		Sequence red = new Sequence();
+		red.addFilter(new ColorSpace(Imgproc.COLOR_BGR2HSV));
+		red.addFilter(FindStanchion2015.createRedColorRange());
+		addFilter("HSV Red", red);
+		
+		addFilter("Find Yellow", new FindStanchion2015(false));
+		addFilter("Find Red", new FindStanchion2015(true));
+		
+		addFilter("Find Yellow or Red", new FindYellowOrRed());
+	}
+
     /**
      * Main entry point to this Java Application.
      * 
@@ -65,8 +107,7 @@ public final class StanchionView2015 {
      */
     public static void main(String[] args) {
         // Create the GUI application, set the filter then start up the GUI
-        final LiveViewGui frame = new LiveViewGui("2015 AVC Stanchion Viewer");
-        frame.setFilter(new FindStanchion2015(false));
+        final LiveViewGui frame = new StanchionView2015();
         //frame.setFilter(FindTarget2013.createHsvColorRange());
         frame.main();
     }

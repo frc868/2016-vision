@@ -82,6 +82,9 @@ public final class FindStanchion2015 implements MatFilter {
     private final int _Thickness;
     private final ColorSpace _BgrToHsv;
 
+    /** Set to true for lots of debug output dumped to the console. */
+	private boolean _Debug;
+
     /**
      * Constructs a new instance by pre-allocating all of our image filtering
      * objects.
@@ -214,12 +217,13 @@ public final class FindStanchion2015 implements MatFilter {
             if ((w > 5) && (h > 15) && (hw > 50) && (hw < 800) && (pts >= 4) && (pts < 20) && (distFromTop > distFromMid) && (distFromTop < imgMid)) {
                 polygons.add(poly);
                 _Found = true;
-
+                if (_Debug) {
                 System.out.println("Accepted: sides: " + pts + " ("
                                    + poly.getWidth() + ", " + poly.getHeight()
                                    + ")  H/W: " + hw + "  distFromTop: " + distFromTop + "  distFromMid: " + distFromMid);
+                }
 
-            } else {
+            } else if (_Debug) {
                 System.out.println("Rejected: sides: " + pts + " ("
                                    + poly.getWidth() + ", " + poly.getHeight()
                                    + ")  H/W: " + hw + "  distFromTop: " + distFromTop + "  distFromMid: " + distFromMid);
