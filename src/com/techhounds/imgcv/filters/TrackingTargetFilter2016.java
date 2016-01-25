@@ -46,7 +46,7 @@ import org.opencv.imgproc.Imgproc;
  *
  * @author Paul Blankenbaker
  */
-public final class VisionFilter2016 extends Filter2016 {
+public final class TrackingTargetFilter2016 extends TargetFilter2016 {
 	
 	//Configurations
 	
@@ -93,7 +93,7 @@ public final class VisionFilter2016 extends Filter2016 {
     private final Scalar      _ReticleOverlay;
 
     //Constructs a new instance by pre-allocating all of our image filtering objects.
-    public VisionFilter2016() { 
+    public TrackingTargetFilter2016() { 
     	_ColorRange         = super.createHsvColorRange();
     	_Dilate 	        = super.createDilate();
     	_Erode		        = super.createErode();

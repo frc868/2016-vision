@@ -29,12 +29,12 @@ import java.awt.HeadlessException;
 
 import org.opencv.core.Mat;
 import com.techhounds.imgcv.LiveViewGui;
-import com.techhounds.imgcv.filters.ColorFilter2016;
+import com.techhounds.imgcv.filters.ColorTargetFilter2016;
 import com.techhounds.imgcv.filters.DoNothingFilter;
 import com.techhounds.imgcv.filters.MatFilter;
-import com.techhounds.imgcv.filters.ProcessFilter2016;
+import com.techhounds.imgcv.filters.ProcessTargetFilter2016;
 import com.techhounds.imgcv.filters.Sequence;
-import com.techhounds.imgcv.filters.VisionFilter2016;
+import com.techhounds.imgcv.filters.TrackingTargetFilter2016;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
 /**
@@ -43,10 +43,10 @@ import edu.wpi.first.wpilibj.networktables.NetworkTable;
  *
  * @author pkb
  */
-public final class VisionView2016 extends LiveViewGui {
-    VisionFilter2016 filter = new VisionFilter2016();
+public final class LiveView2016 extends LiveViewGui {
+    TrackingTargetFilter2016 filter = new TrackingTargetFilter2016();
     
-    public VisionView2016(String title) throws HeadlessException {
+    public LiveView2016(String title) throws HeadlessException {
 		super(title);
 		setFilter(filter);
 	}
@@ -63,9 +63,9 @@ public final class VisionView2016 extends LiveViewGui {
         addFilter("Main 2016 Filter", filter);
         */    	
     	
-    	addFilter("Color Filter", new ColorFilter2016());
-    	addFilter("Process Filter", new ProcessFilter2016());
-    	addFilter("Targeting", new VisionFilter2016());
+    	addFilter("Color Filter", new ColorTargetFilter2016());
+    	addFilter("Process Filter", new ProcessTargetFilter2016());
+    	addFilter("Targeting", new TrackingTargetFilter2016());
     }
 
 	/**
@@ -81,7 +81,7 @@ public final class VisionView2016 extends LiveViewGui {
      */
     public static void main(String[] args) {
         // Create the GUI application, set the filter then start up the GUI
-        final VisionView2016 frame = new VisionView2016("2016 Vision Viewer");
+        final LiveView2016 frame = new LiveView2016("2016 Vision Viewer");
         NetworkTable.setClientMode();
         NetworkTable.setIPAddress("10.8.68.2");
         NetworkTable.initialize();

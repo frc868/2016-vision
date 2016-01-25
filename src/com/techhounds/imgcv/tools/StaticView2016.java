@@ -26,9 +26,9 @@
 package com.techhounds.imgcv.tools;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
-import com.techhounds.imgcv.filters.ColorFilter2016;
-import com.techhounds.imgcv.filters.ProcessFilter2016;
-import com.techhounds.imgcv.filters.VisionFilter2016;
+import com.techhounds.imgcv.filters.ColorTargetFilter2016;
+import com.techhounds.imgcv.filters.ProcessTargetFilter2016;
+import com.techhounds.imgcv.filters.TrackingTargetFilter2016;
 import com.techhounds.imgcv.LiveViewGui;
 
 import java.awt.event.ActionEvent;
@@ -57,9 +57,9 @@ import org.opencv.highgui.VideoCapture;
  *
  * @author pkb
  */
-public final class VisionTool2016 extends FilterToolGuiOpenCv {
+public final class StaticView2016 extends FilterToolGuiOpenCv {
 
-    private VisionTool2016() { //Constructs a new instance of our example filter tool.
+    private StaticView2016() { //Constructs a new instance of our example filter tool.
         super("Vision Tool 2016");        
     }
 
@@ -67,9 +67,9 @@ public final class VisionTool2016 extends FilterToolGuiOpenCv {
     protected void addControls() { //Adding controls and filters to the side bar.
         super.addControls(); //Adds parent controls
         //adds the button for our 2016 filter (VisionFilter2016.java)
-        addImageProcessingButton("2016 Targeting Filter", new VisionFilter2016()); 
-        addImageProcessingButton("Image Processing Filter", new ProcessFilter2016());
-        addImageProcessingButton("Color Processing Filter", new ColorFilter2016());
+        addImageProcessingButton("2016 Targeting Filter", new TrackingTargetFilter2016()); 
+        addImageProcessingButton("Image Processing Filter", new ProcessTargetFilter2016());
+        addImageProcessingButton("Color Processing Filter", new ColorTargetFilter2016());
     }
 
     /**
@@ -78,7 +78,7 @@ public final class VisionTool2016 extends FilterToolGuiOpenCv {
      */
     public static void main(String[] args) {
         // Create the GUI application and then start it's main routine
-    	final FilterToolGuiOpenCv frame = new VisionTool2016();
+    	final FilterToolGuiOpenCv frame = new StaticView2016();
         frame.main();
     }
 }

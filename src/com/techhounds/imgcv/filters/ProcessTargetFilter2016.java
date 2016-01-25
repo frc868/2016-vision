@@ -40,13 +40,23 @@ import org.opencv.imgproc.Imgproc;
  *
  * @author Paul Blankenbaker
  */
-public final class ColorFilter2016 extends Filter2016 {
+public final class ProcessTargetFilter2016 extends TargetFilter2016 {
+	
+	//Processing Filters
 	
     private final MatFilter		_ColorRange; //Used to filter image to a specific color range.
+    private final Dilate		_Dilate;     //grows remaining parts of the images
+    private final Erode			_Erode;      //shrinks remaining parts of the images
+    private final GrayScale		_GrayScale; //Used to convert image to a gray scale rendering.
+    private final BlackWhite	_BlackWhite; //Used to convert from gray scale to black and white.
 
     //Constructs a new instance by pre-allocating all of our image filtering objects.
-    public ColorFilter2016() { 
+    public ProcessTargetFilter2016() { 
     	_ColorRange = super.createHsvColorRange();
+    	_Dilate 	= super.createDilate();  
+    	_Erode		= super.createErode();
+        _GrayScale  = super.createGrayScale();
+        _BlackWhite = super.createBlackWhite();
     }
 
     /**
@@ -56,11 +66,22 @@ public final class ColorFilter2016 extends Filter2016 {
      * is not permitted).
      *
      * @return The original image with overlay information applied (we do a lot
-     * of filtering and try to locate the target).
+     * of filtering and try to locate the 2013 FRC rectangular target regions).
      */
     @Override
     public Mat process(Mat srcImage) {       
-    	return _ColorRange.process(srcImage.clone());
+        return primaryProcessing(srcImage.clone()); //creates new color processed image
+    }
+        
+    private Mat primaryProcessing(Mat inputImage) { //does basic color/erosion processing
+    	_ColorRange.process(inputImage); 
+        _Dilate.process(inputImage); //what if we erode first?
+        _Erode.process(inputImage);
+        _GrayScale.process(inputImage);
+        _BlackWhite.process(inputImage);
+        //blur is done via camera focus, not here
+        
+        return inputImage; //convenience sake, not necessary
     }
 }
 

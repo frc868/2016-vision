@@ -2,7 +2,7 @@ package com.techhounds.imgcv.filters;
 
 import org.opencv.core.Mat;
 
-public abstract class Filter2016 implements MatFilter {
+public abstract class TargetFilter2016 implements MatFilter {
 
 	//CONFIGS
 	
