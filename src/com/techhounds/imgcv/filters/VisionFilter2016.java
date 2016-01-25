@@ -174,14 +174,19 @@ public final class VisionFilter2016 extends Filter2016 {
     	PolygonCv bestTarget = null;
     	PolygonCv currentTarget;
     	double    bestTargetValue = 0;
+    	int       bestTargetIndex = 0;
     	
     	for(int i = 0; i < targetList.size(); i++) {
     		currentTarget = targetList.get(i);
     		
     		if(getTargetRating(currentTarget) > bestTargetValue)  { //if this is better than
     			bestTarget = currentTarget;                         //best so far
-    		}                                                       //becomes new best
+    			bestTargetIndex = i;                                //becomes new best
+    		}                                                       
     	}
+    	
+    	//will cause issues if targetList is NULL! this shouldn't happen though
+    	targetList.remove(bestTargetIndex); //removes the best target
     	
     	return bestTarget;
     }
