@@ -31,9 +31,12 @@ import javafx.scene.shape.Circle;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
@@ -48,6 +51,7 @@ public final class VisionFilter2016 extends Filter2016 {
 	//Configurations
 	
 	private static double[] bestTargetColors  = {100, 100, 255};
+	private static double[] reticleColors     = {100, 100, 255};
 	private static double[] otherTargetColors = {255, 100, 100};
 	private static int      targetOutlineThickness   = 1;
 
@@ -63,6 +67,9 @@ public final class VisionFilter2016 extends Filter2016 {
 	private static double   targetSidesIdeal  = 6;
 	private static double   targetRatioIdeal  = 0.85;
 	private static double   targetAreaIdeal   = 7500;
+	
+	private static int      reticleHeight     = 2;
+	private static int      reticleWidth      = 2;
 	
 	private static double   targetTapeWidth   = 24; //inches
 	private static double   targetTowerHeight = 120; //inches
@@ -83,6 +90,7 @@ public final class VisionFilter2016 extends Filter2016 {
     private final CrossHair   _CrossHair;  //used to draw a crosshair
     private final Scalar      _BestTargetOverlay; 
     private final Scalar      _OtherTargetOverlay;
+    private final Scalar      _ReticleOverlay;
 
     //Constructs a new instance by pre-allocating all of our image filtering objects.
     public VisionFilter2016() { 
@@ -94,6 +102,7 @@ public final class VisionFilter2016 extends Filter2016 {
         _CrossHair          = new CrossHair();    
         _BestTargetOverlay  = new Scalar(bestTargetColors);
         _OtherTargetOverlay = new Scalar(otherTargetColors);
+        _ReticleOverlay     = new Scalar(reticleColors);
     }
 
     /**
@@ -249,7 +258,16 @@ public final class VisionFilter2016 extends Filter2016 {
     	return inputImage;
     }
     
-    private Mat drawReticle(Mat inputImage, PolygonCv bestTarget){
+    private Mat drawReticle(Mat inputImage, PolygonCv bestTarget){  	
+    	double reticleCenterX = bestTarget.getCenterX();
+    	double reticleCenterY = bestTarget.getMinY();
+    	
+    	Point point1 = new Point(reticleCenterX + reticleWidth,
+    			                 reticleCenterY + reticleHeight);
+    	Point point2 = new Point(reticleCenterX - reticleWidth,
+    			                 reticleCenterY - reticleHeight);
+    	
+    	Core.rectangle(inputImage, point1, point2, _ReticleOverlay, -1);
     	
     	return inputImage;
     }
