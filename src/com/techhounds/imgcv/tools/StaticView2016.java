@@ -26,9 +26,9 @@
 package com.techhounds.imgcv.tools;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
-import com.techhounds.imgcv.filters.ColorTargetFilter2016;
-import com.techhounds.imgcv.filters.ProcessTargetFilter2016;
-import com.techhounds.imgcv.filters.TrackingTargetFilter2016;
+import com.techhounds.imgcv.filters.vision2016.ColorTargetFilter2016;
+import com.techhounds.imgcv.filters.vision2016.ProcessTargetFilter2016;
+import com.techhounds.imgcv.filters.vision2016.TrackingTargetFilter2016;
 import com.techhounds.imgcv.LiveViewGui;
 
 import java.awt.event.ActionEvent;

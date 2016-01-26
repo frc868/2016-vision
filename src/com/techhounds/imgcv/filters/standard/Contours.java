@@ -23,7 +23,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.filters;
+package com.techhounds.imgcv.filters.standard;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +32,8 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+
+import com.techhounds.imgcv.filters.MatFilter;
 
 /**
  * A image filter which accepts a single channel (typically black & white) image

@@ -4,9 +4,9 @@ import java.awt.HeadlessException;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
 import com.techhounds.imgcv.filters.FillChannel;
-import com.techhounds.imgcv.filters.GrayScale;
-import com.techhounds.imgcv.filters.Negative;
-import com.techhounds.imgcv.filters.Sequence;
+import com.techhounds.imgcv.filters.standard.GrayScale;
+import com.techhounds.imgcv.filters.standard.Negative;
+import com.techhounds.imgcv.filters.standard.Sequence;
 
 /**
  * Example of extending the {@link FilterToolGuiOpenCv} class to make your own

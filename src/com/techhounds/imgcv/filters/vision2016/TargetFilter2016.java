@@ -1,6 +1,15 @@
-package com.techhounds.imgcv.filters;
+package com.techhounds.imgcv.filters.vision2016;
 
 import org.opencv.core.Mat;
+
+import com.techhounds.imgcv.filters.MatFilter;
+import com.techhounds.imgcv.filters.standard.BlackWhite;
+import com.techhounds.imgcv.filters.standard.ColorRange;
+import com.techhounds.imgcv.filters.standard.ColorSpace;
+import com.techhounds.imgcv.filters.standard.Dilate;
+import com.techhounds.imgcv.filters.standard.Erode;
+import com.techhounds.imgcv.filters.standard.GrayScale;
+import com.techhounds.imgcv.filters.standard.Sequence;
 
 public abstract class TargetFilter2016 implements MatFilter {
 

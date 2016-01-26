@@ -1,6 +1,8 @@
-package com.techhounds.imgcv.filters;
+package com.techhounds.imgcv.filters.standard;
 
 import org.opencv.core.Mat;
+
+import com.techhounds.imgcv.filters.MatFilter;
 
 /**
  * A "do nothing" filter that just returns a copy of the original image passed to it.

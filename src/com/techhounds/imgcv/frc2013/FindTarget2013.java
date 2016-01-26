@@ -26,14 +26,14 @@
 package com.techhounds.imgcv.frc2013;
 
 import com.techhounds.imgcv.PolygonCv;
-import com.techhounds.imgcv.filters.BlackWhite;
-import com.techhounds.imgcv.filters.ColorRange;
-import com.techhounds.imgcv.filters.ColorSpace;
-import com.techhounds.imgcv.filters.Dilate;
-import com.techhounds.imgcv.filters.Erode;
-import com.techhounds.imgcv.filters.GrayScale;
 import com.techhounds.imgcv.filters.MatFilter;
-import com.techhounds.imgcv.filters.Sequence;
+import com.techhounds.imgcv.filters.standard.BlackWhite;
+import com.techhounds.imgcv.filters.standard.ColorRange;
+import com.techhounds.imgcv.filters.standard.ColorSpace;
+import com.techhounds.imgcv.filters.standard.Dilate;
+import com.techhounds.imgcv.filters.standard.Erode;
+import com.techhounds.imgcv.filters.standard.GrayScale;
+import com.techhounds.imgcv.filters.standard.Sequence;
 
 import java.util.ArrayList;
 import java.util.List;

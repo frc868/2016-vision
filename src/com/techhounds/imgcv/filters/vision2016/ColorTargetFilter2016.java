@@ -23,9 +23,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.filters;
+package com.techhounds.imgcv.filters.vision2016;
 
 import com.techhounds.imgcv.PolygonCv;
+import com.techhounds.imgcv.filters.MatFilter;
+
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import java.util.ArrayList;
 import java.util.List;

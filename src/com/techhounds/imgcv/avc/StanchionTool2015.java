@@ -26,9 +26,9 @@
 package com.techhounds.imgcv.avc;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
-import com.techhounds.imgcv.filters.ColorSpace;
-import com.techhounds.imgcv.filters.GrayScale;
 import com.techhounds.imgcv.filters.MatFilter;
+import com.techhounds.imgcv.filters.standard.ColorSpace;
+import com.techhounds.imgcv.filters.standard.GrayScale;
 
 /**
  * A more involved example of extending the filter tool for testing filters.
