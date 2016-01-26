@@ -75,8 +75,9 @@ public final class TrackingTargetFilter2016 extends TargetFilter2016 {
 	private static int      reticleHeight     = 2;
 	private static int      reticleWidth      = 2;
 	
-	private static double   targetTapeWidth   = 24; //inches
-	private static double   targetTowerHeight = 120;//inches
+	private static double   targetTapeWidth   = 20; //inches
+	private static double   targetTowerHeight = 80;//inches, not sure if to bottom or middle of target
+	private static double   cameraElevation   = 22;//inches
 	private static double   cameraHorizFOV    = 67; //degrees
 	private static double   cameraResolutionX = 800;//pixels
 
@@ -228,12 +229,13 @@ public final class TrackingTargetFilter2016 extends TargetFilter2016 {
     					 	Math.tan(
     								 (targetWidth / cameraResolutionX) * (cameraHorizRads / 2));
     	
-    	cameraAngleElevation = Math.asin(targetTowerHeight / targetDistance);
+    	cameraAngleElevation = Math.asin((targetTowerHeight - cameraElevation) / targetDistance);
     	
     	baseDistance = Math.cos(cameraAngleElevation) * targetDistance;
     	
     	networkTable.putNumber("OffCenterDegreesX", offCenterDegreesX);
     	networkTable.putNumber("DistanceToBase",  baseDistance);
+    	networkTable.putNumber("DistanceToTarget", targetDistance);
     }
 
     private Mat drawTargets(Mat inputImage, List<PolygonCv> targetList) {
