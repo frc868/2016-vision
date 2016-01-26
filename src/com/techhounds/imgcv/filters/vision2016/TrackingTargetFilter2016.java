@@ -57,11 +57,8 @@ public final class TrackingTargetFilter2016 extends TargetFilter2016 {
 	
 	//Configurations
 	
-	private static double[] bestTargetColors  = {100, 100, 255};
-	private static double[] reticleColors     = {100, 100, 255};
-	private static double[] otherTargetColors = {255, 100, 100};
-	private static int      targetOutlineThickness   = 1;
 
+	private static int      targetOutlineThickness   = 1;
 	private static double   polygonEpsilon    = 5.0; //used for detecting polygons from contours
 	private static int      targetSidesMin    = 4; //ie at least 3 sides
 	private static double   targetRatioMin    = 0.3;
@@ -79,9 +76,9 @@ public final class TrackingTargetFilter2016 extends TargetFilter2016 {
 	private static int      reticleWidth      = 2;
 	
 	private static double   targetTapeWidth   = 24; //inches
-	private static double   targetTowerHeight = 120; //inches
-	private static double   cameraHorizFOV    = 67; //could be wrong
-	private static double   cameraResolutionX = 800;
+	private static double   targetTowerHeight = 120;//inches
+	private static double   cameraHorizFOV    = 67; //degrees
+	private static double   cameraResolutionX = 800;//pixels
 
 	private        double   frameCount        = 0;
 	private  NetworkTable   networkTable;
@@ -95,9 +92,9 @@ public final class TrackingTargetFilter2016 extends TargetFilter2016 {
     private final GrayScale   _GrayScale;  //Used to convert image to a gray scale rendering.
     private final BlackWhite  _BlackWhite; //Used to convert from gray scale to black and white.
     private final CrossHair   _CrossHair;  //used to draw a crosshair
-    private final Scalar      _BestTargetOverlay; 
-    private final Scalar      _OtherTargetOverlay;
-    private final Scalar      _ReticleOverlay;
+    private final Scalar      _BestTargetOverlay;  //used to outline best target
+    private final Scalar      _OtherTargetOverlay; //used to outline other targets
+    private final Scalar      _ReticleOverlay;     //used to draw reticle at center of target
 
     //Constructs a new instance by pre-allocating all of our image filtering objects.
     public TrackingTargetFilter2016() { 
@@ -106,10 +103,10 @@ public final class TrackingTargetFilter2016 extends TargetFilter2016 {
     	_Erode		        = super.createErode();
         _GrayScale          = super.createGrayScale();
         _BlackWhite         = super.createBlackWhite(); 
-        _CrossHair          = new CrossHair();    
-        _BestTargetOverlay  = new Scalar(bestTargetColors);
-        _OtherTargetOverlay = new Scalar(otherTargetColors);
-        _ReticleOverlay     = new Scalar(reticleColors);
+        _CrossHair          = super.createCrossHair();
+        _BestTargetOverlay  = super.createBestTargetOverlay();
+        _OtherTargetOverlay = super.createOtherTargetOverlay();
+        _ReticleOverlay     = super.createReticleOverlay();
     }
 
     /**

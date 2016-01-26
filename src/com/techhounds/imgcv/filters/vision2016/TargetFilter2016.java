@@ -1,7 +1,9 @@
 package com.techhounds.imgcv.filters.vision2016;
 
 import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
 
+import com.techhounds.imgcv.filters.CrossHair;
 import com.techhounds.imgcv.filters.MatFilter;
 import com.techhounds.imgcv.filters.standard.BlackWhite;
 import com.techhounds.imgcv.filters.standard.ColorRange;
@@ -22,6 +24,10 @@ public abstract class TargetFilter2016 implements MatFilter {
 	private static int		blackWhiteThresh  = 40;
 	private static int		dilateFactor      = 3; 
 	private static int		erodeFactor       = 5; 
+	
+	private static double[] bestTargetColors  = {100, 100, 255};
+	private static double[] reticleColors     = {100, 100, 255};
+	private static double[] otherTargetColors = {255, 100, 100};
 	
 	//METHODS
 	
@@ -55,5 +61,21 @@ public abstract class TargetFilter2016 implements MatFilter {
         return filter;
     }
 	
+    public static CrossHair createCrossHair() {
+    	return new CrossHair(); 
+    }
+    
+    public static Scalar createBestTargetOverlay() {
+    	return new Scalar(bestTargetColors);
+    }
+    
+    public static Scalar createOtherTargetOverlay() {
+    	return new Scalar(otherTargetColors);
+    }
+    
+    public static Scalar createReticleOverlay() {
+    	return new Scalar(reticleColors);
+    }
+    
 	public abstract Mat process(Mat srcImage);
 }
