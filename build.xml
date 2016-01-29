@@ -12,7 +12,6 @@
 	ocvJarDir=${user.home}/usr/opencv-2.4.11
     ocvLibDir=${user.home}/usr/opencv-2.4.11/lib
 	-->
-	<loadproperties srcfile="${user.home}/.img-process.properties" />
     <property name="src.dir"     value="src"/>
 
     <property name="lib.dir"     value="${ocvJarDir}"/>
@@ -24,7 +23,7 @@
     <property name="classes.dir" value="${build.dir}/classes"/>
     <property name="jar.dir"     value="${build.dir}/jar"/>
 	
-	<property name="tool" value="StanchionTool2015" />
+	<property name="tool" value="StaticView2016" />
 
     <property name="main-class"  value="com.techhounds.imgcv.tools.${tool}"/>
 
@@ -35,7 +34,11 @@
 
     <target name="compile">
         <mkdir dir="${classes.dir}"/>
-        <javac includeantruntime="false" srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath"/>
+        <javac includeantruntime="false" srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath">
+	  <classpath>
+	      <pathelement path="/home/debian/wpilib/java/current/lib/NetworkTables.jar"/><pathelement path="/usr/local/share/OpenCV/java/opencv-2412.jar"/>
+	  </classpath>
+	</javac>
     </target>
 
     <target name="jar" depends="compile">
@@ -51,6 +54,7 @@
         <java fork="true" classname="${main-class}">
             <sysproperty key="java.library.path" path="${ocvLibDir}"/>
             <classpath>
+	      
                 <path refid="classpath"/>
                 <path location="${jar.dir}/${ant.project.name}.jar"/>
             </classpath>

@@ -34,7 +34,6 @@ import com.techhounds.imgcv.filters.standard.Erode;
 import com.techhounds.imgcv.filters.standard.GrayScale;
 
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
-import javafx.scene.shape.Circle;
 
 import java.util.ArrayList;
 import java.util.List;
