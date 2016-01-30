@@ -26,9 +26,7 @@
 package com.techhounds.imgcv.tools;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
-import com.techhounds.imgcv.filters.vision2016.ColorTargetFilter2016;
-import com.techhounds.imgcv.filters.vision2016.ProcessTargetFilter2016;
-import com.techhounds.imgcv.filters.vision2016.TrackingTargetFilter2016;
+import com.techhounds.imgcv.filters.vision2016.TargetFilter;
 import com.techhounds.imgcv.LiveViewGui;
 
 import java.awt.event.ActionEvent;
@@ -67,9 +65,8 @@ public final class StaticView2016 extends FilterToolGuiOpenCv {
     protected void addControls() { //Adding controls and filters to the side bar.
         super.addControls(); //Adds parent controls
         //adds the button for our 2016 filter (VisionFilter2016.java)
-        addImageProcessingButton("2016 Targeting Filter", new TrackingTargetFilter2016()); 
-        addImageProcessingButton("Image Processing Filter", new ProcessTargetFilter2016());
-        addImageProcessingButton("Color Processing Filter", new ColorTargetFilter2016());
+        addImageProcessingButton("2016 Targeting Filter", new TargetFilter(2)); 
+        addImageProcessingButton("2016 Color Filter", new TargetFilter(1));
     }
 
     /**
