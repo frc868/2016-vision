@@ -36,7 +36,9 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
 
 import com.techhounds.imgcv.filters.MatFilter;
 
@@ -80,6 +82,18 @@ public final class ColorRange implements MatFilter {
 	 * List of listeners to notify if values are changed in GUI editor.
 	 */
 	private final ArrayList<ChangeListener> _Listeners;
+
+	/**
+	 * Lower bounds of color ranges for Core.inRange() optimized invocation
+	 * (will be null if we can't used the optimized method).
+	 */
+	private Scalar _KeepAllLower;
+
+	/**
+	 * Upper bounds of color ranges for Core.inRange() optimized invocation
+	 * (will be null if we can't used the optimized method).
+	 */
+	private Scalar _KeepAllUpper;
 
 	/**
 	 * Construct a new instance of the range filter and choose whether to keep
@@ -135,17 +149,41 @@ public final class ColorRange implements MatFilter {
 	 *            as minVals array).
 	 */
 	public void setRanges(int[] minVals, int[] maxVals, boolean[] keep) {
-		if ((minVals.length != maxVals.length) || (minVals.length == 0)) {
+		int channels = minVals.length;
+
+		if ((channels != maxVals.length) || (channels == 0)) {
 			throw new IllegalArgumentException(
 					"Color range arrays must have non-zero matching lengths");
 		}
-		if (keep.length != minVals.length) {
+		if (keep.length != channels) {
 			throw new IllegalArgumentException(
 					"Keep flags length does not match the number of channels");
 		}
 		_MinVals = minVals.clone();
 		_MaxVals = maxVals.clone();
 		_Keep = keep.clone();
+		boolean keepAll = true;
+		double[] minScalar = new double[channels];
+		double[] maxScalar = new double[channels];
+
+		for (int i = 0; i < channels; i++) {
+			keepAll = keepAll && _Keep[i];
+			minScalar[i] = minVals[i];
+			maxScalar[i] = maxVals[i];
+		}
+
+		if (keepAll) {
+			// Keep in range is true for all channels, enable optimized
+			// color range check
+			_KeepAllLower = new Scalar(minScalar);
+			_KeepAllUpper = new Scalar(maxScalar);
+		} else {
+			// One or more channels want to keep values out of range, fall
+			// back to slower check
+			_KeepAllLower = null;
+			_KeepAllUpper = null;
+		}
+
 	}
 
 	/**
@@ -162,16 +200,10 @@ public final class ColorRange implements MatFilter {
 	 *            false to remove the pixels outside all of the ranges.
 	 */
 	public void setRanges(int[] minVals, int[] maxVals, boolean keep) {
-		if ((minVals.length != maxVals.length) || (minVals.length == 0)) {
-			throw new IllegalArgumentException(
-					"Color range arrays must have non-zero matching lengths");
-		}
-
 		// Create keep array to match range sizes
-		_Keep = new boolean[minVals.length];
-		Arrays.fill(_Keep, keep);
-		_MinVals = minVals.clone();
-		_MaxVals = maxVals.clone();
+		boolean[] keepChannels = new boolean[minVals.length];
+		Arrays.fill(keepChannels, keep);
+		setRanges(minVals, maxVals, keepChannels);
 	}
 
 	/**
@@ -188,6 +220,14 @@ public final class ColorRange implements MatFilter {
 	public Mat process(Mat img) {
 		int nchannels = img.channels();
 		int ncolors = _MinVals.length;
+
+		// If only keeping values within range and number of channels
+		// match, use native OpenCV inrange function to optimize performance
+		if ((_KeepAllLower != null) && (nchannels == ncolors)) {
+			Core.inRange(img, _KeepAllLower, _KeepAllUpper, img);
+			return img;
+		}
+
 		if (nchannels <= ncolors) {
 			int nrows = img.rows();
 			int ncols = img.cols();
