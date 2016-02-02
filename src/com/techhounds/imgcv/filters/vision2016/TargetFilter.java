@@ -34,11 +34,11 @@ public class TargetFilter extends Filter implements MatFilter {
 		targetRatioMin    = 1;
 		targetAreaMin     = 1200; //areas and sizes are of bounding box
 		
-		targetHeightMax   = 100;
-		targetWidthMax    = 175;
+		targetHeightMax   = 120;
+		targetWidthMax    = 200;
 		targetSidesMax    = 10;
-		targetRatioMax    = 2;
-		targetAreaMax     = 12000;
+		targetRatioMax    = 2.5;
+		targetAreaMax     = 15000;
 		
 		targetHeightIdeal = 80;
 		targetWidthIdeal  = 100;
