@@ -41,7 +41,7 @@ public class FrameGrabber {
 	 * @return A cloned copy of the last image retrieved (or null if no image
 	 *         retrieved yet since the last start).
 	 */
-	Mat getLastImage() {
+	public Mat getLastImage() {
 		CaptureThread ct = _CaptureThread;
 		Mat img = null;
 		if (ct != null) {

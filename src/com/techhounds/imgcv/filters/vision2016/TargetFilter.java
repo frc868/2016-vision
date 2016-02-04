@@ -95,18 +95,6 @@ public class TargetFilter extends Filter implements MatFilter {
 		if(targets.size() > 0) {
         	bestTarget = findBestTarget(targets);
         	
-        	System.out.println(bestTarget.getHeight());
-        	System.out.println(bestTarget.getWidth());
-        	System.out.println(bestTarget.size());
-        	System.out.println(bestTarget.getBoundingAspectRatio());
-        	System.out.println(bestTarget.getBoundingArea());
-        	System.out.println();
-        	System.out.println();
-        	System.out.println();
-        	System.out.println();
-        	System.out.println();
-        	System.out.println();
-        	
         	if(networkTable != null) { 
         		targetAnalysis(bestTarget); //no return as it simply writes data to netTables 
         		networkTable.putNumber("FrameCount", frameCount++); 
@@ -118,6 +106,8 @@ public class TargetFilter extends Filter implements MatFilter {
         			targetOutlineThickness);
         	PolygonRender.drawPoint(workingImage, bestTarget.getCenterX(), 
         			bestTarget.getMinY(), reticleSize, reticleSize, reticleColors);
+        } else {
+        	System.out.println("No targets found");
         }
         
         crossHair.process(workingImage);
