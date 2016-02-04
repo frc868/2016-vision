@@ -19,19 +19,20 @@ import com.techhounds.imgcv.filters.standard.GrayScale;
 import com.techhounds.imgcv.utils.*;
 
 /*
- * Filter Stage List
+ * Constructor Codes:
  * 
  * 0: Do Nothing
- * 1: ColorSpace
- * 7: CrossHair
- * 8: OtherTargets
- * 9: BestTarget
- * 10: BoundingBox
+ * 1: Color Process
+ * 2: Analysis Only
+ * 3: Classical Renderer
+ * 4: Bounding Only Render (preferred by drivers)
  */
 
 public class TargetFilter extends Filter implements MatFilter, TargetFilterConfig {
 			
-	public TargetFilter(int stage) {
+	public TargetFilter(int input) {
+		
+		stage = input;
 		
 		polygonEpsilon    = 5.0; //used for detecting polygons from contours
 	
@@ -52,26 +53,10 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		targetSidesIdeal  = 8;
 		targetRatioIdeal  = 1.5;
 		targetAreaIdeal   = 5000;
-		
-		if(stage > 0) {
-			useColorRange   = true;
-			useColorSpace   = true;
-		}
-		if(stage > 1) useErode        = true;
-		if(stage > 2) useDilate       = true;
-		if(stage > 3) useGrayScale    = true;
-		if(stage > 4) useBlackWhite   = true;
-		if(stage > 5) useCrossHair    = true;
-		if(stage > 6) useOtherTargets = true;
-		if(stage > 7) useBestTarget   = true;
-		if(stage > 8) useReticle      = true;
-		if(stage > 9) {
-			useOtherTargets = false;
-			useBestTarget   = false;
-			useBoundingBox  = true;
-		}
 	
 	}
+	
+	private int stage;
 		
 	//filter instances TODO could we put these into an interface?
 	
@@ -82,35 +67,29 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 	private final MatFilter _GrayScale    = new GrayScale();
 	private final MatFilter _BlackWhite   = new BlackWhite(blackWhiteThresh, 255, true);
 	private final MatFilter _CrossHair    = new CrossHair();
-	private final MatFilter _OtherTargets = new PolygonRender(ScalarColors.BLUE, targetOutlineThickness);
-	private final MatFilter _BestTarget   = new PolygonRender(ScalarColors.RED,  targetOutlineThickness);
-	private final MatFilter _Reticle      = new RectangleRender(ScalarColors.RED, -1); //-1 is filled
-	private final MatFilter _BoundingBox  = new RectangleRender(ScalarColors.GREEN, boundingBoxThickness);
+	private final PolygonRender   _OtherTargets = new PolygonRender(ScalarColors.BLUE, targetOutlineThickness);
+	private final PolygonRender   _BestTarget   = new PolygonRender(ScalarColors.RED,  targetOutlineThickness);
+	private final RectangleRender _Reticle      = new RectangleRender(ScalarColors.RED, -1); //-1 is filled
+	private final RectangleRender _BoundingBox  = new RectangleRender(ScalarColors.GREEN, boundingBoxThickness);
 	
 	//should be set by constructor based on stage value (via switch)
-	
-	private boolean   useColorRange;
-	private boolean   useColorSpace;
-	private boolean   useErode;
-	private boolean   useDilate;
-	private boolean   useGrayScale;
-	private boolean   useBlackWhite;
-	private boolean   useCrossHair;
-	private boolean   useOtherTargets;
-	private boolean   useBestTarget;
-	private boolean   useReticle;
-	private boolean   useBoundingBox;
-	
+		
 	public Mat process(Mat srcImage) {
+		if(stage == 0) return srcImage;
+		
 		List<PolygonCv> targets  = new ArrayList<>();
 		     PolygonCv  bestTarget;
-		     
+		
 		Mat workingImage = srcImage.clone();
 		
-		if(useColorRange) _ColorRange.process(workingImage); else return workingImage;
-		if(useColorSpace) _ColorSpace.process(workingImage); else return workingImage;
-		if(useErode)      _Erode.process(workingImage);     
-		if(useDilate)     _Dilate.process(workingImage);
+		_ColorRange.process(workingImage);
+		_ColorSpace.process(workingImage);
+		_Erode.process(workingImage);     
+		_Dilate.process(workingImage);
+		_GrayScale.process(workingImage);
+		_BlackWhite.process(workingImage);
+		
+		if(stage == 1) return workingImage;
 		
 		targets = findTargets(workingImage);
 		workingImage = srcImage.clone();
@@ -123,9 +102,29 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
         		networkTable.putNumber("FrameCount", frameCount++); 
         	}	
         	
-        	//draw polies here
+        	if(stage == 2) return workingImage;
+        	
+        	if(stage == 3) {
+        		for(int i = 0; i < targets.size(); i++) { //size will be one less than prev call
+        			_OtherTargets.setPolygon(targets.get(i));
+        			_OtherTargets.process(workingImage);
+        		}
+        		_BestTarget.process(workingImage);
+        		
+        		_Reticle.setCenter(bestTarget.getCenterX(), bestTarget.getMaxY());
+        		_Reticle.setSize(reticleSize, reticleSize);
+        		_Reticle.process(workingImage);
+        	}
+        	
+        	if(stage == 4) {
+        		_BoundingBox.setCenter(bestTarget.getCenterX(), bestTarget.getCenterY());
+        		_BoundingBox.setSize(bestTarget.getHeight(), bestTarget.getWidth());
+        		_BoundingBox.process(workingImage);
+        	}
         	
         }
+		
+		_CrossHair.process(workingImage);
         		
 		return workingImage;
 	}

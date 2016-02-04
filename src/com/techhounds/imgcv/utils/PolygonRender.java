@@ -13,9 +13,9 @@ import com.techhounds.imgcv.filters.MatFilter;
 
 public class PolygonRender implements MatFilter {
     
-	private Scalar    colors;
-	private int       thickness;
-	private PolygonCv polygon;
+	Scalar    colors;
+	int       thickness;
+	PolygonCv polygon;
 	
 	public PolygonRender(Scalar colors, int thickness) {
 		this.colors = colors;
