@@ -121,7 +121,6 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
         		_BoundingBox.setSize(bestTarget.getHeight(), bestTarget.getWidth());
         		_BoundingBox.process(workingImage);
         	}
-        	
         }
 		
 		_CrossHair.process(workingImage);
