@@ -32,9 +32,7 @@ import com.techhounds.imgcv.LiveViewGui;
 import com.techhounds.imgcv.filters.MatFilter;
 import com.techhounds.imgcv.filters.standard.DoNothingFilter;
 import com.techhounds.imgcv.filters.standard.Sequence;
-import com.techhounds.imgcv.filters.vision2016.ColorTargetFilter2016;
-import com.techhounds.imgcv.filters.vision2016.ProcessTargetFilter2016;
-import com.techhounds.imgcv.filters.vision2016.TrackingTargetFilter2016;
+import com.techhounds.imgcv.filters.vision2016.TargetFilter;
 
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
@@ -45,28 +43,18 @@ import edu.wpi.first.wpilibj.networktables.NetworkTable;
  * @author pkb
  */
 public final class LiveView2016 extends LiveViewGui {
-    TrackingTargetFilter2016 filter = new TrackingTargetFilter2016();
+    TargetFilter filter = new TargetFilter(2); //default filter to be set
     
     public LiveView2016(String title) throws HeadlessException {
 		super(title);
-		setFilter(filter);
+		setFilter(filter); //set default filter here 
 	}
     
     protected void addMenuItems() {
-    	super.addMenuItems();
+    	super.addMenuItems(); //adds default menu items  	
     	
-    	/*
-    	addFilter("Main 2016 Step 1", VisionFilter2016.createDilate());
-    	Sequence step2 = new Sequence();
-    	step2.addFilter(VisionFilter2016.createDilate());
-    	step2.addFilter(VisionFilter2016.createErode());
-    	addFilter("Main 2016 Step 2", step2);
-        addFilter("Main 2016 Filter", filter);
-        */    	
-    	
-    	addFilter("Color Filter", new ColorTargetFilter2016());
-    	addFilter("Process Filter", new ProcessTargetFilter2016());
-    	addFilter("Targeting", new TrackingTargetFilter2016());
+    	addFilter("Color Filter", new TargetFilter(1));
+    	addFilter("Full Filter",  new TargetFilter(2));
     }
 
 	/**
@@ -81,14 +69,23 @@ public final class LiveView2016 extends LiveViewGui {
      * @param args Array of command line arguments (ignored).
      */
     public static void main(String[] args) {
+    	
         // Create the GUI application, set the filter then start up the GUI
+    	
         final LiveView2016 frame = new LiveView2016("2016 Vision Viewer");
+        
+        //NetworkTable setup
+        
         NetworkTable.setClientMode();
         NetworkTable.setIPAddress("10.8.68.2");
         NetworkTable.initialize();
         NetworkTable sd = NetworkTable.getTable("SmartDashboard");
         frame.filter.setNetworkTable(sd);
+        
+        //call itself again
+        
         frame.main();
+        
         //frame.startVideoFeed(); //starts from incorrect source
     }
 
