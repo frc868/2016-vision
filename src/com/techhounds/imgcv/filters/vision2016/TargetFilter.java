@@ -67,7 +67,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 	private final MatFilter _GrayScale    = new GrayScale();
 	private final MatFilter _BlackWhite   = new BlackWhite(blackWhiteThresh, 255, true);
 	private final MatFilter _CrossHair    = new CrossHair();
-	private final PolygonRender   _OtherTargets = new PolygonRender(ScalarColors.BLUE, targetOutlineThickness);
+	private final PolyArrayRender _OtherTargets = new PolyArrayRender(ScalarColors.BLUE, targetOutlineThickness);
 	private final PolygonRender   _BestTarget   = new PolygonRender(ScalarColors.RED,  targetOutlineThickness);
 	private final RectangleRender _Reticle      = new RectangleRender(ScalarColors.RED, -1); //-1 is filled
 	private final RectangleRender _BoundingBox  = new RectangleRender(ScalarColors.GREEN, boundingBoxThickness);
@@ -105,10 +105,10 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
         	if(stage == 2) return workingImage;
         	
         	if(stage == 3) {
-        		for(int i = 0; i < targets.size(); i++) { //size will be one less than prev call
-        			_OtherTargets.setPolygon(targets.get(i));
-        			_OtherTargets.process(workingImage);
-        		}
+        		_OtherTargets.setPolygon(targets);
+        		_OtherTargets.process(workingImage);
+        		
+        		_BestTarget.setPolygon(bestTarget);
         		_BestTarget.process(workingImage);
         		
         		_Reticle.setCenter(bestTarget.getCenterX(), bestTarget.getMaxY());
