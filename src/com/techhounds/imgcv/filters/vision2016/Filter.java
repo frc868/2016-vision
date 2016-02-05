@@ -47,11 +47,11 @@ public abstract class Filter {
 	protected double targetRatioMax;
 	protected double targetAreaMax;
 	
-	protected double targetHeightIdeal;
-	protected double targetWidthIdeal;
-	protected double targetSidesIdeal;
-	protected double targetRatioIdeal;
-	protected double targetAreaIdeal;
+	protected double targetHeightIdeal; protected double targetHeightWeight;
+	protected double targetWidthIdeal;  protected double targetWidthWeight;
+	protected double targetSidesIdeal;  protected double targetSidesWeight;
+	protected double targetRatioIdeal;  protected double targetRatioWeight;
+	protected double targetAreaIdeal;   protected double targetAreaWeight;
 	
 	//Abstract Methods
 	
@@ -113,11 +113,16 @@ public abstract class Filter {
     protected double getTargetRating(PolygonCv inputTarget) {
     	double targetRating = 1000000;
     	
-    	targetRating -= Math.abs(inputTarget.getHeight() -  targetHeightIdeal); //TODO remove these?
-    	targetRating -= Math.abs(inputTarget.getWidth() -   targetWidthIdeal);
-    	targetRating -= 100 * Math.abs(inputTarget.size() - targetSidesIdeal);
-    	targetRating -= 1000 * Math.abs(inputTarget.getBoundingAspectRatio() - targetRatioIdeal);
-    	targetRating -= 0.03 * Math.abs(inputTarget.getBoundingArea() - targetAreaIdeal);
+    	targetRating -= targetHeightWeight 
+    			* Math.abs(inputTarget.getHeight()              - targetHeightIdeal);
+    	targetRating -= targetWidthWeight  
+    			* Math.abs(inputTarget.getWidth()               - targetWidthIdeal);
+    	targetRating -= targetSidesWeight  
+    			* Math.abs(inputTarget.size()                   - targetSidesIdeal);
+    	targetRating -= targetRatioWeight  
+    			* Math.abs(inputTarget.getBoundingAspectRatio() - targetRatioIdeal);
+    	targetRating -= targetAreaWeight 
+    			* Math.abs(inputTarget.getBoundingArea()        - targetAreaIdeal);
     	
     	return targetRating;
     }

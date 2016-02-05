@@ -46,11 +46,13 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		targetRatioMax    = 2.5;
 		targetAreaMax     = 15000;
 		
-		targetHeightIdeal = 80;
-		targetWidthIdeal  = 100;
-		targetSidesIdeal  = 8;
-		targetRatioIdeal  = 1.5;
-		targetAreaIdeal   = 5000;
+		targetHeightIdeal = 80;   targetHeightWeight = 1;
+		targetWidthIdeal  = 100;  targetWidthWeight  = 1;
+		targetSidesIdeal  = 8;    targetSidesWeight  = 100;
+		targetRatioIdeal  = 1.5;  targetRatioWeight  = 1000;
+		targetAreaIdeal   = 5000; targetAreaWeight   = 0.03;
+		
+		
 	
 	}
 	
