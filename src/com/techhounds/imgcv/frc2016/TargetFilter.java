@@ -144,7 +144,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     	
     	baseDistance = Math.cos(cameraAngleElevation) * targetDistance;
     	
-    	networkTable.putNumber("OffCenterDegreesX", offCenterDegreesX);
+    	if(offCenterDegreesX > -67 && offCenterDegreesX < -67) networkTable.putNumber("OffCenterDegreesX", offCenterDegreesX);
     	networkTable.putNumber("DistanceToBase",  baseDistance);
     	networkTable.putNumber("DistanceToTarget", targetDistance);  	
     }
