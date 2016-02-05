@@ -26,8 +26,8 @@
 package com.techhounds.imgcv.frc2013;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
+import com.techhounds.imgcv.filters.ColorRange;
 import com.techhounds.imgcv.filters.MatFilter;
-import com.techhounds.imgcv.filters.standard.ColorRange;
 
 import java.awt.event.ActionEvent;
 

@@ -23,63 +23,56 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.filters.standard;
+package com.techhounds.imgcv.filters;
 
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
-import com.techhounds.imgcv.filters.MatFilter;
-
 /**
- * Converts each channel in a image to a black and white representation.
+ * A dilation filter (causes objects to fill-in and grow).
  *
  * <p>
- * This filter is used to convert a image to it's "black and white"
- * representation. It is typically applied to gray scale images having a single
- * channel where each value ranges from 0 to 255.</p>
- *
- * <p>
- * When run, this filter goes through each channel in the image (if there is
- * more than one) and maps each value to either 0 or 255).</p>
+ * This filter is typically applied to black and white images and is useful to
+ * clean up speckles (missing dots). It "grows" the white areas a bit in a black
+ * and white image.</p>
  *
  * @author Paul Blankenbaker
  */
-public final class BlackWhite implements MatFilter {
+public final class Dilate implements MatFilter {
 
     /**
-     * The threshold to exceed before a value is considered "on".
+     * The kernel to use when dilating the image (lager sized kernels cause
+     * larger growth).
      */
-    private final double _Thresh;
-    /**
-     * The maximum value allowed (typically 255).
-     */
-    private final double _MaxVal;
-    /**
-     * The type of conversion (whether to invert output values).
-     */
-    private final int _Type;
+    private Mat _Kernel;
 
     /**
-     * Creates a new instance of the black and white filter.
+     * Construct a new instance with a specific kernel matrix.
      *
-     * @param thresh The value that must be met or exceeded for a pixel to be on
-     * (typically in the range of [1, 254]).
-     * @param maxval The maximum value permitted (typically 255).
-     * @param invert Whether output should be inverted (pass true if you want
-     * low values to be "white" and "high" values to be black).
+     * @param kernel A small matrix used by the opencv algorithm when dilating
+     * the image.
      */
-    public BlackWhite(double thresh, double maxval, boolean invert) {
-        _Thresh = thresh;
-        _MaxVal = maxval;
-        _Type = (invert ? Imgproc.THRESH_BINARY_INV : Imgproc.THRESH_BINARY);
+    private Dilate(Mat kernel) {
+        _Kernel = kernel;
     }
 
     /**
-     * Creates a new instance of the black and white filter that uses 128 as the
-     * threshold.
+     * Construct a new instance of the filter with a specific dilation size.
+     *
+     * @param size The size (in pixels) to dilate the image by (for example, if
+     * you pass 5 it would result in a 5x5 kernel producing a fairly large
+     * amount of dilation)
      */
-    public BlackWhite() {
-        this(128.0, 255, false);
+    public Dilate(int size) {
+        this(Mat.ones(size, size, CvType.CV_8U));
+    }
+
+    /**
+     * Construct a new instance of the filter with a 3 pixel dilation.
+     */
+    public Dilate() {
+        this(3);
     }
 
     /**
@@ -88,14 +81,15 @@ public final class BlackWhite implements MatFilter {
      * @param srcImage - The source image to be processed (passing {@code null}
      * is not permitted).
      *
-     * @return Applies the {@link Imgproc#threshold} opencv function to the
-     * image to produce a "black and white" image according to the settings
-     * passed to the constructor.
+     * @return The image after applying the
+     * {@link Imgproc#dilate(org.opencv.core.Mat, org.opencv.core.Mat, org.opencv.core.Mat)}
+     * filter. NOTE: This method re-uses the source image (your original image
+     * is replaced).
      */
     @Override
     public Mat process(Mat srcImage) {
         Mat dst = srcImage;
-        Imgproc.threshold(srcImage, dst, _Thresh, _MaxVal, _Type);
+        Imgproc.dilate(srcImage, dst, _Kernel);
         return dst;
     }
 }

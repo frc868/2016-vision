@@ -25,12 +25,12 @@
  */
 package com.techhounds.imgcv;
 
+import com.techhounds.imgcv.filters.ColorSpace;
 import com.techhounds.imgcv.filters.CrossHair;
+import com.techhounds.imgcv.filters.DoNothingFilter;
+import com.techhounds.imgcv.filters.GrayScale;
 import com.techhounds.imgcv.filters.MatFilter;
-import com.techhounds.imgcv.filters.standard.ColorSpace;
-import com.techhounds.imgcv.filters.standard.DoNothingFilter;
-import com.techhounds.imgcv.filters.standard.GrayScale;
-import com.techhounds.imgcv.filters.standard.Sequence;
+import com.techhounds.imgcv.filters.Sequence;
 
 import javax.swing.*;
 

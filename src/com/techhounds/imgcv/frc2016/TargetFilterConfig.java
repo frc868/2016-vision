@@ -1,4 +1,4 @@
-package com.techhounds.imgcv.filters.vision2016;
+package com.techhounds.imgcv.frc2016;
 
 public interface TargetFilterConfig {
 

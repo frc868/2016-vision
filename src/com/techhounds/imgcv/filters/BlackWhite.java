@@ -23,58 +23,61 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.filters.standard;
+package com.techhounds.imgcv.filters;
 
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
-import com.techhounds.imgcv.filters.MatFilter;
-
 /**
- * A erosion filter (causes objects to shrink).
+ * Converts each channel in a image to a black and white representation.
  *
  * <p>
- * This filter is typically applied to black and white images and is useful to
- * clean up speckles (extra dots). It "shinks" the white areas a bit in a black
- * and white image which often helps cleaning up stray pixels.</p>
+ * This filter is used to convert a image to it's "black and white"
+ * representation. It is typically applied to gray scale images having a single
+ * channel where each value ranges from 0 to 255.</p>
+ *
+ * <p>
+ * When run, this filter goes through each channel in the image (if there is
+ * more than one) and maps each value to either 0 or 255).</p>
  *
  * @author Paul Blankenbaker
  */
-public final class Erode implements MatFilter {
+public final class BlackWhite implements MatFilter {
 
     /**
-     * The kernel to use when eroding the image (lager sized kernels cause more
-     * shrinkage).
+     * The threshold to exceed before a value is considered "on".
      */
-    private Mat _Kernel;
+    private final double _Thresh;
+    /**
+     * The maximum value allowed (typically 255).
+     */
+    private final double _MaxVal;
+    /**
+     * The type of conversion (whether to invert output values).
+     */
+    private final int _Type;
 
     /**
-     * Construct a new instance with a specific kernel matrix.
+     * Creates a new instance of the black and white filter.
      *
-     * @param kernel A small matrix used by the opencv algorithm when eroding
-     * the image.
+     * @param thresh The value that must be met or exceeded for a pixel to be on
+     * (typically in the range of [1, 254]).
+     * @param maxval The maximum value permitted (typically 255).
+     * @param invert Whether output should be inverted (pass true if you want
+     * low values to be "white" and "high" values to be black).
      */
-    private Erode(Mat kernel) {
-        _Kernel = kernel;
+    public BlackWhite(double thresh, double maxval, boolean invert) {
+        _Thresh = thresh;
+        _MaxVal = maxval;
+        _Type = (invert ? Imgproc.THRESH_BINARY_INV : Imgproc.THRESH_BINARY);
     }
 
     /**
-     * Construct a new instance of the filter with a specific erosion size.
-     *
-     * @param size The size (in pixels) to erode the image by (for example, if
-     * you pass 5 it would result in a 5x5 kernel producing a fairly large
-     * amount of erosion)
+     * Creates a new instance of the black and white filter that uses 128 as the
+     * threshold.
      */
-    public Erode(int size) {
-        this(Mat.ones(size, size, CvType.CV_8U));
-    }
-
-    /**
-     * Construct a new instance of the filter with a 3 pixel erosion.
-     */
-    public Erode() {
-        this(3);
+    public BlackWhite() {
+        this(128.0, 255, false);
     }
 
     /**
@@ -83,15 +86,14 @@ public final class Erode implements MatFilter {
      * @param srcImage - The source image to be processed (passing {@code null}
      * is not permitted).
      *
-     * @return The image after applying the
-     * {@link Imgproc#erode(org.opencv.core.Mat, org.opencv.core.Mat, org.opencv.core.Mat)}
-     * filter. NOTE: This method re-uses the source image (your original image
-     * is replaced).
+     * @return Applies the {@link Imgproc#threshold} opencv function to the
+     * image to produce a "black and white" image according to the settings
+     * passed to the constructor.
      */
     @Override
     public Mat process(Mat srcImage) {
         Mat dst = srcImage;
-        Imgproc.erode(srcImage, dst, _Kernel);
+        Imgproc.threshold(srcImage, dst, _Thresh, _MaxVal, _Type);
         return dst;
     }
 }

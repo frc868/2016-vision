@@ -23,15 +23,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.tools;
-
-import java.awt.HeadlessException;
+package com.techhounds.imgcv.frc2015;
 
 import com.techhounds.imgcv.LiveViewGui;
 import com.techhounds.imgcv.filters.MatFilter;
-import com.techhounds.imgcv.filters.vision2016.TargetFilter;
-
-import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
 /**
  * A simple example of leveraging the {@link LiveViewGui} class to quickly test
@@ -39,24 +34,8 @@ import edu.wpi.first.wpilibj.networktables.NetworkTable;
  *
  * @author pkb
  */
-public final class LiveView2016 extends LiveViewGui {
-    TargetFilter filter = new TargetFilter(4); //default filter to be set
-    
-    public LiveView2016(String title) throws HeadlessException {
-		super(title);
-		setFilter(filter); //set default filter here 
-	}
-    
-    protected void addMenuItems() {
-    	super.addMenuItems(); //adds default menu items  	
-    	
-    	addFilter("No Filter", new TargetFilter(0));
-    	addFilter("Color Filter", new TargetFilter(1));
-    	addFilter("Classic Filter",  new TargetFilter(3));
-    	addFilter("Bounding Filter", new TargetFilter(4));
-    }
-
-	/**
+public final class TTTView {
+    /**
      * Main entry point to this Java Application.
      * 
      * <ul>
@@ -68,24 +47,11 @@ public final class LiveView2016 extends LiveViewGui {
      * @param args Array of command line arguments (ignored).
      */
     public static void main(String[] args) {
-    	
         // Create the GUI application, set the filter then start up the GUI
-    	
-        final LiveView2016 frame = new LiveView2016("2016 Vision Viewer");
-        
-        //NetworkTable setup
-        
-        NetworkTable.setClientMode();
-        NetworkTable.setIPAddress("10.8.68.2");
-        NetworkTable.initialize();
-        NetworkTable sd = NetworkTable.getTable("SmartDashboard");
-        frame.filter.setNetworkTable(sd);
-        
-        //call itself again
-        
+        final LiveViewGui frame = new LiveViewGui("TTT Viewer");
+        frame.setFilter(new TTTFilter());
+        //frame.setFilter(FindTarget2013.createHsvColorRange());
         frame.main();
-        
-        //frame.startVideoFeed(); //starts from incorrect source
     }
 
 }

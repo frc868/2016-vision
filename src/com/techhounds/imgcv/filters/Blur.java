@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Paul Blankenbaker
+ * Copyright (c) 2013, Paul Blankenbaker
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,40 +23,54 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.filters.standard;
+package com.techhounds.imgcv.filters;
 
-import org.opencv.core.Core;
 import org.opencv.core.Mat;
-
-import com.techhounds.imgcv.filters.MatFilter;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 
 /**
- * Image filter which does a bitwise or of the results of applying two other filters.
+ * A image filter which blurs (softens) the image.
  *
  * @author Paul Blankenbaker
  */
-public final class BitwiseOr implements MatFilter {
-    private final MatFilter _filterA;
-    private final MatFilter _filterB;
-    
-    public BitwiseOr(MatFilter a, MatFilter b) {
-        _filterA = a;
-        _filterB = b;        
+public final class Blur implements MatFilter {
+
+    /**
+     * How powerful to blur.
+     */
+    private Size _ksize;
+
+    /**
+     * Creates a blur filter with a specific kernel size.
+     *
+     * @param ksize The kernel size to use when blurring - larger sizes cause
+     * more blurriness.
+     */
+    public Blur(Size ksize) {
+        _ksize = ksize;
     }
 
     /**
-     * Method to filter a source image and return the filtered results.
+     * Constructs a blur filter with a 3x3 kernel size.
+     */
+    public Blur() {
+        this(new Size(3, 3));
+    }
+
+    /**
+     * Applies the filter to a source image and returns the filtered results.
      *
      * @param srcImage - The source image to be processed (passing {@code null}
      * is not permitted).
      *
-     * @return This filter makes clone copies of the source (your srcImage will not be modified).
+     * @return A blurred representation of the original source image (note the
+     * srcImage is re-used and destroyed by this filter).
      */
     @Override
     public Mat process(Mat srcImage) {
-        Mat a = _filterA.process(srcImage.clone());
-        Mat b = _filterB.process(srcImage.clone());
-        Core.bitwise_or(a, b, a);
-        return a;
+        Mat dst = srcImage;
+        Imgproc.blur(srcImage, srcImage, _ksize);
+        return dst;
     }
 }

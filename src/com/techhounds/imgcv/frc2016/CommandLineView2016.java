@@ -1,12 +1,11 @@
-package com.techhounds.imgcv.tools;
+package com.techhounds.imgcv.frc2016;
 
 import com.techhounds.imgcv.Configuration;
 import com.techhounds.imgcv.FrameGrabber;
-import com.techhounds.imgcv.filters.vision2016.TargetFilter;
 
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
-public class CommandLineVisionTool {
+public class CommandLineView2016 {
 	
 	private static long previousFrame = 0;
 	private static long currentFrame = 0;

@@ -1,8 +1,7 @@
-package com.techhounds.imgcv.filters.standard;
+package com.techhounds.imgcv.filters;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import com.techhounds.imgcv.filters.MatFilter;
 
 /**
  * Wrapper around the OpenCV LUT (Lookup Up Table?) filter which allows you to

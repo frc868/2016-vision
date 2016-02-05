@@ -23,20 +23,57 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.filters.standard;
+package com.techhounds.imgcv.filters;
 
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
-import com.techhounds.imgcv.filters.MatFilter;
-
 /**
- * Image filter which converts a 3 channel RGB image to a single channel gray
- * scale image.
+ * A erosion filter (causes objects to shrink).
+ *
+ * <p>
+ * This filter is typically applied to black and white images and is useful to
+ * clean up speckles (extra dots). It "shinks" the white areas a bit in a black
+ * and white image which often helps cleaning up stray pixels.</p>
  *
  * @author Paul Blankenbaker
  */
-public final class GrayScale implements MatFilter {
+public final class Erode implements MatFilter {
+
+    /**
+     * The kernel to use when eroding the image (lager sized kernels cause more
+     * shrinkage).
+     */
+    private Mat _Kernel;
+
+    /**
+     * Construct a new instance with a specific kernel matrix.
+     *
+     * @param kernel A small matrix used by the opencv algorithm when eroding
+     * the image.
+     */
+    private Erode(Mat kernel) {
+        _Kernel = kernel;
+    }
+
+    /**
+     * Construct a new instance of the filter with a specific erosion size.
+     *
+     * @param size The size (in pixels) to erode the image by (for example, if
+     * you pass 5 it would result in a 5x5 kernel producing a fairly large
+     * amount of erosion)
+     */
+    public Erode(int size) {
+        this(Mat.ones(size, size, CvType.CV_8U));
+    }
+
+    /**
+     * Construct a new instance of the filter with a 3 pixel erosion.
+     */
+    public Erode() {
+        this(3);
+    }
 
     /**
      * Method to filter a source image and return the filtered results.
@@ -44,16 +81,15 @@ public final class GrayScale implements MatFilter {
      * @param srcImage - The source image to be processed (passing {@code null}
      * is not permitted).
      *
-     * @return The gray scale version of the image. NOTE: This method writes the
-     * results into the original srcImage (your srcImage will be modified).
+     * @return The image after applying the
+     * {@link Imgproc#erode(org.opencv.core.Mat, org.opencv.core.Mat, org.opencv.core.Mat)}
+     * filter. NOTE: This method re-uses the source image (your original image
+     * is replaced).
      */
     @Override
     public Mat process(Mat srcImage) {
         Mat dst = srcImage;
-    	int channels = srcImage.channels();
-    	if (channels == 3 || channels == 4) {
-        	Imgproc.cvtColor(srcImage, dst, Imgproc.COLOR_RGB2GRAY);
-        }
+        Imgproc.erode(srcImage, dst, _Kernel);
         return dst;
     }
 }

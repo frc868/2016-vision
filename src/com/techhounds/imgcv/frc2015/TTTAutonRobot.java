@@ -23,12 +23,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.tools;
+package com.techhounds.imgcv.frc2015;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
+import com.techhounds.imgcv.filters.ColorRange;
 import com.techhounds.imgcv.filters.MatFilter;
-import com.techhounds.imgcv.filters.TTTFilter;
-import com.techhounds.imgcv.filters.standard.ColorRange;
 import com.techhounds.imgcv.frc2013.FindTarget2013;
 
 import java.awt.event.ActionEvent;

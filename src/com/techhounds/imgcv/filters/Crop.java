@@ -1,8 +1,6 @@
-package com.techhounds.imgcv.filters.standard;
+package com.techhounds.imgcv.filters;
 
 import org.opencv.core.Mat;
-
-import com.techhounds.imgcv.filters.MatFilter;
 
 /**
  * A crop filter that allows you to specify the region of the crop in absolute pixel values or as a relative portion of the original image.

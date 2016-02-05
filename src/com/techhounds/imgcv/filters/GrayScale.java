@@ -23,59 +23,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.filters.standard;
+package com.techhounds.imgcv.filters;
 
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
-import com.techhounds.imgcv.filters.MatFilter;
-
 /**
- * A dilation filter (causes objects to fill-in and grow).
- *
- * <p>
- * This filter is typically applied to black and white images and is useful to
- * clean up speckles (missing dots). It "grows" the white areas a bit in a black
- * and white image.</p>
+ * Image filter which converts a 3 channel RGB image to a single channel gray
+ * scale image.
  *
  * @author Paul Blankenbaker
  */
-public final class Dilate implements MatFilter {
-
-    /**
-     * The kernel to use when dilating the image (lager sized kernels cause
-     * larger growth).
-     */
-    private Mat _Kernel;
-
-    /**
-     * Construct a new instance with a specific kernel matrix.
-     *
-     * @param kernel A small matrix used by the opencv algorithm when dilating
-     * the image.
-     */
-    private Dilate(Mat kernel) {
-        _Kernel = kernel;
-    }
-
-    /**
-     * Construct a new instance of the filter with a specific dilation size.
-     *
-     * @param size The size (in pixels) to dilate the image by (for example, if
-     * you pass 5 it would result in a 5x5 kernel producing a fairly large
-     * amount of dilation)
-     */
-    public Dilate(int size) {
-        this(Mat.ones(size, size, CvType.CV_8U));
-    }
-
-    /**
-     * Construct a new instance of the filter with a 3 pixel dilation.
-     */
-    public Dilate() {
-        this(3);
-    }
+public final class GrayScale implements MatFilter {
 
     /**
      * Method to filter a source image and return the filtered results.
@@ -83,15 +42,16 @@ public final class Dilate implements MatFilter {
      * @param srcImage - The source image to be processed (passing {@code null}
      * is not permitted).
      *
-     * @return The image after applying the
-     * {@link Imgproc#dilate(org.opencv.core.Mat, org.opencv.core.Mat, org.opencv.core.Mat)}
-     * filter. NOTE: This method re-uses the source image (your original image
-     * is replaced).
+     * @return The gray scale version of the image. NOTE: This method writes the
+     * results into the original srcImage (your srcImage will be modified).
      */
     @Override
     public Mat process(Mat srcImage) {
         Mat dst = srcImage;
-        Imgproc.dilate(srcImage, dst, _Kernel);
+    	int channels = srcImage.channels();
+    	if (channels == 3 || channels == 4) {
+        	Imgproc.cvtColor(srcImage, dst, Imgproc.COLOR_RGB2GRAY);
+        }
         return dst;
     }
 }

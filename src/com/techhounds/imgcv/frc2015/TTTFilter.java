@@ -1,9 +1,11 @@
-package com.techhounds.imgcv.filters;
+package com.techhounds.imgcv.frc2015;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
+
+import com.techhounds.imgcv.filters.MatFilter;
 
 public class TTTFilter implements MatFilter{
 	

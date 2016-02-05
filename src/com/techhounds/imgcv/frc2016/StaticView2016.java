@@ -23,10 +23,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.techhounds.imgcv.tools;
+package com.techhounds.imgcv.frc2016;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
-import com.techhounds.imgcv.filters.vision2016.TargetFilter;
 
 /**
  * A more involved example of extending the filter tool for testing filters.
