@@ -27,11 +27,8 @@ package com.techhounds.imgcv.tools;
 
 import java.awt.HeadlessException;
 
-import org.opencv.core.Mat;
 import com.techhounds.imgcv.LiveViewGui;
 import com.techhounds.imgcv.filters.MatFilter;
-import com.techhounds.imgcv.filters.standard.DoNothingFilter;
-import com.techhounds.imgcv.filters.standard.Sequence;
 import com.techhounds.imgcv.filters.vision2016.TargetFilter;
 
 import edu.wpi.first.wpilibj.networktables.NetworkTable;

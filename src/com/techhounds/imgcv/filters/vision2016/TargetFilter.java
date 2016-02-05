@@ -3,9 +3,7 @@ package com.techhounds.imgcv.filters.vision2016;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
 
 import com.techhounds.imgcv.PolygonCv;
 import com.techhounds.imgcv.filters.CrossHair;

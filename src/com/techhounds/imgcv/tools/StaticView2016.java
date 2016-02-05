@@ -27,16 +27,6 @@ package com.techhounds.imgcv.tools;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
 import com.techhounds.imgcv.filters.vision2016.TargetFilter;
-import com.techhounds.imgcv.LiveViewGui;
-
-import java.awt.event.ActionEvent;
-
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JMenuItem;
-
-import org.opencv.core.Mat;
-import org.opencv.highgui.VideoCapture;
 
 /**
  * A more involved example of extending the filter tool for testing filters.
