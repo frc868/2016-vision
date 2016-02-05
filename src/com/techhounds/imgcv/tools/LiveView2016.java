@@ -43,7 +43,7 @@ import edu.wpi.first.wpilibj.networktables.NetworkTable;
  * @author pkb
  */
 public final class LiveView2016 extends LiveViewGui {
-    TargetFilter filter = new TargetFilter(2); //default filter to be set
+    TargetFilter filter = new TargetFilter(4); //default filter to be set
     
     public LiveView2016(String title) throws HeadlessException {
 		super(title);
@@ -53,8 +53,10 @@ public final class LiveView2016 extends LiveViewGui {
     protected void addMenuItems() {
     	super.addMenuItems(); //adds default menu items  	
     	
+    	addFilter("No Filter", new TargetFilter(0));
     	addFilter("Color Filter", new TargetFilter(1));
-    	addFilter("Full Filter",  new TargetFilter(2));
+    	addFilter("Classic Filter",  new TargetFilter(3));
+    	addFilter("Bounding Filter", new TargetFilter(4));
     }
 
 	/**

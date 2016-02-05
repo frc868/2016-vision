@@ -65,8 +65,10 @@ public final class StaticView2016 extends FilterToolGuiOpenCv {
     protected void addControls() { //Adding controls and filters to the side bar.
         super.addControls(); //Adds parent controls
         //adds the button for our 2016 filter (VisionFilter2016.java)
-        addImageProcessingButton("2016 Targeting Filter", new TargetFilter(2)); 
-        addImageProcessingButton("2016 Color Filter", new TargetFilter(1));
+        addImageProcessingButton("No Filter", new TargetFilter(0)); 
+        addImageProcessingButton("Color Filter", new TargetFilter(2));
+        addImageProcessingButton("Classic Filter", new TargetFilter(3));
+        addImageProcessingButton("Bounding Filter", new TargetFilter(4));
     }
 
     /**
