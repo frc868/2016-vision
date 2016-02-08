@@ -134,7 +134,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
         float targetWidth 	   = foundTarget.getWidth();
         float targetX		   = foundTarget.getCenterX();
     	
-    	offCenterDegreesX = ((targetX / (cameraResolutionX / 2)) - 1) * cameraHorizFOV;
+    	offCenterDegreesX = Math.atan(2 * targetX * Math.tan(cameraHorizRads/2) / cameraResolutionX);
     	
     	targetDistance = (targetTapeWidth / 2) / 
     					 	Math.tan(
@@ -144,7 +144,9 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     	
     	baseDistance = Math.cos(cameraAngleElevation) * targetDistance;
     	
-    	if(offCenterDegreesX > -67 && offCenterDegreesX < -67) networkTable.putNumber("OffCenterDegreesX", offCenterDegreesX);
+    	if(offCenterDegreesX < (cameraHorizFOV/2) && offCenterDegreesX > (-cameraHorizFOV/2)) 
+    		networkTable.putNumber("OffCenterDegreesX", offCenterDegreesX);
+    	
     	networkTable.putNumber("DistanceToBase",  baseDistance);
     	networkTable.putNumber("DistanceToTarget", targetDistance);  	
     }
