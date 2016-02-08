@@ -19,8 +19,11 @@ public interface TargetFilterConfig {
 	//physical data
 	
 	public final double targetTapeWidth   = 20; //inches
+	public final double targetTapeHeight  = 20;
 	public final double targetTowerHeight = 80;//inches, not sure if to bottom or middle of target
 	public final double cameraElevation   = 22;//inches
 	public final double cameraHorizFOV    = 67; //degrees
+	public final double cameraVertFOV     = 51;
 	public final double cameraResolutionX = 800;//pixels
+	public final double cameraResolutionY = 600;
 }

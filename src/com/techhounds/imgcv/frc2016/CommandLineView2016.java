@@ -39,7 +39,6 @@ public class CommandLineView2016 {
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException ie) {
-				
 			}
 		}
 	}

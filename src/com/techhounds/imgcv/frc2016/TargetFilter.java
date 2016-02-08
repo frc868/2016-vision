@@ -58,7 +58,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 	
 	private int stage;
 		
-	//filter instances TODO could we put these into an interface?
+	//filter instances
 	
 	private final MatFilter _ColorSpace   = ColorSpace.createBGRtoHSV();
 	private final MatFilter _ColorRange   = new ColorRange(colorFilterMin, colorFilterMax, true);
@@ -129,16 +129,16 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 	}
 	
 	private void targetAnalysis(PolygonCv foundTarget) { //tells the robo info about the target
-        double offCenterDegreesX, targetDistance, baseDistance, cameraAngleElevation; //elevation in RADIANS
+        double offCenterDegreesX, targetDistance, baseDistance, cameraAngleElevation, targetAngle; //elevation in RADIANS
         double cameraHorizRads = Math.toRadians(cameraHorizFOV);
-        float targetWidth 	   = foundTarget.getWidth();
-        float targetX		   = foundTarget.getCenterX();
+        double cameraVertRads  = Math.toRadians(cameraVertFOV);
     	
-    	offCenterDegreesX = Math.atan(2 * targetX * Math.tan(cameraHorizRads/2) / cameraResolutionX);
+    	offCenterDegreesX = Math.atan(2 * foundTarget.getCenterX() * Math.tan(cameraHorizRads/2) / cameraResolutionX);
     	
-    	targetDistance = (targetTapeWidth / 2) / 
-    					 	Math.tan(
-    								 (targetWidth / cameraResolutionX) * (cameraHorizRads / 2));
+    	targetAngle = Math.atan(2 * foundTarget.getMaxY() * Math.tan(cameraVertRads/2) / cameraResolutionY) - //gets degree value of top
+    				  Math.atan(2 * foundTarget.getMinY() * Math.tan(cameraVertRads/2) / cameraResolutionY);  //and bottom points, and finds difference
+    	
+    	targetDistance = (targetTapeHeight / 2) / Math.tan(targetAngle);
     	
     	cameraAngleElevation = Math.asin((targetTowerHeight - cameraElevation) / targetDistance);
     	
