@@ -82,8 +82,8 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		
 		Mat workingImage = srcImage.clone();
 		
-		_ColorRange.process(workingImage);
 		_ColorSpace.process(workingImage);
+		_ColorRange.process(workingImage);
 		_Erode.process(workingImage);     
 		_Dilate.process(workingImage);
 		_GrayScale.process(workingImage);
@@ -118,7 +118,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
         	
         	if(stage == 4) {
         		_BoundingBox.setCenter(bestTarget.getCenterX(), bestTarget.getCenterY());
-        		_BoundingBox.setSize(bestTarget.getHeight(), bestTarget.getWidth());
+        		_BoundingBox.setSize(bestTarget.getHeight() / 2, bestTarget.getWidth() / 2);
         		_BoundingBox.process(workingImage);
         	}
         }
@@ -129,16 +129,20 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 	}
 	
 	private void targetAnalysis(PolygonCv foundTarget) { //tells the robo info about the target
-        double offCenterDegreesX, targetDistance, baseDistance, cameraAngleElevation, targetAngle; //elevation in RADIANS
+        double offCenterDegreesX, targetDistance, baseDistance, 
+        cameraAngleElevation, targetAngle, perspectiveTargetHeight; //elevation in RADIANS
         double cameraHorizRads = Math.toRadians(cameraHorizFOV);
         double cameraVertRads  = Math.toRadians(cameraVertFOV);
     	
-    	offCenterDegreesX = Math.atan(2 * foundTarget.getCenterX() * Math.tan(cameraHorizRads/2) / cameraResolutionX);
+    	offCenterDegreesX = Math.atan(2 * foundTarget.getCenterX() * 
+    						Math.tan(cameraHorizRads/2) / cameraResolutionX);
     	
     	targetAngle = Math.atan(2 * foundTarget.getMaxY() * Math.tan(cameraVertRads/2) / cameraResolutionY) - //gets degree value of top
     				  Math.atan(2 * foundTarget.getMinY() * Math.tan(cameraVertRads/2) / cameraResolutionY);  //and bottom points, and finds difference
     	
-    	targetDistance = (targetTapeHeight / 2) / Math.tan(targetAngle);
+    	perspectiveTargetHeight = targetTapeHeight * Math.tan(targetAngle + (Math.PI / 4));
+    	
+    	targetDistance = (targetTapeHeight / 2) / Math.tan(targetAngle); //use perspective height rather than targetTapeHeight?
     	
     	cameraAngleElevation = Math.asin((targetTowerHeight - cameraElevation) / targetDistance);
     	

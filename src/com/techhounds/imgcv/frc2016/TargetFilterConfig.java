@@ -4,8 +4,8 @@ public interface TargetFilterConfig {
 
 	//Imgproc configs
 	
-	public final int[] colorFilterMin   = {40, 175, 40};
-	public final int[] colorFilterMax   = {105, 255, 255};
+	public final int[] colorFilterMin   = {80, 60, 200};
+	public final int[] colorFilterMax   = {255, 255, 255};
 	public final int   blackWhiteThresh = 40;
 	public final int   dilateFactor     = 4; 
 	public final int   erodeFactor      = 5;
