@@ -78,10 +78,7 @@ public final class LiveView2016 extends LiveViewGui {
         NetworkTable.setIPAddress("10.8.68.2");
         NetworkTable.initialize();
         NetworkTable sd = NetworkTable.getTable("SmartDashboard");
-        frame.filter.setNetworkTable(sd);
-        
-        //call itself again
-        
+        frame.filter.setNetworkTable(sd);        
         frame.main();
         
         //frame.startVideoFeed(); //starts from incorrect source

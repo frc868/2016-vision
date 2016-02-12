@@ -102,7 +102,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
         		networkTable.putNumber("FrameCount", frameCount++); 
         	}	
         	
-        	if(stage == 2) return workingImage;
+        	if(stage == 2) return workingImage; //commandline, so don't bother drawing anything
         	
         	if(stage == 3) {
         		_OtherTargets.setPolygon(targets);
@@ -130,17 +130,18 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 	
 	private void targetAnalysis(PolygonCv foundTarget) { //tells the robo info about the target
         double offCenterDegreesX, targetDistance, baseDistance, 
-        cameraAngleElevation, targetAngle, perspectiveTargetHeight; //elevation in RADIANS
+        	cameraAngleElevation, targetAngle, perspectiveTargetHeight; //elevation in RADIANS
         double cameraHorizRads = Math.toRadians(cameraHorizFOV);
         double cameraVertRads  = Math.toRadians(cameraVertFOV);
     	
-    	offCenterDegreesX = Math.atan(2 * foundTarget.getCenterX() * 
-    						Math.tan(cameraHorizRads/2) / cameraResolutionX);
+    	offCenterDegreesX = Math.toDegrees(
+    						Math.atan(2 * foundTarget.getCenterX() * 
+    						Math.tan(cameraHorizRads/2) / cameraResolutionX));
     	
     	targetAngle = Math.atan(2 * foundTarget.getMaxY() * Math.tan(cameraVertRads/2) / cameraResolutionY) - //gets degree value of top
     				  Math.atan(2 * foundTarget.getMinY() * Math.tan(cameraVertRads/2) / cameraResolutionY);  //and bottom points, and finds difference
     	
-    	perspectiveTargetHeight = targetTapeHeight * Math.tan(targetAngle + (Math.PI / 4));
+    	//perspectiveTargetHeight = targetTapeHeight * Math.tan(targetAngle + (Math.PI / 4));
     	
     	targetDistance = (targetTapeHeight / 2) / Math.tan(targetAngle); //use perspective height rather than targetTapeHeight?
     	
