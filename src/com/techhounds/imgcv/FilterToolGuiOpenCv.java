@@ -1179,7 +1179,7 @@ public class FilterToolGuiOpenCv {
 	protected Mat openImage(File imgFile) {
 		final String path = imgFile.getAbsolutePath();
 		final Mat newImage = Highgui.imread(path);
-		if (newImage != null) {
+		if ((newImage != null) && (newImage.width() > 0) && (newImage.height() > 0)) {
 			_Config.setLastOpenedFile(path);
 			lastFile = imgFile;
 			_LastLoadedImage = newImage;
