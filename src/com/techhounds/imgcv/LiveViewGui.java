@@ -363,6 +363,10 @@ public class LiveViewGui {
 	protected void addFilter(String label, MatFilter filter) {
 		addMenuItem("Filter", createMenuFilterItem(label, filter));
 	}
+	
+	protected void addFilterCategory(String filterType, String filterName, MatFilter filter) {
+		addMenuItem("" + filterType + " Filter", createMenuFilterItem(filterName, filter));
+	}
 
 	/**
 	 * Adds a new top level menu item with a set of filter representing each

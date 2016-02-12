@@ -49,10 +49,10 @@ public final class LiveView2016 extends LiveViewGui {
     protected void addMenuItems() {
     	super.addMenuItems(); //adds default menu items  	
     	
-    	addFilter("No Filter", new TargetFilter(0));
-    	addFilter("Color Filter", new TargetFilter(1));
-    	addFilter("Classic Filter",  new TargetFilter(3));
-    	addFilter("Bounding Filter", new TargetFilter(4));
+    	addFilterCategory("2016", "No Filter",       new TargetFilter(0));
+    	addFilterCategory("2016", "Color Filter",    new TargetFilter(1));
+    	addFilterCategory("2016", "Classic Filter",  new TargetFilter(3));
+    	addFilterCategory("2016", "Bounding Filter", new TargetFilter(4));
     }
 
 	/**
