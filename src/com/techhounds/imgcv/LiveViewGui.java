@@ -194,7 +194,8 @@ public class LiveViewGui {
 
 						_FilteredCount++;
 						_FilteredDur += (end - start);
-						if (_FilteredCount % 20 == 0) {
+						if ((_FilterFps != null)
+								&& ((_FilteredCount % 20) == 0)) {
 							_FilterFps.setText("" + getFilterFps());
 						}
 
@@ -205,10 +206,12 @@ public class LiveViewGui {
 						_JFrame.pack();
 					}
 					lastFrame = frame;
-					if (frame % 10 == 0) {
+					if ((_CameraFps != null) && ((frame % 10) == 0)) {
 						_CameraFps.setText(Integer.toString(_FrameGrabber
 								.getFps()));
 					}
+					// Notify everyone that image has been updated
+					imageUpdated();
 				}
 			}
 		});
@@ -360,17 +363,23 @@ public class LiveViewGui {
 	protected void addFilter(String label, MatFilter filter) {
 		addMenuItem("Filter", createMenuFilterItem(label, filter));
 	}
-	
+
 	/**
-	 * Adds a new top level menu item with a set of filter representing each stage of a sequence.
+	 * Adds a new top level menu item with a set of filter representing each
+	 * stage of a sequence.
 	 * 
-	 * @param label Label for menu item to add to menu bar.
-	 * @param seqFilter A {@link Sequence} filter with at least one stage added.
+	 * @param label
+	 *            Label for menu item to add to menu bar.
+	 * @param seqFilter
+	 *            A {@link Sequence} filter with at least one stage added.
 	 */
 	protected void addSequence(String label, Sequence seqFilter) {
 		int n = seqFilter.steps();
 		for (int i = 0; i <= n; i++) {
-			addMenuItem(label, createMenuFilterItem("Stage " + i, seqFilter.createStepFilter(i)));
+			addMenuItem(
+					label,
+					createMenuFilterItem("Stage " + i,
+							seqFilter.createStepFilter(i)));
 		}
 	}
 
@@ -534,6 +543,54 @@ public class LiveViewGui {
 	}
 
 	/**
+	 * Method which derived implementations can override to customize or replace
+	 * the items shown on the status panel.
+	 * 
+	 * <p>
+	 * By default, this method adds some frame rate diagnostics to the bottom of
+	 * the status panel area. You can override (see example below) if you want
+	 * to add other items.
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>
+	 * protected void addStatusPanelItems(JPanel statusPanel) {
+	 *     super.addStatusPanelItems(statusPanel); // include standard FPS items
+	 *     statusPanel.add(Box.createHorizontalStrut(10));
+	 *     statusPanel.add(new JLabel("My New Item"));
+	 * }
+	 * </code>
+	 * </pre>
+	 * 
+	 * <p>
+	 * NOTE: If you override this method, you will likely want to override the
+	 * {@link #imageUpdated()} method as well (to update your custom status bar
+	 * widgets).
+	 * </p>
+	 * 
+	 * @param statusPanel
+	 *            The empty status panel widget that appears below the image.
+	 */
+	protected void addStatusPanelItems(JPanel statusPanel) {
+		JLabel fpsLabel = new JLabel("Camera FPS");
+
+		_CameraFps = new JLabel("-");
+
+		JLabel fpsFilterLabel = new JLabel("Filter FPS");
+
+		_FilterFps = new JLabel("-");
+
+		statusPanel.add(fpsLabel);
+		statusPanel.add(Box.createHorizontalStrut(10));
+		statusPanel.add(_CameraFps);
+		statusPanel.add(Box.createHorizontalStrut(30));
+		statusPanel.add(fpsFilterLabel);
+		statusPanel.add(Box.createHorizontalStrut(10));
+		statusPanel.add(_FilterFps);
+		statusPanel.add(Box.createHorizontalGlue());
+	}
+
+	/**
 	 * Builds the status bar for bottom of window that is used to show FPS
 	 * values.
 	 * 
@@ -544,28 +601,23 @@ public class LiveViewGui {
 		statusPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
 		statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.X_AXIS));
 
-		JLabel fpsLabel = new JLabel("Camera FPS");
-
-		_CameraFps = new JLabel("-");
-		//_CameraFps.setHorizontalAlignment(SwingConstants.RIGHT);
-		//_CameraFps.setPreferredSize(new Dimension(24, 8));
-
-		JLabel fpsFilterLabel = new JLabel("Filter FPS");
-
-		_FilterFps = new JLabel("-");
-		//_FilterFps.setHorizontalAlignment(SwingConstants.RIGHT);
-		//_FilterFps.setPreferredSize(new Dimension(24, 8));
-
-		statusPanel.add(fpsLabel);
-		statusPanel.add(Box.createHorizontalStrut(10));
-		statusPanel.add(_CameraFps);
-		statusPanel.add(Box.createHorizontalStrut(30));
-		statusPanel.add(fpsFilterLabel);
-		statusPanel.add(Box.createHorizontalStrut(10));
-		statusPanel.add(_FilterFps);
-		statusPanel.add(Box.createHorizontalGlue());
+		addStatusPanelItems(statusPanel);
 
 		return statusPanel;
+	}
+
+	/**
+	 * Method that is called after a new image has been received and processed.
+	 * 
+	 * <p>
+	 * This method serves as a hook for derived classes. You can override this
+	 * method if you want to perform actions whenever a new image has been
+	 * processed (such as updated custom components on the status bar). By
+	 * default, this method does nothing.
+	 * </p>
+	 */
+	protected void imageUpdated() {
+
 	}
 
 	/**
