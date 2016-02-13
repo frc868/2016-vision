@@ -130,7 +130,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 	
 	private void targetAnalysis(PolygonCv foundTarget) { //tells the robo info about the target
         double offCenterDegreesX, targetDistance, baseDistance, 
-        	cameraAngleElevation, targetAngle, perspectiveTargetHeight; //elevation in RADIANS
+        	cameraAngleElevation, targetAngle; //elevation in RADIANS
         double cameraHorizRads = Math.toRadians(cameraHorizFOV);
         double cameraVertRads  = Math.toRadians(cameraVertFOV);
     	
