@@ -120,11 +120,14 @@ public final class LiveView2016 extends LiveViewGui {
         NetworkTable.setIPAddress("10.8.68.2");
         NetworkTable.initialize();
         netTable = NetworkTable.getTable("SmartDashboard");
-        while(!netTable.getBoolean("cameraEnable", false)) { //hangs when NOT cameraEnable
+        while(!netTable.getBoolean("cameraEnable", true)) { //hangs when NOT cameraEnable
+        	frame.stopVideoFeed();
         	try{
         		Thread.sleep(10);
-        	} catch (Exception e) {
-        		
+        	} catch (Exception e) {	
+        	}
+        	if(netTable.getBoolean("cameraEnable", false)) {
+        		frame.startVideoFeed();
         	}
         }
         frame.filter.setNetworkTable(netTable);        
