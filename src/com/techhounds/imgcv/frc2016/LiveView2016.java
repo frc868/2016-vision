@@ -115,11 +115,18 @@ public final class LiveView2016 extends LiveViewGui {
         final LiveView2016 frame = new LiveView2016("2016 Vision Viewer");
         
         //NetworkTable setup
-        
+               
         NetworkTable.setClientMode();
         NetworkTable.setIPAddress("10.8.68.2");
         NetworkTable.initialize();
         netTable = NetworkTable.getTable("SmartDashboard");
+        while(!netTable.getBoolean("cameraEnable", false)) { //hangs when NOT cameraEnable
+        	try{
+        		Thread.sleep(10);
+        	} catch (Exception e) {
+        		
+        	}
+        }
         frame.filter.setNetworkTable(netTable);        
         frame.main();
         
