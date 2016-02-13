@@ -207,8 +207,7 @@ public class LiveViewGui {
 					}
 					lastFrame = frame;
 					if ((_CameraFps != null) && ((frame % 10) == 0)) {
-						_CameraFps.setText(Integer.toString(_FrameGrabber
-								.getFps()));
+						_CameraFps.setText("" + getFrameGrabberFps());
 					}
 					// Notify everyone that image has been updated
 					imageUpdated();
@@ -228,6 +227,14 @@ public class LiveViewGui {
 			return (int) (_FilteredCount * 1000000000L / _FilteredDur);
 		}
 		return 0;
+	}
+	
+	public int getFrameGrabberFps() {
+		if(_FrameGrabber.getFrameCount() % 10 == 0) {
+			return _FrameGrabber.getFps();
+		} else {
+			return 0;
+		}
 	}
 
 	/**

@@ -27,6 +27,10 @@ package com.techhounds.imgcv.frc2016;
 
 import java.awt.HeadlessException;
 
+import javax.swing.Box;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
 import com.techhounds.imgcv.LiveViewGui;
 import com.techhounds.imgcv.filters.MatFilter;
 
@@ -39,14 +43,22 @@ import edu.wpi.first.wpilibj.networktables.NetworkTable;
  * @author pkb
  */
 public final class LiveView2016 extends LiveViewGui {
+	
     TargetFilter filter = new TargetFilter(4); //default filter to be set
+    
+    protected JLabel _CameraFps = new JLabel("-");
+    protected JLabel _FilterFps = new JLabel("-");
+    protected JLabel _Distance = new JLabel("-");
+    protected JLabel _Angle = new JLabel("-");
+    
+    NetworkTable netTable;
     
     public LiveView2016(String title) throws HeadlessException {
 		super(title);
 		setFilter(filter); //set default filter here 
 	}
     
-    protected void addMenuItems() {
+    protected void addMenuItems() { //sets menu items
     	super.addMenuItems(); //adds default menu items  	
     	
     	addFilterCategory("2016", "No Filter",       new TargetFilter(0));
@@ -54,7 +66,38 @@ public final class LiveView2016 extends LiveViewGui {
     	addFilterCategory("2016", "Classic Filter",  new TargetFilter(3));
     	addFilterCategory("2016", "Bounding Filter", new TargetFilter(4));
     }
+    
+    protected void addStatusPanelItems(JPanel statusPanel) { //configs status panel
 
+		statusPanel.add(new JLabel("Camera FPS"));
+		statusPanel.add(Box.createHorizontalStrut(10));
+		statusPanel.add(_CameraFps);
+		
+		statusPanel.add(Box.createHorizontalStrut(30));
+		statusPanel.add(new JLabel("Filter FPS"));
+		statusPanel.add(Box.createHorizontalStrut(10));
+		statusPanel.add(_FilterFps);
+		
+		statusPanel.add(Box.createHorizontalStrut(30));
+		statusPanel.add(new JLabel("Distance"));
+		statusPanel.add(Box.createHorizontalStrut(10));
+		statusPanel.add(_Distance);
+		
+		statusPanel.add(Box.createHorizontalStrut(30));
+		statusPanel.add(new JLabel("Angle"));
+		statusPanel.add(Box.createHorizontalStrut(10));
+		statusPanel.add(_Angle);
+		
+		statusPanel.add(Box.createHorizontalGlue());
+	}
+
+    protected void imageUpdated() {
+    	_FilterFps.setText("" + getFilterFps());
+    	_CameraFps.setText("" + getFrameGrabberFps());
+    	_Distance.setText(""  + netTable.getNumber("DistanceToBase", 0));
+    	_Angle.setText(""     + netTable.getNumber("OffCenterDegreesX", 0));
+    }
+    
 	/**
      * Main entry point to this Java Application.
      * 
@@ -77,8 +120,8 @@ public final class LiveView2016 extends LiveViewGui {
         NetworkTable.setClientMode();
         NetworkTable.setIPAddress("10.8.68.2");
         NetworkTable.initialize();
-        NetworkTable sd = NetworkTable.getTable("SmartDashboard");
-        frame.filter.setNetworkTable(sd);        
+        NetworkTable netTable = NetworkTable.getTable("SmartDashboard");
+        frame.filter.setNetworkTable(netTable);        
         frame.main();
         
         //frame.startVideoFeed(); //starts from incorrect source
