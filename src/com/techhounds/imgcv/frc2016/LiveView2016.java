@@ -51,7 +51,7 @@ public final class LiveView2016 extends LiveViewGui {
     protected JLabel _Distance = new JLabel("-");
     protected JLabel _Angle = new JLabel("-");
     
-    NetworkTable netTable;
+    private static NetworkTable netTable;
     
     public LiveView2016(String title) throws HeadlessException {
 		super(title);
@@ -72,22 +72,21 @@ public final class LiveView2016 extends LiveViewGui {
 		statusPanel.add(new JLabel("Camera FPS"));
 		statusPanel.add(Box.createHorizontalStrut(10));
 		statusPanel.add(_CameraFps);
-		
 		statusPanel.add(Box.createHorizontalStrut(30));
+		
 		statusPanel.add(new JLabel("Filter FPS"));
 		statusPanel.add(Box.createHorizontalStrut(10));
 		statusPanel.add(_FilterFps);
-		
 		statusPanel.add(Box.createHorizontalStrut(30));
+		
 		statusPanel.add(new JLabel("Distance"));
 		statusPanel.add(Box.createHorizontalStrut(10));
 		statusPanel.add(_Distance);
-		
 		statusPanel.add(Box.createHorizontalStrut(30));
+		
 		statusPanel.add(new JLabel("Angle"));
 		statusPanel.add(Box.createHorizontalStrut(10));
 		statusPanel.add(_Angle);
-		
 		statusPanel.add(Box.createHorizontalGlue());
 	}
 
@@ -120,7 +119,7 @@ public final class LiveView2016 extends LiveViewGui {
         NetworkTable.setClientMode();
         NetworkTable.setIPAddress("10.8.68.2");
         NetworkTable.initialize();
-        NetworkTable netTable = NetworkTable.getTable("SmartDashboard");
+        netTable = NetworkTable.getTable("SmartDashboard");
         frame.filter.setNetworkTable(netTable);        
         frame.main();
         
