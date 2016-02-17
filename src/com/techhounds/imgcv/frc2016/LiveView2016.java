@@ -93,8 +93,11 @@ public final class LiveView2016 extends LiveViewGui {
     protected void imageUpdated() {
     	_FilterFps.setText("" + getFilterFps());
     	_CameraFps.setText("" + getFrameGrabberFps());
-    	_Distance.setText(""  + netTable.getNumber("DistanceToBase", 0));
-    	_Angle.setText(""     + netTable.getNumber("OffCenterDegreesX", 0));
+    	
+    	if(netTable != null) {
+	    	_Distance.setText(""  + netTable.getNumber("DistanceToBase", 0));
+	    	_Angle.setText(""     + netTable.getNumber("OffCenterDegreesX", 0));
+	    }
     }
     
 	/**
@@ -128,7 +131,7 @@ public final class LiveView2016 extends LiveViewGui {
         	}
         	if(netTable.getBoolean("cameraEnable", false)) {
         		frame.startVideoFeed();
-        	}
+        	} //TODO fix disable-disconnect-enable hang
         }
         frame.filter.setNetworkTable(netTable);        
         frame.main();

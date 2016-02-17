@@ -132,20 +132,20 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
         double offsetXDegrees, offsetXDegreesIdeal,
         	targetDistanceInches, baseDistanceInches, 
         	cameraAngleElevationRadians, targetAngleRadians; 
-        double cameraHorizRads = Math.toRadians(Camera.FOV_X_DEGREES);
-        double cameraVertRads  = Math.toRadians(Camera.FOV_Y_DEGREES);
-    	
+            	
         //calculates how far off center the target is from the center of the camera
     	offsetXDegrees = Math.toDegrees(
     						Math.atan(2 * foundTarget.getCenterX() * 
-    						Math.tan(cameraHorizRads/2) / Camera.RESOLUTION_X_PIXELS));
+    						Math.tan(Camera.FOV_X_RADIANS/2) / Camera.RESOLUTION_X_PIXELS));
     	
     	//gets size of target in Radians
-    	targetAngleRadians = Math.atan(2 * foundTarget.getMaxY() * Math.tan(cameraVertRads/2) / Camera.RESOLUTION_Y_PIXELS) - //gets degree value of top
-    				  Math.atan(2 * foundTarget.getMinY() * Math.tan(cameraVertRads/2) / Camera.RESOLUTION_Y_PIXELS);  //and bottom points, and finds difference
+    	targetAngleRadians = Math.atan(2 * foundTarget.getMaxY() * Math.tan(Camera.FOV_Y_RADIANS/2) / Camera.RESOLUTION_Y_PIXELS) - 
+    				  Math.atan(2 * foundTarget.getMinY() * Math.tan(Camera.FOV_Y_RADIANS/2) / Camera.RESOLUTION_Y_PIXELS);  
+    	//gets degree value of top and bottom points, and finds difference
     	    	
     	//gets distance to target
-    	targetDistanceInches = (Target.TAPE_HEIGHT_INCHES / 2) / Math.tan(targetAngleRadians); //use perspective height rather than targetTapeHeight?
+    	targetDistanceInches = (Target.TAPE_HEIGHT_INCHES / 2) / Math.tan(targetAngleRadians); 
+    	//use perspective height rather than targetTapeHeight?
     	
     	//gets elevation of target to camera relative to ground
     	cameraAngleElevationRadians = Math.asin((Target.TOWER_HEIGHT_INCHES - Camera.OFFSET_Y_INCHES) / targetDistanceInches);
@@ -153,8 +153,14 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     	//gets distance to the base of the target
     	baseDistanceInches = Math.cos(cameraAngleElevationRadians) * targetDistanceInches;
     	
-    	//gets 'ideal' target off center angle - because camera is to the side, a perfectly zeroed robot will be slightly off from the camera
-    	offsetXDegreesIdeal = Math.toDegrees(Math.atan(targetDistanceInches / Camera.OFFSET_X_INCHES)); //will be positive if cameraCenterOffset is negative
+    	/* gets 'ideal' target off center angle - because camera is to the side,
+    	 * a perfectly zeroed robot will be slightly off from the camera
+    	 */
+    	if(Camera.OFFSET_X_INCHES != 0) {
+    		offsetXDegreesIdeal = Math.toDegrees(Math.atan(targetDistanceInches / Camera.OFFSET_X_INCHES)); 
+    	} else { 								//will be positive if cameraCenterOffset is negative
+    		offsetXDegreesIdeal = 0;
+    	}
     	
     	//compensates for Ideal angle offset
     	offsetXDegrees = offsetXDegrees - offsetXDegreesIdeal; 
