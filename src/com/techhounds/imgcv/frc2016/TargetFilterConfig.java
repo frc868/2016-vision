@@ -1,30 +1,36 @@
 package com.techhounds.imgcv.frc2016;
 
 public interface TargetFilterConfig {
-
-	//Imgproc configs
 	
-	public final int[] colorFilterMin   = {60, 160, 20};
-	public final int[] colorFilterMax   = {110, 255, 255};
-	public final int   blackWhiteThresh = 40;
-	public final int   dilateFactor     = 4; 
-	public final int   erodeFactor      = 5;
+	interface Render {
+		public final int OUTLINE_THICKNESS = 1;
+		public final int RETICLE_SIZE      = 2;
+		public final int BOX_THICKNESS     = 3;
+	}
 	
-	//Render configs 
+	interface Imgproc {
+		public final int[] COLOR_MIN         = {60, 160, 20};
+		public final int[] COLOR_MAX         = {110, 255, 255};
+		public final int   BLACKWHITE_THRESH = 40;
+		public final int   DILATE_FACTOR     = 4; 
+		public final int   ERODE_FACTOR      = 5;
+	}
 	
-	public final int targetOutlineThickness = 1;
-	public final int reticleSize            = 2;
-	public final int boundingBoxThickness   = 3;
+	interface Target {
+		public final double TAPE_WIDTH_INCHES   = 20;
+		public final double TAPE_HEIGHT_INCHES  = 14;
+		public final double TOWER_HEIGHT_INCHES = 80;
+	}
 	
-	//physical data
-	
-	public final double targetTapeWidth    = 20; //inches
-	public final double targetTapeHeight   = 14;
-	public final double targetTowerHeight  = 80;//inches, not sure if to bottom or middle of target
-	public final double cameraElevation    = 12;//inches
-	public final double cameraHorizFOV     = 67; //degrees
-	public final double cameraVertFOV      = 51;
-	public final double cameraResolutionX  = 800;//pixels
-	public final double cameraResolutionY  = 600;
-	public final double cameraCenterOffset = -8; //inches, negative is to left
+	interface Camera {
+		public final double OFFSET_Y_INCHES     = 12;
+		public final double OFFSET_X_INCHES     = -8; //negative is to left
+		public final double FOV_X_DEGREES       = 67; 
+		public final double FOV_Y_DEGREES       = 51;
+		public final double FOV_X_RADIANS       = Math.toRadians(FOV_X_DEGREES);
+		public final double FOV_Y_RADIANS       = Math.toRadians(FOV_Y_DEGREES);
+		public final double RESOLUTION_X_PIXELS = 800;
+		public final double RESOLUTION_Y_PIXELS = 600;
+		
+	}
 }

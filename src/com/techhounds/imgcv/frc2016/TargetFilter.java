@@ -61,16 +61,16 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 	//filter instances
 	
 	private final MatFilter _ColorSpace   = ColorSpace.createBGRtoHSV();
-	private final MatFilter _ColorRange   = new ColorRange(colorFilterMin, colorFilterMax, true);
-	private final MatFilter _Erode        = new Erode(erodeFactor);
-	private final MatFilter _Dilate       = new Dilate(dilateFactor);
+	private final MatFilter _ColorRange   = new ColorRange(Imgproc.COLOR_MIN, Imgproc.COLOR_MAX, true);
+	private final MatFilter _Erode        = new Erode(Imgproc.ERODE_FACTOR);
+	private final MatFilter _Dilate       = new Dilate(Imgproc.DILATE_FACTOR);
 	private final MatFilter _GrayScale    = new GrayScale();
-	private final MatFilter _BlackWhite   = new BlackWhite(blackWhiteThresh, 255, true);
+	private final MatFilter _BlackWhite   = new BlackWhite(Imgproc.BLACKWHITE_THRESH, 255, true);
 	private final MatFilter _CrossHair    = new CrossHair();
-	private final PolyArrayRender _OtherTargets = new PolyArrayRender(ScalarColors.BLUE, targetOutlineThickness);
-	private final PolygonRender   _BestTarget   = new PolygonRender(ScalarColors.RED,  targetOutlineThickness);
+	private final PolyArrayRender _OtherTargets = new PolyArrayRender(ScalarColors.BLUE, Render.OUTLINE_THICKNESS);
+	private final PolygonRender   _BestTarget   = new PolygonRender(ScalarColors.RED,  Render.OUTLINE_THICKNESS);
 	private final RectangleRender _Reticle      = new RectangleRender(ScalarColors.RED, -1); //-1 is filled
-	private final RectangleRender _BoundingBox  = new RectangleRender(ScalarColors.GREEN, boundingBoxThickness);
+	private final RectangleRender _BoundingBox  = new RectangleRender(ScalarColors.GREEN, Render.BOX_THICKNESS);
 	
 	//should be set by constructor based on stage value (via switch)
 		
@@ -112,7 +112,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
         		_BestTarget.process(workingImage);
         		
         		_Reticle.setCenter(bestTarget.getCenterX(), bestTarget.getMaxY());
-        		_Reticle.setSize(reticleSize, reticleSize);
+        		_Reticle.setSize(Render.RETICLE_SIZE, Render.RETICLE_SIZE);
         		_Reticle.process(workingImage);
         	}
         	
@@ -129,41 +129,42 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 	}
 	
 	private void targetAnalysis(PolygonCv foundTarget) { //tells the robo info about the target
-        double offCenterDegreesX, targetDistance, baseDistance, 
-        	cameraAngleElevationRadians, targetAngleRadians, offCenterDegreesXIdeal; 
-        double cameraHorizRads = Math.toRadians(cameraHorizFOV);
-        double cameraVertRads  = Math.toRadians(cameraVertFOV);
+        double offsetXDegrees, offsetXDegreesIdeal,
+        	targetDistanceInches, baseDistanceInches, 
+        	cameraAngleElevationRadians, targetAngleRadians; 
+        double cameraHorizRads = Math.toRadians(Camera.FOV_X_DEGREES);
+        double cameraVertRads  = Math.toRadians(Camera.FOV_Y_DEGREES);
     	
         //calculates how far off center the target is from the center of the camera
-    	offCenterDegreesX = Math.toDegrees(
+    	offsetXDegrees = Math.toDegrees(
     						Math.atan(2 * foundTarget.getCenterX() * 
-    						Math.tan(cameraHorizRads/2) / cameraResolutionX));
+    						Math.tan(cameraHorizRads/2) / Camera.RESOLUTION_X_PIXELS));
     	
     	//gets size of target in Radians
-    	targetAngleRadians = Math.atan(2 * foundTarget.getMaxY() * Math.tan(cameraVertRads/2) / cameraResolutionY) - //gets degree value of top
-    				  Math.atan(2 * foundTarget.getMinY() * Math.tan(cameraVertRads/2) / cameraResolutionY);  //and bottom points, and finds difference
+    	targetAngleRadians = Math.atan(2 * foundTarget.getMaxY() * Math.tan(cameraVertRads/2) / Camera.RESOLUTION_Y_PIXELS) - //gets degree value of top
+    				  Math.atan(2 * foundTarget.getMinY() * Math.tan(cameraVertRads/2) / Camera.RESOLUTION_Y_PIXELS);  //and bottom points, and finds difference
     	    	
     	//gets distance to target
-    	targetDistance = (targetTapeHeight / 2) / Math.tan(targetAngleRadians); //use perspective height rather than targetTapeHeight?
+    	targetDistanceInches = (Target.TAPE_HEIGHT_INCHES / 2) / Math.tan(targetAngleRadians); //use perspective height rather than targetTapeHeight?
     	
     	//gets elevation of target to camera relative to ground
-    	cameraAngleElevationRadians = Math.asin((targetTowerHeight - cameraElevation) / targetDistance);
+    	cameraAngleElevationRadians = Math.asin((Target.TOWER_HEIGHT_INCHES - Camera.OFFSET_Y_INCHES) / targetDistanceInches);
     	
     	//gets distance to the base of the target
-    	baseDistance = Math.cos(cameraAngleElevationRadians) * targetDistance;
+    	baseDistanceInches = Math.cos(cameraAngleElevationRadians) * targetDistanceInches;
     	
     	//gets 'ideal' target off center angle - because camera is to the side, a perfectly zeroed robot will be slightly off from the camera
-    	offCenterDegreesXIdeal = Math.toDegrees(Math.atan(targetDistance / cameraCenterOffset)); //will be positive if cameraCenterOffset is negative
+    	offsetXDegreesIdeal = Math.toDegrees(Math.atan(targetDistanceInches / Camera.OFFSET_X_INCHES)); //will be positive if cameraCenterOffset is negative
     	
     	//compensates for Ideal angle offset
-    	offCenterDegreesX = offCenterDegreesX - offCenterDegreesXIdeal; 
+    	offsetXDegrees = offsetXDegrees - offsetXDegreesIdeal; 
     	
     	//determines if angle values are reasonable
-    	if(offCenterDegreesX < (cameraHorizFOV/2) && offCenterDegreesX > (-cameraHorizFOV/2)) 
-    		networkTable.putNumber("OffCenterDegreesX", offCenterDegreesX);
+    	if(offsetXDegrees < (Camera.FOV_X_DEGREES/2) && offsetXDegrees > (-Camera.FOV_X_DEGREES/2)) 
+    		networkTable.putNumber("OffCenterDegreesX", offsetXDegrees);
     	
     	//writes calculated data to network tables
-    	networkTable.putNumber("DistanceToBase",  baseDistance);
-    	networkTable.putNumber("DistanceToTarget", targetDistance);  	
+    	networkTable.putNumber("DistanceToBase",  baseDistanceInches);
+    	networkTable.putNumber("DistanceToTarget", targetDistanceInches);  	
     }
 }
