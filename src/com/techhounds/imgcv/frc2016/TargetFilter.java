@@ -147,6 +147,11 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     	targetDistanceInches = (Target.TAPE_HEIGHT_INCHES / 2) / Math.tan(targetAngleRadians); 
     	//use perspective height rather than targetTapeHeight?
     	
+    	//because why not
+    	targetDistanceInches = (Target.TAPE_HEIGHT_INCHES / 2) / 
+			 	Math.tan(
+						 (Target.TAPE_HEIGHT_INCHES / Camera.RESOLUTION_Y_PIXELS) * (Camera.FOV_Y_RADIANS / 2));
+    	
     	//gets elevation of target to camera relative to ground
     	cameraAngleElevationRadians = Math.asin((Target.TOWER_HEIGHT_INCHES - Camera.OFFSET_Y_INCHES) / targetDistanceInches);
     	
