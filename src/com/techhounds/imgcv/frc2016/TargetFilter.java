@@ -135,22 +135,22 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
             	
         //calculates how far off center the target is from the center of the camera
     	offsetXDegrees = Math.toDegrees(
-    						Math.atan(2 * foundTarget.getCenterX() * 
-    						Math.tan(Camera.FOV_X_RADIANS/2) / Camera.RESOLUTION_X_PIXELS));
+    					 Math.atan(2 * foundTarget.getCenterX() * 
+    					 Math.tan(Camera.FOV_X_RADIANS/2) / Camera.RESOLUTION_X_PIXELS));
     	
     	//gets size of target in Radians
     	targetAngleRadians = Math.atan(2 * foundTarget.getMaxY() * Math.tan(Camera.FOV_Y_RADIANS/2) / Camera.RESOLUTION_Y_PIXELS) - 
-    				  Math.atan(2 * foundTarget.getMinY() * Math.tan(Camera.FOV_Y_RADIANS/2) / Camera.RESOLUTION_Y_PIXELS);  
+    				  		 Math.atan(2 * foundTarget.getMinY() * Math.tan(Camera.FOV_Y_RADIANS/2) / Camera.RESOLUTION_Y_PIXELS);  
     	//gets degree value of top and bottom points, and finds difference
     	    	
     	//gets distance to target
     	targetDistanceInches = (Target.TAPE_HEIGHT_INCHES / 2) / Math.tan(targetAngleRadians); 
     	//use perspective height rather than targetTapeHeight?
     	
-    	//because why not
-    	targetDistanceInches = (Target.TAPE_HEIGHT_INCHES / 2) / 
+    	//because why not -- SHIT ALGO 
+    	/*targetDistanceInches = (Target.TAPE_HEIGHT_INCHES / 2) / 
 			 	Math.tan(
-						 (Target.TAPE_HEIGHT_INCHES / Camera.RESOLUTION_Y_PIXELS) * (Camera.FOV_Y_RADIANS / 2));
+						 (Target.TAPE_HEIGHT_INCHES / Camera.RESOLUTION_Y_PIXELS) * (Camera.FOV_Y_RADIANS / 2)); */
     	
     	//gets elevation of target to camera relative to ground
     	cameraAngleElevationRadians = Math.asin((Target.TOWER_HEIGHT_INCHES - Camera.OFFSET_Y_INCHES) / targetDistanceInches);
