@@ -129,53 +129,25 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 	}
 	
 	private void targetAnalysis(PolygonCv foundTarget) { //tells the robo info about the target
-        double offsetXDegrees, offsetXDegreesIdeal,
-        	targetDistanceInches, baseDistanceInches, 
-        	cameraAngleElevationRadians, targetAngleRadians; 
-            	
-        //calculates how far off center the target is from the center of the camera
-    	offsetXDegrees = Math.toDegrees(
-    					 Math.atan(2 * foundTarget.getCenterX() * 
-    					 Math.tan(Camera.FOV_X_RADIANS/2) / Camera.RESOLUTION_X_PIXELS));
+		double offCenterDegreesX, targetDistance, baseDistance, cameraAngleElevation; //elevation in RADIANS
+        double cameraHorizRads = Math.toRadians(Camera.FOV_X_DEGREES);
+        float targetWidth 	   = foundTarget.getWidth();
+        float targetX		   = foundTarget.getCenterX();
     	
-    	//gets size of target in Radians
-    	targetAngleRadians = Math.atan(2 * foundTarget.getMaxY() * Math.tan(Camera.FOV_Y_RADIANS/2) / Camera.RESOLUTION_Y_PIXELS) - 
-    				  		 Math.atan(2 * foundTarget.getMinY() * Math.tan(Camera.FOV_Y_RADIANS/2) / Camera.RESOLUTION_Y_PIXELS);  
-    	//gets degree value of top and bottom points, and finds difference
-    	    	
-    	//gets distance to target
-    	targetDistanceInches = (Target.TAPE_HEIGHT_INCHES / 2) / Math.tan(targetAngleRadians); 
-    	//use perspective height rather than targetTapeHeight?
+    	offCenterDegreesX = Math.atan(2 * targetX * Math.tan(cameraHorizRads/2) / Camera.RESOLUTION_X_PIXELS);
     	
-    	//because why not -- SHIT ALGO 
-    	/*targetDistanceInches = (Target.TAPE_HEIGHT_INCHES / 2) / 
-			 	Math.tan(
-						 (Target.TAPE_HEIGHT_INCHES / Camera.RESOLUTION_Y_PIXELS) * (Camera.FOV_Y_RADIANS / 2)); */
+    	targetDistance = (Target.TAPE_WIDTH_INCHES / 2) / 
+    					 	Math.tan(
+    								 (targetWidth / Camera.RESOLUTION_X_PIXELS) * (cameraHorizRads / 2));
     	
-    	//gets elevation of target to camera relative to ground
-    	cameraAngleElevationRadians = Math.asin((Target.TOWER_HEIGHT_INCHES - Camera.OFFSET_Y_INCHES) / targetDistanceInches);
+    	cameraAngleElevation = Math.asin((Target.TOWER_HEIGHT_INCHES - Camera.OFFSET_Y_INCHES) / targetDistance);
     	
-    	//gets distance to the base of the target
-    	baseDistanceInches = Math.cos(cameraAngleElevationRadians) * targetDistanceInches;
+    	baseDistance = Math.cos(cameraAngleElevation) * targetDistance;
     	
-    	/* gets 'ideal' target off center angle - because camera is to the side,
-    	 * a perfectly zeroed robot will be slightly off from the camera
-    	 */
-    	if(Camera.OFFSET_X_INCHES != 0) {
-    		offsetXDegreesIdeal = Math.toDegrees(Math.atan(targetDistanceInches / Camera.OFFSET_X_INCHES)); 
-    	} else { 								//will be positive if cameraCenterOffset is negative
-    		offsetXDegreesIdeal = 0;
-    	}
+    	if(offCenterDegreesX < (Camera.FOV_X_DEGREES/2) && offCenterDegreesX > (-Camera.FOV_X_DEGREES/2)) 
+    		networkTable.putNumber("OffCenterDegreesX", offCenterDegreesX);
     	
-    	//compensates for Ideal angle offset
-    	offsetXDegrees = offsetXDegrees - offsetXDegreesIdeal; 
-    	
-    	//determines if angle values are reasonable
-    	if(offsetXDegrees < (Camera.FOV_X_DEGREES/2) && offsetXDegrees > (-Camera.FOV_X_DEGREES/2)) 
-    		networkTable.putNumber("OffCenterDegreesX", offsetXDegrees);
-    	
-    	//writes calculated data to network tables
-    	networkTable.putNumber("DistanceToBase",  baseDistanceInches);
-    	networkTable.putNumber("DistanceToTarget", targetDistanceInches);  	
+    	networkTable.putNumber("DistanceToBase",  baseDistance);
+    	networkTable.putNumber("DistanceToTarget", targetDistance);
     }
 }
