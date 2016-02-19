@@ -51,8 +51,6 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		targetSidesIdeal  = 8;    targetSidesWeight  = 100;
 		targetRatioIdeal  = 1.5;  targetRatioWeight  = 1000;
 		targetAreaIdeal   = 5000; targetAreaWeight   = 0.03;
-		
-		
 	
 	}
 	
@@ -144,8 +142,8 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     	targetAngleFactor = 2 * Math.tan(Camera.FOV_Y_RADIANS / 2) / Camera.RESOLUTION_Y_PIXELS;
     	
     	//gets size of target in Radians
-    	targetAngleRadians = Math.atan(foundTarget.getMinY() * targetAngleFactor) - 
-    				  		 Math.atan(foundTarget.getMaxY() * targetAngleFactor);  
+    	targetAngleRadians = Math.atan((400 - foundTarget.getMinY()) * targetAngleFactor) - 
+    				  		 Math.atan((400 - foundTarget.getMaxY()) * targetAngleFactor);  
     	//gets degree value of top and bottom points, and finds difference
     	    	
     	//gets distance to target
