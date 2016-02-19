@@ -96,7 +96,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		
 		if(targets.size() > 0) {
         	bestTarget = findBestTarget(targets);
-        	
+        	        	
         	if(networkTable != null) { 
         		targetAnalysis(bestTarget); //no return as it simply writes data to netTables 
         		networkTable.putNumber("FrameCount", frameCount++); 
@@ -129,25 +129,57 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 	}
 	
 	private void targetAnalysis(PolygonCv foundTarget) { //tells the robo info about the target
-		double offCenterDegreesX, targetDistance, baseDistance, cameraAngleElevation; //elevation in RADIANS
-        double cameraHorizRads = Math.toRadians(Camera.FOV_X_DEGREES);
-        float targetWidth 	   = foundTarget.getWidth();
-        float targetX		   = foundTarget.getCenterX();
+        double offsetXDegrees, offsetXDegreesIdeal,
+        	targetDistanceInches, baseDistanceInches, 
+        	cameraAngleElevationRadians, targetAngleRadians,
+        	targetAngleFactor; 
+            	
+        //calculates how far off center the target is from the center of the camera
+    	offsetXDegrees = Math.atan((400 - foundTarget.getCenterX()) * Math.tan(Camera.FOV_X_RADIANS/2) / (Camera.RESOLUTION_X_PIXELS/2));
     	
-    	offCenterDegreesX = Math.atan(2 * targetX * Math.tan(cameraHorizRads/2) / Camera.RESOLUTION_X_PIXELS);
+    	//converts from radians (output of Math) to degrees
+    	offsetXDegrees = Math.toDegrees(offsetXDegrees);
     	
-    	targetDistance = (Target.TAPE_WIDTH_INCHES / 2) / 
-    					 	Math.tan(
-    								 (targetWidth / Camera.RESOLUTION_X_PIXELS) * (cameraHorizRads / 2));
+    	//used to determine size of the target in radians
+    	targetAngleFactor = 2 * Math.tan(Camera.FOV_Y_RADIANS / 2) / Camera.RESOLUTION_Y_PIXELS;
     	
-    	cameraAngleElevation = Math.asin((Target.TOWER_HEIGHT_INCHES - Camera.OFFSET_Y_INCHES) / targetDistance);
+    	//gets size of target in Radians
+    	targetAngleRadians = Math.atan(foundTarget.getMinY() * targetAngleFactor) - 
+    				  		 Math.atan(foundTarget.getMaxY() * targetAngleFactor);  
+    	//gets degree value of top and bottom points, and finds difference
+    	    	
+    	//gets distance to target
+    	targetDistanceInches = (Target.TAPE_HEIGHT_INCHES / 2) / Math.tan(targetAngleRadians); 
+    	//use perspective height rather than targetTapeHeight?
     	
-    	baseDistance = Math.cos(cameraAngleElevation) * targetDistance;
+    	//gets elevation of target to camera relative to ground
+    	cameraAngleElevationRadians = Math.asin((Target.TOWER_HEIGHT_INCHES - Camera.OFFSET_Y_INCHES) / targetDistanceInches);
     	
-    	if(offCenterDegreesX < (Camera.FOV_X_DEGREES/2) && offCenterDegreesX > (-Camera.FOV_X_DEGREES/2)) 
-    		networkTable.putNumber("OffCenterDegreesX", offCenterDegreesX);
+    	//gets distance to the base of the target
+    	baseDistanceInches = Math.cos(cameraAngleElevationRadians) * targetDistanceInches;
     	
-    	networkTable.putNumber("DistanceToBase",  baseDistance);
-    	networkTable.putNumber("DistanceToTarget", targetDistance);
+    	/* gets 'ideal' target off center angle - because camera is to the side,
+    	 * a perfectly zeroed robot will be slightly off from the camera
+    	 */
+    	if(Camera.OFFSET_X_INCHES != 0) {
+    		offsetXDegreesIdeal = Math.toDegrees(Math.atan(targetDistanceInches / Camera.OFFSET_X_INCHES)); 
+    	} else { 								//will be positive if cameraCenterOffset is negative
+    		offsetXDegreesIdeal = 0;
+    	}
+    	
+    	//compensates for Ideal angle offset
+    	offsetXDegrees = offsetXDegrees - offsetXDegreesIdeal; 
+    	
+    	//determines if angle values are reasonable
+    	if(offsetXDegrees < (Camera.FOV_X_DEGREES/2) && offsetXDegrees > (-Camera.FOV_X_DEGREES/2)) 
+    		networkTable.putNumber("OffCenterDegreesX", offsetXDegrees);
+    	
+    	System.out.print(foundTarget.getCenterX());
+    	System.out.print("     ");
+    	System.out.println(offsetXDegrees);
+    	
+    	//writes calculated data to network tables
+    	networkTable.putNumber("DistanceToBase",  baseDistanceInches);
+    	networkTable.putNumber("DistanceToTarget", targetDistanceInches);  	
     }
 }

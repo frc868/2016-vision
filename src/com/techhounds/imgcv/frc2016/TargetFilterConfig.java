@@ -9,8 +9,8 @@ public interface TargetFilterConfig {
 	}
 	
 	interface Imgproc {
-		public final int[] COLOR_MIN         = {100, 100, 80};
-		public final int[] COLOR_MAX         = {115, 255, 255};
+		public final int[] COLOR_MIN         = {60, 200, 30};
+		public final int[] COLOR_MAX         = {105, 255, 255};
 		public final int   BLACKWHITE_THRESH = 40;
 		public final int   DILATE_FACTOR     = 4; 
 		public final int   ERODE_FACTOR      = 5;
@@ -23,8 +23,8 @@ public interface TargetFilterConfig {
 	}
 	
 	interface Camera {
-		public final double OFFSET_Y_INCHES     = 12;
-		public final double OFFSET_X_INCHES     = 0; //negative is to left
+		public final double OFFSET_Y_INCHES     = 12; //amount above ground
+		public final double OFFSET_X_INCHES     = 0;  //negative is to left
 		public final double FOV_X_DEGREES       = 67; 
 		public final double FOV_Y_DEGREES       = 51;
 		public final double FOV_X_RADIANS       = Math.toRadians(FOV_X_DEGREES);
