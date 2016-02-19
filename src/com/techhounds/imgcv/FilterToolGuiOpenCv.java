@@ -1371,7 +1371,7 @@ public class FilterToolGuiOpenCv {
 	 *
 	 * @return Action that can be assigned to a button or menu item.
 	 */
-	private Action getColorRangeAction() {
+	private Action getColorRangeAction() { //TODO save values
 		if (_ColorRange == null) {
 			int[] minVals = { 0, 0, 0 };
 			int[] maxVals = { 255, 255, 255 };
@@ -1412,6 +1412,14 @@ public class FilterToolGuiOpenCv {
 			}
 		};
 		return action;
+	}
+	
+	protected JFrame getFrame() {
+		return frame;
+	}
+	
+	protected ColorRange getColorRange() {
+		return _ColorRange;
 	}
 
 }

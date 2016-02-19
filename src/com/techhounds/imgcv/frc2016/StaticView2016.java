@@ -25,7 +25,23 @@
  */
 package com.techhounds.imgcv.frc2016;
 
+import java.awt.Cursor;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
+import com.techhounds.imgcv.FilterView;
+import com.techhounds.imgcv.filters.MatFilter;
 
 /**
  * A more involved example of extending the filter tool for testing filters.
@@ -58,9 +74,55 @@ public final class StaticView2016 extends FilterToolGuiOpenCv {
         addImageProcessingButton("Color Filter", new TargetFilter(1));
         addImageProcessingButton("Classic Filter", new TargetFilter(3));
         addImageProcessingButton("Bounding Filter", new TargetFilter(4));
+        
+        JButton button = new JButton(createSaveConfig());
+		addControl(button);
     }
 
-    /**
+    private Action createSaveConfig() {
+		final AbstractAction saveAction = new AbstractAction("Save Configs") {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					JFileChooser saveDialog = new JFileChooser();
+					
+					// Ask user for the location of the image file
+					saveDialog.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+					// If user picks directory, process all images in directory
+					if (saveDialog.showSaveDialog(getFrame()) == JFileChooser.APPROVE_OPTION) {
+						File file = saveDialog.getSelectedFile();
+						String path = file.getAbsolutePath();
+						
+						int[] maxVals = getColorRange().getMaxVals();
+						int[] minVals = getColorRange().getMinVals();
+						
+						Writer configFile = new FileWriter(path);
+						
+						for(int i = 0; i < maxVals.length; i++) {
+							System.out.println(maxVals[i]);
+							System.out.println(minVals[i]);
+							configFile.write(Integer.toString(maxVals[i]));
+							configFile.write(System.lineSeparator());
+							configFile.write(Integer.toString(minVals[i]));
+							configFile.write(System.lineSeparator());
+						}
+						
+						configFile.close();
+					}
+				} catch (Exception ex) {
+					System.out.println(ex);
+				}
+			}
+			
+		};
+    	
+    	return saveAction;
+	}
+
+	/**
      * Main entry point which allows you to run the tool as a Java Application.
      * @param args Array of command line arguments.
      */

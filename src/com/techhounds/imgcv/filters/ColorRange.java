@@ -362,4 +362,12 @@ public final class ColorRange implements MatFilter {
 		slider.setPaintTicks(true);
 		return slider;
 	}
+	
+	public int[] getMaxVals() {
+		return _MaxVals;
+	}
+	
+	public int[] getMinVals() {
+		return _MinVals;
+	}
 }
