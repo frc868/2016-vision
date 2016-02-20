@@ -1,5 +1,8 @@
 package com.techhounds.imgcv.frc2016;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,7 +62,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 	//filter instances
 	
 	private final MatFilter _ColorSpace   = ColorSpace.createBGRtoHSV();
-	private final MatFilter _ColorRange   = new ColorRange(Imgproc.COLOR_MIN, Imgproc.COLOR_MAX, true);
+	private final ColorRange _ColorRange   = new ColorRange(Imgproc.COLOR_MIN, Imgproc.COLOR_MAX, true);
 	private final MatFilter _Erode        = new Erode(Imgproc.ERODE_FACTOR);
 	private final MatFilter _Dilate       = new Dilate(Imgproc.DILATE_FACTOR);
 	private final MatFilter _GrayScale    = new GrayScale();
@@ -150,6 +153,13 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     	targetDistanceInches = (Target.TAPE_HEIGHT_INCHES / 2) / Math.tan(targetAngleRadians); 
     	//use perspective height rather than targetTapeHeight?
     	
+    	//ye olde algorithm
+    	//targetDistanceInches = (Target.TAPE_WIDTH_INCHES / 2) / 
+		//	 	Math.tan(
+		//				 (Target.TAPE_WIDTH_INCHES / Camera.RESOLUTION_X_PIXELS) * (Camera.FOV_X_RADIANS / 2));
+    	
+    	
+    	
     	//gets elevation of target to camera relative to ground
     	cameraAngleElevationRadians = Math.asin((Target.TOWER_HEIGHT_INCHES - Camera.OFFSET_Y_INCHES) / targetDistanceInches);
     	
@@ -165,19 +175,42 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     		offsetXDegreesIdeal = 0;
     	}
     	
+    	System.out.print(targetDistanceInches + "   ");
+    	System.out.print(foundTarget.getHeight() + "   ");
+    	System.out.println(foundTarget.getWidth());
+    	
     	//compensates for Ideal angle offset
     	offsetXDegrees = offsetXDegrees - offsetXDegreesIdeal; 
     	
     	//determines if angle values are reasonable
     	if(offsetXDegrees < (Camera.FOV_X_DEGREES/2) && offsetXDegrees > (-Camera.FOV_X_DEGREES/2)) 
     		networkTable.putNumber("OffCenterDegreesX", offsetXDegrees);
-    	
-    	System.out.print(foundTarget.getCenterX());
-    	System.out.print("     ");
-    	System.out.println(offsetXDegrees);
-    	
+    	    	
     	//writes calculated data to network tables
     	networkTable.putNumber("DistanceToBase",  baseDistanceInches);
     	networkTable.putNumber("DistanceToTarget", targetDistanceInches);  	
     }
+
+	public void setColorRangeConfig(File configFile) {
+		try {
+			FileReader configFileReader = new FileReader(configFile);
+			BufferedReader  configFileBReader = new BufferedReader(configFileReader);
+			
+			for(int i = 0; i < Imgproc.COLOR_MAX.length; i++) {
+				Imgproc.COLOR_MAX[i] = Integer.parseInt(configFileBReader.readLine());
+				System.out.println("Read & Set " + Imgproc.COLOR_MAX[i]);
+				Imgproc.COLOR_MIN[i] = Integer.parseInt(configFileBReader.readLine());
+				System.out.println("Read & Set " + Imgproc.COLOR_MIN[i]);
+
+			}
+			
+			_ColorRange.setRanges(Imgproc.COLOR_MIN, Imgproc.COLOR_MAX, true);
+			
+			configFileReader.close();
+			configFileBReader.close();
+
+		} catch (Exception ex) {
+			System.out.println(ex);
+		}
+	}
 }

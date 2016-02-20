@@ -927,4 +927,8 @@ public class LiveViewGui {
 		_CaptureTimer.stop();
 	}
 
+	protected JFrame getFrame() {
+		return _JFrame;
+	}
+	
 }

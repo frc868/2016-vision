@@ -25,23 +25,17 @@
  */
 package com.techhounds.imgcv.frc2016;
 
-import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
-import com.techhounds.imgcv.FilterView;
-import com.techhounds.imgcv.filters.MatFilter;
 
 /**
  * A more involved example of extending the filter tool for testing filters.
@@ -102,8 +96,8 @@ public final class StaticView2016 extends FilterToolGuiOpenCv {
 						Writer configFile = new FileWriter(path);
 						
 						for(int i = 0; i < maxVals.length; i++) {
-							System.out.println(maxVals[i]);
-							System.out.println(minVals[i]);
+							System.out.println("Wrote " + maxVals[i]);
+							System.out.println("Wrote " + minVals[i]);
 							configFile.write(Integer.toString(maxVals[i]));
 							configFile.write(System.lineSeparator());
 							configFile.write(Integer.toString(minVals[i]));

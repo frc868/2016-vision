@@ -26,9 +26,15 @@
 package com.techhounds.imgcv.frc2016;
 
 import java.awt.HeadlessException;
+import java.awt.event.ActionEvent;
+import java.io.File;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.Box;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 
 import com.techhounds.imgcv.LiveViewGui;
@@ -65,6 +71,8 @@ public final class LiveView2016 extends LiveViewGui {
     	addFilterCategory("2016", "Color Filter",    new TargetFilter(1));
     	addFilterCategory("2016", "Classic Filter",  new TargetFilter(3));
     	addFilterCategory("2016", "Bounding Filter", new TargetFilter(4));
+    	
+    	addMenuItem("File", new JMenuItem(createLoadConfigAction()));
     }
     
     protected void addStatusPanelItems(JPanel statusPanel) { //configs status panel
@@ -98,6 +106,25 @@ public final class LiveView2016 extends LiveViewGui {
 	    	_Distance.setText(""  + netTable.getNumber("DistanceToBase", 0));
 	    	_Angle.setText(""     + netTable.getNumber("OffCenterDegreesX", 0));
 	    }
+    }
+    
+    private Action createLoadConfigAction() {
+    	final AbstractAction loadAction = new AbstractAction("Load Configs") {
+    		
+			private static final long serialVersionUID = 1L;
+
+			public void actionPerformed(ActionEvent e) {
+    			JFileChooser loadDialog = new JFileChooser();
+    			loadDialog.setFileSelectionMode(JFileChooser.FILES_ONLY);
+    			
+    			if (loadDialog.showSaveDialog(getFrame()) == JFileChooser.APPROVE_OPTION) {
+    				File selectedFile = loadDialog.getSelectedFile();
+    				filter.setColorRangeConfig(selectedFile);
+    			}
+    		}
+    	};
+    	
+    	return loadAction;
     }
     
 	/**
