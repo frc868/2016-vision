@@ -94,7 +94,7 @@ public final class StaticView2016 extends FilterToolGuiOpenCv {
 						int[] minVals = getColorRange().getMinVals();
 						
 						Writer configFile = new FileWriter(path);
-						
+												
 						for(int i = 0; i < maxVals.length; i++) {
 							System.out.println("Wrote " + maxVals[i]);
 							System.out.println("Wrote " + minVals[i]);

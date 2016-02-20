@@ -142,23 +142,29 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     	offsetXDegrees = Math.toDegrees(offsetXDegrees);
     	
     	//used to determine size of the target in radians
-    	targetAngleFactor = 2 * Math.tan(Camera.FOV_Y_RADIANS / 2) / Camera.RESOLUTION_Y_PIXELS;
+    	targetAngleFactor = 2 * Math.tan(Camera.FOV_X_RADIANS / 2) / Camera.RESOLUTION_X_PIXELS;
     	
-    	//gets size of target in Radians
-    	targetAngleRadians = Math.atan((400 - foundTarget.getMinY()) * targetAngleFactor) - 
-    				  		 Math.atan((400 - foundTarget.getMaxY()) * targetAngleFactor);  
+ /*   	//gets size of target in Radians
+    	targetAngleRadians = Math.atan(((Camera.RESOLUTION_X_PIXELS/2) - foundTarget.getMaxX()) * targetAngleFactor) - 
+    				  		 Math.atan(((Camera.RESOLUTION_X_PIXELS/2) - foundTarget.getMinX()) * targetAngleFactor);  
     	//gets degree value of top and bottom points, and finds difference
     	    	
+    	//targetAngleRadians could be negative, compensates for this
+    	targetAngleRadians = Math.abs(targetAngleRadians);
+    	
     	//gets distance to target
-    	targetDistanceInches = (Target.TAPE_HEIGHT_INCHES / 2) / Math.tan(targetAngleRadians); 
-    	//use perspective height rather than targetTapeHeight?
+    	targetDistanceInches = (Target.TAPE_WIDTH_INCHES / 2) / Math.tan(targetAngleRadians); 
+*/    	//use perspective height rather than targetTapeHeight?
     	
     	//ye olde algorithm
-    	//targetDistanceInches = (Target.TAPE_WIDTH_INCHES / 2) / 
-		//	 	Math.tan(
-		//				 (Target.TAPE_WIDTH_INCHES / Camera.RESOLUTION_X_PIXELS) * (Camera.FOV_X_RADIANS / 2));
+/*    	targetDistanceInches = (Target.TAPE_WIDTH_INCHES / 2) / Math.tan((Target.TAPE_WIDTH_INCHES / Camera.RESOLUTION_X_PIXELS) * (Camera.FOV_X_RADIANS / 2));
+*/
+    	//new old algo
+    	double dpx = (Camera.RESOLUTION_X_PIXELS/2) / Math.tan(Camera.FOV_X_RADIANS/2);
+    	double tta = (foundTarget.getWidth()) / dpx;
+    	targetDistanceInches = (Target.TAPE_WIDTH_INCHES) / Math.tan(tta);
     	
-    	
+    	System.out.println(dpx + " " + tta + " " + targetDistanceInches);
     	
     	//gets elevation of target to camera relative to ground
     	cameraAngleElevationRadians = Math.asin((Target.TOWER_HEIGHT_INCHES - Camera.OFFSET_Y_INCHES) / targetDistanceInches);
@@ -174,10 +180,6 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     	} else { 								//will be positive if cameraCenterOffset is negative
     		offsetXDegreesIdeal = 0;
     	}
-    	
-    	System.out.print(targetDistanceInches + "   ");
-    	System.out.print(foundTarget.getHeight() + "   ");
-    	System.out.println(foundTarget.getWidth());
     	
     	//compensates for Ideal angle offset
     	offsetXDegrees = offsetXDegrees - offsetXDegreesIdeal; 
