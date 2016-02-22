@@ -136,7 +136,8 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
         	targetAngleFactor; 
             	
         //calculates how far off center the target is from the center of the camera
-    	offsetXDegrees = Math.atan((400 - foundTarget.getCenterX()) * Math.tan(Camera.FOV_X_RADIANS/2) / (Camera.RESOLUTION_X_PIXELS/2));
+        //offsetXDegrees = Math.atan((400 - foundTarget.getCenterX()) * Math.tan(Camera.FOV_X_RADIANS/2) / (Camera.RESOLUTION_X_PIXELS/2));
+        offsetXDegrees = Math.atan((400 - foundTarget.getMinX()) * Math.tan(Camera.FOV_X_RADIANS/2) / (Camera.RESOLUTION_X_PIXELS/2));
     	
     	//converts from radians (output of Math) to degrees
     	offsetXDegrees = Math.toDegrees(offsetXDegrees);
@@ -164,7 +165,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     	double tta = (foundTarget.getWidth()) / dpx;
     	targetDistanceInches = (Target.TAPE_WIDTH_INCHES) / Math.tan(tta);
     	
-    	System.out.println(dpx + " " + tta + " " + targetDistanceInches);
+    	//System.out.println(dpx + " " + tta + " " + targetDistanceInches);
     	
     	//gets elevation of target to camera relative to ground
     	cameraAngleElevationRadians = Math.asin((Target.TOWER_HEIGHT_INCHES - Camera.OFFSET_Y_INCHES) / targetDistanceInches);
