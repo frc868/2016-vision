@@ -162,7 +162,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 */
     	//new old algo
     	double dpx = (Camera.RESOLUTION_X_PIXELS/2) / Math.tan(Camera.FOV_X_RADIANS/2);
-    	double tta = (foundTarget.getWidth()) / dpx;
+    	double tta = (foundTarget.getWidth()/2) / dpx;
     	targetDistanceInches = (Target.TAPE_WIDTH_INCHES) / Math.tan(tta);
     	
     	//System.out.println(dpx + " " + tta + " " + targetDistanceInches);

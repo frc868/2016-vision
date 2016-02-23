@@ -9,8 +9,8 @@ public interface TargetFilterConfig {
 	}
 	
 	interface Imgproc {
-		public int[] COLOR_MAX         = {105, 255, 255};
-		public int[] COLOR_MIN         = {80, 160, 110};
+		public int[] COLOR_MAX         = {90, 255, 255};
+		public int[] COLOR_MIN         = {25, 200, 18};
 		public final int   BLACKWHITE_THRESH = 40;
 		public final int   DILATE_FACTOR     = 4; 
 		public final int   ERODE_FACTOR      = 5;
