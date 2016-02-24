@@ -35,6 +35,7 @@ import com.techhounds.imgcv.filters.CrossHair;
 import com.techhounds.imgcv.filters.Dilate;
 import com.techhounds.imgcv.filters.Erode;
 import com.techhounds.imgcv.filters.FillChannel;
+import com.techhounds.imgcv.filters.FovOverlay;
 import com.techhounds.imgcv.filters.GrayScale;
 import com.techhounds.imgcv.filters.MatFilter;
 import com.techhounds.imgcv.filters.Negative;
@@ -64,6 +65,7 @@ import javax.swing.event.DocumentListener;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.highgui.Highgui;
 
@@ -258,6 +260,7 @@ public class FilterToolGuiOpenCv {
 	 *            The IplImage you want to display/use in the tool.
 	 */
 	public void setImage(Mat img) {
+		boolean needFit = (_Image == null);
 		_UndoImage = _Image;
 		_Image = img;
 		BufferedImage iconImg = null;
@@ -291,6 +294,9 @@ public class FilterToolGuiOpenCv {
 		}
 		if (iconImg != null) {
 			imageView.setIcon(new ImageIcon(iconImg));
+			if (needFit) {
+				fit();
+			}
 		} else {
 			imageView.setIcon(null);
 		}
@@ -885,19 +891,26 @@ public class FilterToolGuiOpenCv {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (_Image != null) {
-					// Don't like the "magic guess" at the size adjustment to
-					// prevent scroll bars from appearing
-					int width = _Image.cols() + 3;
-					int height = _Image.rows() + 3;
-					Dimension size = new Dimension(width, height);
-					imageScrollPane.setPreferredSize(size);
-					frame.pack();
-				}
+				fit();
 			}
 
 		};
 		return action;
+	}
+	
+	/**
+	 * Helper method to fix window for image loaded.
+	 */
+	private void fit() {
+		if (_Image != null) {
+			// Don't like the "magic guess" at the size adjustment to
+			// prevent scroll bars from appearing
+			int width = _Image.cols() + 3;
+			int height = _Image.rows() + 3;
+			Dimension size = new Dimension(width, height);
+			imageScrollPane.setPreferredSize(size);
+			frame.pack();
+		}		
 	}
 
 	/**
@@ -1019,6 +1032,36 @@ public class FilterToolGuiOpenCv {
 
 		addMenuItem(editName,
 				createImageProcessingMenuItem("Cross Hair", new CrossHair()));
+		
+		JMenu fovMenu = new JMenu("FOV");
+		String fovPrefs = "defaultFov";
+		addMenuItem(editName, fovMenu);
+
+		FovOverlay fov = new FovOverlay(fovPrefs);
+		fov.setVerticalVisible(false);
+		fov.setHorizontalVisible(true);
+		fovMenu.add(createImageProcessingAction("Horizontal (5 deg)", fov));
+
+		fov = new FovOverlay(fovPrefs);
+		fov.setDegSpacing(1);
+		fov.setLineColor(new Scalar(80, 80, 50));
+		fov.setTextColor(null);
+		fov.setVerticalVisible(false);
+		fov.setHorizontalVisible(true);
+		fovMenu.add(createImageProcessingAction("Horizontal (1 deg)", fov));
+
+		fov = new FovOverlay(fovPrefs);
+		fov.setVerticalVisible(true);
+		fov.setHorizontalVisible(false);
+		fovMenu.add(createImageProcessingAction("Vertical (5 deg)", fov));
+
+		fov = new FovOverlay(fovPrefs);
+		fov.setDegSpacing(1);
+		fov.setLineColor(new Scalar(80, 80, 50));
+		fov.setTextColor(null);
+		fov.setVerticalVisible(true);
+		fov.setHorizontalVisible(false);
+		fovMenu.add(createImageProcessingAction("Vertical (1 deg)", fov));
 	}
 
 	/**
