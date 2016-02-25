@@ -54,7 +54,8 @@ public final class FovOverlay implements MatFilter {
 	private boolean _VerticalEnable = false;
 
 	// FOV in degrees in horizontal
-	private double _FovDeg = 45;
+	// (Paul's ThinkPAD Web Cam is 56.75
+	private double _FovDeg = 56.75;
 
 	// Distance to FOV
 	private double _Distance = 100;

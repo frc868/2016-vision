@@ -40,6 +40,7 @@ import com.techhounds.imgcv.filters.GrayScale;
 import com.techhounds.imgcv.filters.MatFilter;
 import com.techhounds.imgcv.filters.Negative;
 import com.techhounds.imgcv.filters.Sequence;
+import com.techhounds.imgcv.widgets.FovEditor;
 
 import javax.swing.*;
 
@@ -215,6 +216,36 @@ public class FilterToolGuiOpenCv {
 	 * Reference to last filter applied/set.
 	 */
 	protected MatFilter _LastFilter;
+
+	/**
+	 * Editor that user can change FOV overlay settings with.
+	 */
+	private FovEditor _FovEditor;
+
+	/**
+	 * Filter that displays FOV lines spaced out at 5 degrees across the horizontal.
+	 */
+	private FovOverlay _FovHor5;
+
+	/**
+	 * Filter that displays FOV lines spaced out at 1 degree across the horizontal.
+	 */
+	private FovOverlay _FovHor1;
+
+	/**
+	 * Filter that displays FOV lines spaced out at 5 degrees across the vertical.
+	 */
+	private FovOverlay _FovVer5;
+
+	/**
+	 * Filter that displays FOV lines spaced out at 1 degree across the vertical.
+	 */
+	private FovOverlay _FovVer1;
+
+	/**
+	 * Dialog box that the FOV editor is shown in.
+	 */
+	private JDialog _FovDialog;
 
 	/**
 	 * Constructs a new instance with a given title - you will override.
@@ -897,7 +928,7 @@ public class FilterToolGuiOpenCv {
 		};
 		return action;
 	}
-	
+
 	/**
 	 * Helper method to fix window for image loaded.
 	 */
@@ -910,7 +941,7 @@ public class FilterToolGuiOpenCv {
 			Dimension size = new Dimension(width, height);
 			imageScrollPane.setPreferredSize(size);
 			frame.pack();
-		}		
+		}
 	}
 
 	/**
@@ -923,6 +954,7 @@ public class FilterToolGuiOpenCv {
 	 * implementation adds a lot of stock features.
 	 * </p>
 	 */
+	@SuppressWarnings("serial")
 	protected void addMenuItems() {
 		String fileMenu = "File";
 		addMenuItem(fileMenu, new JMenuItem(createOpenImageAction()));
@@ -938,6 +970,7 @@ public class FilterToolGuiOpenCv {
 		addMenuItem(fileMenu, new JMenuItem(createExitAction()));
 
 		String editName = "Edit";
+		String overlayName = "Overlays";
 		addMenuItem(editName, new JMenuItem(createUndoImageAction()));
 
 		String colorSpaceName = "Color Space";
@@ -1030,38 +1063,85 @@ public class FilterToolGuiOpenCv {
 		addMenuItem(editName,
 				createImageProcessingMenuItem("Contours", new Contours()));
 
-		addMenuItem(editName,
+		addMenuItem(overlayName,
 				createImageProcessingMenuItem("Cross Hair", new CrossHair()));
-		
+
 		JMenu fovMenu = new JMenu("FOV");
 		String fovPrefs = "defaultFov";
-		addMenuItem(editName, fovMenu);
+		addMenuItem(overlayName, fovMenu);
 
-		FovOverlay fov = new FovOverlay(fovPrefs);
-		fov.setVerticalVisible(false);
-		fov.setHorizontalVisible(true);
-		fovMenu.add(createImageProcessingAction("Horizontal (5 deg)", fov));
+		fovMenu.add(new AbstractAction("Settings") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				showFovDialog();
+			}
+		});
 
-		fov = new FovOverlay(fovPrefs);
-		fov.setDegSpacing(1);
-		fov.setLineColor(new Scalar(80, 80, 50));
-		fov.setTextColor(null);
-		fov.setVerticalVisible(false);
-		fov.setHorizontalVisible(true);
-		fovMenu.add(createImageProcessingAction("Horizontal (1 deg)", fov));
+		_FovEditor = new FovEditor();
+		try {
+			// Try loading in the default settings
+			_FovEditor.loadSettings(_FovEditor.getDefaultFile());
+		} catch (Exception ignore) {
+		}
+		_FovDialog = new JDialog(getFrame(), "FOV Settings", true);
+		_FovDialog.add(_FovEditor);
 
-		fov = new FovOverlay(fovPrefs);
-		fov.setVerticalVisible(true);
-		fov.setHorizontalVisible(false);
-		fovMenu.add(createImageProcessingAction("Vertical (5 deg)", fov));
+		_FovHor5 = new FovOverlay();
+		_FovHor5.setDegSpacing(5);
+		_FovHor5.setVerticalVisible(false);
+		_FovHor5.setHorizontalVisible(true);
+		fovMenu.add(createImageProcessingAction("Horizontal (5 deg)", _FovHor5));
 
-		fov = new FovOverlay(fovPrefs);
-		fov.setDegSpacing(1);
-		fov.setLineColor(new Scalar(80, 80, 50));
-		fov.setTextColor(null);
-		fov.setVerticalVisible(true);
-		fov.setHorizontalVisible(false);
-		fovMenu.add(createImageProcessingAction("Vertical (1 deg)", fov));
+		_FovHor1 = new FovOverlay();
+		_FovHor1.setDegSpacing(1);
+		_FovHor1.setLineColor(new Scalar(80, 80, 50));
+		_FovHor1.setTextColor(null);
+		_FovHor1.setVerticalVisible(false);
+		_FovHor1.setHorizontalVisible(true);
+		fovMenu.add(createImageProcessingAction("Horizontal (1 deg)", _FovHor1));
+
+		_FovVer5 = new FovOverlay();
+		_FovVer5.setVerticalVisible(true);
+		_FovVer5.setHorizontalVisible(false);
+		fovMenu.add(createImageProcessingAction("Vertical (5 deg)", _FovVer5));
+
+		_FovVer1 = new FovOverlay(fovPrefs);
+		_FovVer1.setDegSpacing(1);
+		_FovVer1.setLineColor(new Scalar(80, 80, 50));
+		_FovVer1.setTextColor(null);
+		_FovVer1.setVerticalVisible(true);
+		_FovVer1.setHorizontalVisible(false);
+		fovMenu.add(createImageProcessingAction("Vertical (1 deg)", _FovVer1));
+
+		updateFovSettings();
+	}
+
+	/**
+	 * Shows FOV settings dialog, then updates FOV settings after user closes.
+	 */
+	private void showFovDialog() {
+		_FovDialog.pack();
+		_FovDialog.setVisible(true);
+		updateFovSettings();
+	}
+
+	/**
+	 * Updates FOV overlay settings based on what is currently in the FOV
+	 * editor.
+	 */
+	private void updateFovSettings() {
+		try {
+			double dist = _FovEditor.getDistance();
+			double fovDeg = _FovEditor.getFov();
+
+			FovOverlay[] overlays = { _FovHor5, _FovHor1, _FovVer5, _FovVer1 };
+			for (FovOverlay overlay : overlays) {
+				overlay.setDistance(dist);
+				overlay.setFovDeg(fovDeg);
+			}
+		} catch (Exception ignore) {
+
+		}
 	}
 
 	/**
@@ -1096,7 +1176,8 @@ public class FilterToolGuiOpenCv {
 		for (int i = 0; i <= n; i++) {
 			String stepLabel = "Stage " + i;
 			MatFilter filter = seqFilter.createStepFilter(i);
-			JMenuItem menuItem = createImageProcessingMenuItem(stepLabel, filter, true);
+			JMenuItem menuItem = createImageProcessingMenuItem(stepLabel,
+					filter, true);
 			addMenuItem(label, menuItem);
 		}
 	}
@@ -1222,7 +1303,8 @@ public class FilterToolGuiOpenCv {
 	protected Mat openImage(File imgFile) {
 		final String path = imgFile.getAbsolutePath();
 		final Mat newImage = Highgui.imread(path);
-		if ((newImage != null) && (newImage.width() > 0) && (newImage.height() > 0)) {
+		if ((newImage != null) && (newImage.width() > 0)
+				&& (newImage.height() > 0)) {
 			_Config.setLastOpenedFile(path);
 			lastFile = imgFile;
 			_LastLoadedImage = newImage;
@@ -1414,7 +1496,7 @@ public class FilterToolGuiOpenCv {
 	 *
 	 * @return Action that can be assigned to a button or menu item.
 	 */
-	private Action getColorRangeAction() { //TODO save values
+	private Action getColorRangeAction() { // TODO save values
 		if (_ColorRange == null) {
 			int[] minVals = { 0, 0, 0 };
 			int[] maxVals = { 255, 255, 255 };
@@ -1456,11 +1538,11 @@ public class FilterToolGuiOpenCv {
 		};
 		return action;
 	}
-	
+
 	protected JFrame getFrame() {
 		return frame;
 	}
-	
+
 	protected ColorRange getColorRange() {
 		return _ColorRange;
 	}
