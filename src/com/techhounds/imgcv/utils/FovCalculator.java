@@ -16,13 +16,21 @@ import org.opencv.core.Size;
  */
 public class FovCalculator {
 
+	/** Full field of view of camera that spans pixels in degrees. */
 	private double _FovDeg;
+	/** Cached FOV in radians. */
 	private double _FovRad;
+	/** The real world distance from the camera to the wall. */
 	private double _Distance;
+	/** The number of pixels the FOV covers. */
 	private double _Pixels;
+	/** Cached half of FOV in radians. */
 	private double _FovRad2;
+	/** Cached value of tan(FOV/2). */
 	private double _TanFov2;
+	/** The length of the target in real world units that is visible in image. */
 	private double _Length;
+	/** Distance of camera to wall in pixels. */
 	private double _DistPx;
 
 	/**
@@ -86,6 +94,24 @@ public class FovCalculator {
 	 */
 	public double getFovDeg() {
 		return _FovDeg;
+	}
+	
+	/**
+	 * Returns the tan(FOV/2) value that has been precomputed.
+	 * 
+	 * @return Pre-computed tangent of half the FOV.
+	 */
+	public double getTanFov2() {
+		return _TanFov2;
+	}
+
+	/**
+	 * Returns the total FOV of the camera in radians.
+	 * 
+	 * @return FOV in radians.
+	 */
+	public double getFovRad() {
+		return _FovRad;
 	}
 
 	/**

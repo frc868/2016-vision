@@ -1,0 +1,183 @@
+package com.techhounds.imgcv.pinksquare;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point3;
+import org.opencv.imgproc.Imgproc;
+
+import com.techhounds.imgcv.PolygonCv;
+import com.techhounds.imgcv.filters.ColorRange;
+import com.techhounds.imgcv.filters.ColorSpace;
+import com.techhounds.imgcv.filters.Dilate;
+import com.techhounds.imgcv.filters.Erode;
+import com.techhounds.imgcv.filters.MatFilter;
+import com.techhounds.imgcv.filters.Sequence;
+import com.techhounds.imgcv.utils.*;
+
+/**
+ * An image filter that looks for a large neon pink rectangle that is 22 in wide
+ * and 20.125 in tall.
+ */
+public class FindPinkRectangleFilter implements MatFilter {
+	/** Will be true if we found the pink rectangle. */
+	private boolean _Found;
+
+	/**
+	 * The set of filters to apply to reduce a source image to a black and white
+	 * image where (hopefully) the large white rectangle corresponds to the pink
+	 * rectangle.
+	 */
+	private Sequence _Filter;
+
+	/**
+	 * A rectangle finder tool that helps locate the image relative to the
+	 * camera/robot in real world coordinates.
+	 */
+	private RectangularTarget _Finder;
+
+	// filter instances
+
+	private final MatFilter _ColorSpace = ColorSpace.createBGRtoHSV();
+
+	private int[] colorFilterMin = { 140, 120, 150 };
+
+	private int[] colorFilterMax = { 180, 240, 255 };
+
+	private final MatFilter _ColorRange = new ColorRange(colorFilterMin,
+			colorFilterMax, true);
+
+	private final MatFilter _Dilate1 = new Dilate(2);
+	private final MatFilter _Erode = new Erode(5);
+	private final MatFilter _Dilate2 = new Dilate(4);
+
+	private boolean _Debug;
+
+	/**
+	 * Constructs a new instance of the filter for a pink rectangle that is 22
+	 * in wide and 20.125 in tall using a camera that is set to 640x480 with a
+	 * FOV of 44.136 degrees across the 480 pixels.
+	 */
+	public FindPinkRectangleFilter() {
+		_Found = false;
+		_Debug = false;
+		_Filter = createSequence();
+		_Finder = new RectangularTarget(22, 20.125, 640, 480, 44.136 /* 56.75 */);
+		_Finder.setCameraLocation(new Point3(-9.0, 12, 11));
+	}
+
+	/**
+	 * Constructs a sequence of filters to reduce a color image to a black and
+	 * white where the white rectangle left in the image corresponds to the pink
+	 * rectangle we are designed to find.
+	 * 
+	 * @return A sequence filter that can be applied to any color image to
+	 *         produce a black and white image.
+	 */
+	public Sequence createSequence() {
+		Sequence s = new Sequence();
+		s.addFilter(_ColorSpace);
+		s.addFilter(_ColorRange);
+		s.addFilter(_Dilate1);
+		s.addFilter(_Erode);
+		s.addFilter(_Dilate2);
+		return s;
+	}
+
+	/**
+	 * Applies the filter to an image drawing results onto the image and
+	 * updating the state of the filter.
+	 */
+	public Mat process(Mat srcImage) {
+		_Found = false;
+		int hImg = srcImage.rows();
+		int wImg = srcImage.cols();
+		int imgMid = hImg / 2;
+		Mat output = srcImage;
+
+		Mat d1 = srcImage.clone();
+		_Filter.process(d1);
+
+		List<MatOfPoint> contours = new ArrayList<>();
+		List<PolygonCv> polygons = new ArrayList<>();
+
+		float maxWidth = -1;
+
+		Mat heirarchy = new Mat();
+		Imgproc.findContours(d1, contours, heirarchy, Imgproc.RETR_LIST,
+				Imgproc.CHAIN_APPROX_SIMPLE);
+		int n = contours.size();
+		for (int i = 0; i < n; i++) {
+			MatOfPoint contour = contours.get(i);
+			// Hmmm, can we do a quick check on contour height/width before
+			// trying to extract polygon?
+			PolygonCv poly = PolygonCv.fromContour(contour, 8.0);
+			int pts = poly.size();
+			float h = poly.getHeight();
+			float w = poly.getWidth();
+			int hw = (int) (w > 0 ? h / w * 100 : 0);
+			float distFromTop = poly.getMinY();
+			float distFromMid = imgMid - (distFromTop + h);
+
+			if ((w > 10) && (h > 10) && (hw > 50) && (hw < 300) && (pts >= 4)) {
+				polygons.add(poly);
+				_Found = true;
+				if (w > maxWidth) {
+					maxWidth = w;
+				}
+				if (_Debug) {
+					System.out.println("Accepted: sides: " + pts + " ("
+							+ poly.getWidth() + ", " + poly.getHeight()
+							+ ")  H/W: " + hw + "  distFromTop: " + distFromTop
+							+ "  distFromMid: " + distFromMid);
+				}
+
+			} else if (_Debug) {
+				System.out.println("Rejected: sides: " + pts + " ("
+						+ poly.getWidth() + ", " + poly.getHeight()
+						+ ")  H/W: " + hw + "  distFromTop: " + distFromTop
+						+ "  distFromMid: " + distFromMid);
+			}
+		}
+
+		int pCnt = polygons.size();
+		PolygonCv[] pArr = new PolygonCv[pCnt];
+		polygons.toArray(pArr);
+
+		// Not searching for pairs, just add contours for all of the polygons
+		for (int i = 0; i < pCnt; i++) {
+			PolygonCv p = pArr[i];
+			float w = p.getWidth();
+			if (w == maxWidth) {
+				p.draw(output, ScalarColors.GREEN, 3);
+				p.drawInfo(output, ScalarColors.GREEN);
+
+				_Finder.setImageSize(wImg, hImg);
+				if (_Finder.computeSolution(p)) {
+					System.out.println(_Finder);
+					_Finder.drawVerticalLines(output);
+					_Finder.drawCrossHair(output);
+					_Finder.drawCamInfo(output);
+					_Finder.drawRobotInfo(output);
+					_Finder.drawWallInfo(output);
+				}
+			} else {
+				p.draw(output, ScalarColors.BLUE, 1);
+			}
+		}
+
+		return output;
+	}
+
+	/**
+	 * Indicates whether we found the pink rectangle in the last image that was
+	 * processed.
+	 * 
+	 * @return true if we found the pink rectangle, false if not.
+	 */
+	public boolean wasFound() {
+		return _Found;
+	}
+}
