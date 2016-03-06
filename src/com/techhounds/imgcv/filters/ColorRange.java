@@ -25,25 +25,13 @@
  */
 package com.techhounds.imgcv.filters;
 
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
 import java.util.Arrays;
-
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.BoxLayout;
-import javax.swing.JCheckBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSlider;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
+
+import com.techhounds.imgcv.utils.ColorRangeValues;
 
 /**
  * A image filter which keeps/removes pixels which fall within a specific color
@@ -67,24 +55,9 @@ import org.opencv.core.Scalar;
 public final class ColorRange implements MatFilter {
 
 	/**
-	 * The lower limits for each color channel.
+	 * The color range values currently being used.
 	 */
-	private int[] _MinVals;
-
-	/**
-	 * The upper limits for each color channel.
-	 */
-	private int[] _MaxVals;
-
-	/**
-	 * Whether we keep or remove the values inside the range.
-	 */
-	private boolean[] _Keep;
-
-	/**
-	 * List of listeners to notify if values are changed in GUI editor.
-	 */
-	private final ArrayList<ChangeListener> _Listeners;
+	ColorRangeValues _Values;
 
 	/**
 	 * Lower bounds of color ranges for Core.inRange() optimized invocation
@@ -115,7 +88,6 @@ public final class ColorRange implements MatFilter {
 	 */
 	public ColorRange(int[] minVals, int[] maxVals, boolean[] keep) {
 		setRanges(minVals, maxVals, keep);
-		_Listeners = new ArrayList<>();
 	}
 
 	/**
@@ -134,7 +106,37 @@ public final class ColorRange implements MatFilter {
 	 */
 	public ColorRange(int[] minVals, int[] maxVals, boolean keep) {
 		setRanges(minVals, maxVals, keep);
-		_Listeners = new ArrayList<>();
+	}
+	
+	/**
+	 * Sets the values to use when applying the filter to images.
+	 * 
+	 * @param crv New color range values to use - must not be null.
+	 */
+	public void setColorRangeValues(ColorRangeValues crv) {
+		_Values = new ColorRangeValues(crv);
+
+		if (crv.getKeepInRangeAll()) {
+			// Keep in range is true for all channels, enable optimized
+			// color range check
+			_KeepAllLower = crv.getMinScalar();
+			_KeepAllUpper = crv.getMaxScalar();
+		} else {
+			// One or more channels want to keep values out of range, fall
+			// back to slower check
+			_KeepAllLower = null;
+			_KeepAllUpper = null;
+		}
+
+	}
+
+	/**
+	 * Returns a copy of the current color range values being used by the filter.
+	 * 
+	 * @return A copy of the current values.
+	 */
+	public ColorRangeValues getColorRangeValues() {
+		return new ColorRangeValues(_Values);
 	}
 
 	/**
@@ -162,31 +164,15 @@ public final class ColorRange implements MatFilter {
 			throw new IllegalArgumentException(
 					"Keep flags length does not match the number of channels");
 		}
-		_MinVals = minVals.clone();
-		_MaxVals = maxVals.clone();
-		_Keep = keep.clone();
-		boolean keepAll = true;
-		double[] minScalar = new double[channels];
-		double[] maxScalar = new double[channels];
-
+		
+		ColorRangeValues crv = new ColorRangeValues(channels);
 		for (int i = 0; i < channels; i++) {
-			keepAll = keepAll && _Keep[i];
-			minScalar[i] = minVals[i];
-			maxScalar[i] = maxVals[i];
+			crv.setKeepInRange(i, keep[i]);
+			crv.setMax(i, maxVals[i]);
+			crv.setMin(i, minVals[i]);
 		}
 
-		if (keepAll) {
-			// Keep in range is true for all channels, enable optimized
-			// color range check
-			_KeepAllLower = new Scalar(minScalar);
-			_KeepAllUpper = new Scalar(maxScalar);
-		} else {
-			// One or more channels want to keep values out of range, fall
-			// back to slower check
-			_KeepAllLower = null;
-			_KeepAllUpper = null;
-		}
-
+		setColorRangeValues(crv);
 	}
 
 	/**
@@ -222,7 +208,7 @@ public final class ColorRange implements MatFilter {
 	@Override
 	public Mat process(Mat img) {
 		int nchannels = img.channels();
-		int ncolors = _MinVals.length;
+		int ncolors = _Values.size();
 
 		// If only keeping values within range and number of channels
 		// match, use native OpenCV inrange function to optimize performance
@@ -244,9 +230,7 @@ public final class ColorRange implements MatFilter {
 					boolean outOfRange = false;
 					for (int c = 0; c < nchannels; c++) {
 						int color = 0xff & ((int) colors[c]);
-						boolean chanInRange = (color >= _MinVals[c])
-								&& (color <= _MaxVals[c]);
-						if (chanInRange != _Keep[c]) {
+						if (!_Values.inRange(c, color)) {
 							outOfRange = true;
 							break;
 						}
@@ -262,151 +246,20 @@ public final class ColorRange implements MatFilter {
 	}
 
 	/**
-	 * Creates a GUI widget that allows the user to view/change the settings.
+	 * Returns a copy of the upper limits for all channels.
 	 * 
-	 * @return A Swing widget to be inserted into your GUI application.
+	 * @return Array or maximum values used in color range checks.
 	 */
-	public JPanel createPreferencesPanel() {
-		JPanel widget = new JPanel();
-		widget.setLayout(new BoxLayout(widget, BoxLayout.Y_AXIS));
-
-		int n = _MaxVals.length;
-		final JCheckBox[] keepCheckboxes = new JCheckBox[n];
-		final JSlider[] _MinSliders = new JSlider[n];
-		final JSlider[] _MaxSliders = new JSlider[n];
-
-		ChangeListener updateState = new ChangeListener() {
-
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				// Transfer values from GUI
-				int n = _MaxSliders.length;
-				boolean[] keep = new boolean[n];
-				int[] minVals = new int[n];
-				int[] maxVals = new int[n];
-				for (int i = 0; i < n; i++) {
-					keep[i] = keepCheckboxes[i].isSelected();
-					minVals[i] = _MinSliders[i].getValue();
-					maxVals[i] = _MaxSliders[i].getValue();
-				}
-				setRanges(minVals, maxVals, keep);
-				notifyListeners();
-			}
-		};
-
-		for (int i = 0; i < n; i++) {
-			JCheckBox keep = new JCheckBox("Channel " + i + " Keep in Range");
-			keep.setSelected(true);
-			keepCheckboxes[i] = keep;
-			widget.add(keep);
-			keep.addChangeListener(updateState);
-
-			widget.add(new JLabel("Channel " + i + " Min"));
-			JSlider minSlider = createSlider(_MinVals[i]);
-			widget.add(minSlider);
-			_MinSliders[i] = minSlider;
-			minSlider.addChangeListener(updateState);
-
-			widget.add(new JLabel("Channel " + i + " Max"));
-			JSlider maxSlider = createSlider(_MaxVals[i]);
-			widget.add(maxSlider);
-			_MaxSliders[i] = maxSlider;
-			maxSlider.addChangeListener(updateState);
-		}
-
-		return widget;
-	}
-	
-	/**
-	 * Builds a action handler to displays a color range editor to allow the
-	 * user to quickly see the impact of adjusting the color ranges.
-	 * 
-	 * @param label
-	 *            The text to associate with the action (like: "Color Range").
-	 *            This is what will appear on buttons or in menus. Pass null for
-	 *            default label.
-	 * 
-	 * @return Action that can be assigned to a button or menu item.
-	 */
-	public Action createColorRangeAction(String label) {
-		if (label == null) {
-			label = "Color Range";
-		}
-		Action action = new AbstractAction(label) {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// When button is pressed, get copy of current image as base
-				// and then display GUI tool to dynamically update the color
-				// range
-				JFrame frame = new JFrame("Color Range");
-				frame.setMinimumSize(new Dimension(480, 200));
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				frame.setContentPane(createPreferencesPanel());
-				frame.pack();
-				frame.setVisible(true);
-			}
-		};
-		return action;
-	}
-
-	/**
-	 * Register a listener to be notified if values are changed on the GUI
-	 * widget.
-	 * 
-	 * @param l
-	 *            The change listener that should be added.
-	 */
-	public void addListener(ChangeListener l) {
-		_Listeners.add(l);
-	}
-
-	/**
-	 * Unregister a listener to be notified if values are changed on the GUI
-	 * widget.
-	 * 
-	 * @param l
-	 *            The change listener that should no longer be notified.
-	 */
-	public void removeListener(ChangeListener l) {
-		_Listeners.remove(l);
-	}
-
-	/**
-	 * Helper method to notify all registered listeners that a value has
-	 * changed.
-	 */
-	private void notifyListeners() {
-		for (ChangeListener l : _Listeners) {
-			l.stateChanged(new ChangeEvent(this));
-		}
-	}
-
-	/**
-	 * Helper method to create a color slider widget.
-	 * 
-	 * @param val
-	 *            Initial value for slider (we force to range of [0, 255]).
-	 * @return A GUI widget to add to your panel.
-	 */
-	private JSlider createSlider(int val) {
-		int minVal = 0;
-		int maxVal = 255;
-		JSlider slider = new JSlider(minVal, maxVal, Math.min(maxVal,
-				Math.max(minVal, val)));
-		slider.setMajorTickSpacing(20);
-		slider.setMinorTickSpacing(5);
-		slider.setPaintLabels(true);
-		slider.setPaintTicks(true);
-		return slider;
-	}
-	
 	public int[] getMaxVals() {
-		return _MaxVals;
+		return _Values.getMax();
 	}
 	
+	/**
+	 * Returns a copy of the lower limits for all channels.
+	 * 
+	 * @return Array or minimum values used in color range checks.
+	 */	
 	public int[] getMinVals() {
-		return _MinVals;
+		return _Values.getMin();
 	}
 }

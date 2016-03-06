@@ -1,9 +1,9 @@
 package com.techhounds.imgcv.pinksquare;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.swing.Action;
 
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -73,6 +73,7 @@ public class FindPinkRectangleFilter implements MatFilter {
 		_Finder.setCameraLocation(new Point3(-9.0, 12, 11));
 		// Let vertical lines be off as much as 10% of width
 		_Finder.setVerticalLineTolerance(0.1);
+		loadColorRanges("pink");
 	}
 
 	/**
@@ -87,6 +88,8 @@ public class FindPinkRectangleFilter implements MatFilter {
 		int[] minVals = { 40, 40, 40 };
 		int[] maxVals = { 130, 210, 255 };
 		filter._ColorRange = new ColorRange(minVals, maxVals, true);
+		filter.loadColorRanges("2016-target");
+		
 		filter._Filter = filter.createSequence();
 
 		RectangularTarget finder = new RectangularTarget(20, 14, 800, 600,
@@ -97,6 +100,23 @@ public class FindPinkRectangleFilter implements MatFilter {
 		filter._Finder = finder;
 
 		return filter;
+	}
+
+	/**
+	 * Helper method to load color range values in from a file (if present).
+	 * 
+	 * @param cfgName Simple name (like "pink") of the default configuration to load.
+	 */
+	private void loadColorRanges(String cfgName) {
+		try {
+			// See if there are color values saved that we can load
+			File f = ColorRangeValues.getFile(cfgName);
+			ColorRangeValues crv = new ColorRangeValues();
+			crv.loadSettings(f);
+			_ColorRange.setColorRangeValues(crv);
+		} catch (IllegalArgumentException | IOException e) {
+			// If error, we just use the built-in values
+		}
 	}
 
 	/**
@@ -116,18 +136,14 @@ public class FindPinkRectangleFilter implements MatFilter {
 		s.addFilter(_Dilate2);
 		return s;
 	}
-
+	
 	/**
-	 * Provides an action to allow you to adjust the color range settings.
+	 * Get direct access to the color range filter.
 	 * 
-	 * @param label
-	 *            The text to associate with the action (like: "Color Range").
-	 *            This is what will appear on buttons or in menus.
-	 * 
-	 * @return Color range editor.
+	 * @return Reference to the internal color range filter.
 	 */
-	public Action createColorRangeEditor(String label) {
-		return _ColorRange.createColorRangeAction(label);
+	public ColorRange getColorRangeFilter() {
+		return _ColorRange;
 	}
 
 	/**

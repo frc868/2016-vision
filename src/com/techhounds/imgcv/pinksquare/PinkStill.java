@@ -2,6 +2,7 @@ package com.techhounds.imgcv.pinksquare;
 
 import java.awt.HeadlessException;
 
+import javax.swing.Action;
 import javax.swing.JMenuItem;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
@@ -14,7 +15,10 @@ import com.techhounds.imgcv.FilterToolGuiOpenCv;
  */
 public final class PinkStill extends FilterToolGuiOpenCv {
 
-	private FindPinkRectangleFilter filter;
+	// Filter to locate big pink rectangle
+	private FindPinkRectangleFilter findPink;
+	
+	// Filter to locate 2016 FRC target
 	private FindPinkRectangleFilter target2016;
 
 	/**
@@ -27,7 +31,7 @@ public final class PinkStill extends FilterToolGuiOpenCv {
 	 */
 	protected PinkStill() throws HeadlessException {
 		super("Image Filter Tool");
-		filter = new FindPinkRectangleFilter();
+		findPink = new FindPinkRectangleFilter();
 		target2016 = FindPinkRectangleFilter.createFor2016Target();
 	}
 
@@ -41,7 +45,7 @@ public final class PinkStill extends FilterToolGuiOpenCv {
 
 		addSeparator();
 		// Apply pink rectangle filter to original
-		addImageProcessingButton("Pink Rect", filter, true);
+		addImageProcessingButton("Pink Rect", findPink, true);
 		addImageProcessingButton("2016 Target", target2016, true);
 	}
 
@@ -56,14 +60,17 @@ public final class PinkStill extends FilterToolGuiOpenCv {
 		// revert or not)
 		addMenuItem(
 				"Pink Filter",
-				createImageProcessingMenuItem("Pink Rectangle", filter, true));
-		addMenuItem("Pink Filter", new JMenuItem(filter.createColorRangeEditor("Color Range")));
+				createImageProcessingMenuItem("Pink Rectangle", findPink, true));
+		Action pca = getColorRangeAction("Color Ranges", "pink", findPink.getColorRangeFilter());
+		addMenuItem("Pink Filter", new JMenuItem(pca));
+
 		addMenuItem(
 				"2016 Filter",
 				createImageProcessingMenuItem("2016 Target", target2016, true));
-		addMenuItem("2016 Filter", new JMenuItem(target2016.createColorRangeEditor("Color Range")));
+		Action t2016ca = getColorRangeAction("Color Ranges", "2016-target", target2016.getColorRangeFilter());
+		addMenuItem("2016 Filter", new JMenuItem(t2016ca));
 		// Adding a sequence filter allows you to view each step of the sequence
-		addSequence("Pink Steps", filter.createSequence());
+		addSequence("Pink Steps", findPink.createSequence());
 		addSequence("2016 Steps", target2016.createSequence());
 	}
 

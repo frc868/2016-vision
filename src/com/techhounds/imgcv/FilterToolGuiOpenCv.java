@@ -40,6 +40,7 @@ import com.techhounds.imgcv.filters.GrayScale;
 import com.techhounds.imgcv.filters.MatFilter;
 import com.techhounds.imgcv.filters.Negative;
 import com.techhounds.imgcv.filters.Sequence;
+import com.techhounds.imgcv.widgets.ColorRangeEditor;
 import com.techhounds.imgcv.widgets.FovEditor;
 
 import javax.swing.*;
@@ -223,22 +224,26 @@ public class FilterToolGuiOpenCv {
 	private FovEditor _FovEditor;
 
 	/**
-	 * Filter that displays FOV lines spaced out at 5 degrees across the horizontal.
+	 * Filter that displays FOV lines spaced out at 5 degrees across the
+	 * horizontal.
 	 */
 	private FovOverlay _FovHor5;
 
 	/**
-	 * Filter that displays FOV lines spaced out at 1 degree across the horizontal.
+	 * Filter that displays FOV lines spaced out at 1 degree across the
+	 * horizontal.
 	 */
 	private FovOverlay _FovHor1;
 
 	/**
-	 * Filter that displays FOV lines spaced out at 5 degrees across the vertical.
+	 * Filter that displays FOV lines spaced out at 5 degrees across the
+	 * vertical.
 	 */
 	private FovOverlay _FovVer5;
 
 	/**
-	 * Filter that displays FOV lines spaced out at 1 degree across the vertical.
+	 * Filter that displays FOV lines spaced out at 1 degree across the
+	 * vertical.
 	 */
 	private FovOverlay _FovVer1;
 
@@ -302,8 +307,7 @@ public class FilterToolGuiOpenCv {
 				int width = img.cols();
 				int height = img.rows();
 				int channel = img.channels();
-				if (width != _LastWidth || height != _LastHeight
-						|| channel != _LastChannel) {
+				if (width != _LastWidth || height != _LastHeight || channel != _LastChannel) {
 					_LastWidth = width;
 					_LastHeight = height;
 					_LastChannel = channel;
@@ -368,10 +372,8 @@ public class FilterToolGuiOpenCv {
 	 *            the filter, false if not.
 	 * @return The button that was created and added to the side panel.
 	 */
-	protected JButton addImageProcessingButton(String name,
-			final MatFilter processor, boolean revert) {
-		JButton button = new JButton(createImageProcessingAction(name,
-				processor, revert));
+	protected JButton addImageProcessingButton(String name, final MatFilter processor, boolean revert) {
+		JButton button = new JButton(createImageProcessingAction(name, processor, revert));
 		addControl(button);
 		return button;
 	}
@@ -387,8 +389,7 @@ public class FilterToolGuiOpenCv {
 	 *            the Action is fired.
 	 * @return The button that was created and added to the side panel.
 	 */
-	protected JButton addImageProcessingButton(String name,
-			final MatFilter processor) {
+	protected JButton addImageProcessingButton(String name, final MatFilter processor) {
 		return addImageProcessingButton(name, processor, false);
 	}
 
@@ -420,8 +421,7 @@ public class FilterToolGuiOpenCv {
 	 * @return A Action object you can then associate with a GUI control (like a
 	 *         JButton).
 	 */
-	protected Action createImageProcessingAction(String name,
-			final MatFilter processor, final boolean revert) {
+	protected Action createImageProcessingAction(String name, final MatFilter processor, final boolean revert) {
 		final Action processAction = new AbstractAction(name) {
 
 			/**
@@ -442,24 +442,21 @@ public class FilterToolGuiOpenCv {
 						_LastFilter = processor;
 						setImage(processor.process(_Image.clone()));
 					} else {
-						showMessageDialog(frame,
-								frame.getName() + " - failure",
-								frame.getTitle(), ERROR_MESSAGE);
+						showMessageDialog(frame, frame.getName() + " - failure", frame.getTitle(), ERROR_MESSAGE);
 					}
 				} finally {
 					frame.setCursor(Cursor.getDefaultCursor());
 				}
 			}
 		};
-		imageView.addPropertyChangeListener("icon",
-				new PropertyChangeListener() {
+		imageView.addPropertyChangeListener("icon", new PropertyChangeListener() {
 
-					@Override
-					public void propertyChange(PropertyChangeEvent pce) {
-						processAction.setEnabled(_Image != null);
-					}
+			@Override
+			public void propertyChange(PropertyChangeEvent pce) {
+				processAction.setEnabled(_Image != null);
+			}
 
-				});
+		});
 		processAction.setEnabled(_Image != null);
 		return processAction;
 	}
@@ -489,8 +486,7 @@ public class FilterToolGuiOpenCv {
 	 * @return A Action object you can then associate with a GUI control (like a
 	 *         JButton).
 	 */
-	protected Action createImageProcessingAction(String name,
-			final MatFilter processor) {
+	protected Action createImageProcessingAction(String name, final MatFilter processor) {
 		return createImageProcessingAction(name, processor, false);
 	}
 
@@ -504,8 +500,7 @@ public class FilterToolGuiOpenCv {
 	 *            The filter to apply when the user selects the item.
 	 * @return A new {@link JMenuItem} you can add to a menu.
 	 */
-	protected JMenuItem createImageProcessingMenuItem(String name,
-			MatFilter imgproc) {
+	protected JMenuItem createImageProcessingMenuItem(String name, MatFilter imgproc) {
 		return createImageProcessingMenuItem(name, imgproc, false);
 	}
 
@@ -522,10 +517,8 @@ public class FilterToolGuiOpenCv {
 	 *            the filter.
 	 * @return A new {@link JMenuItem} you can add to a menu.
 	 */
-	protected JMenuItem createImageProcessingMenuItem(String name,
-			MatFilter imgproc, final boolean revert) {
-		JMenuItem item = new JMenuItem(createImageProcessingAction(name,
-				imgproc, revert));
+	protected JMenuItem createImageProcessingMenuItem(String name, MatFilter imgproc, final boolean revert) {
+		JMenuItem item = new JMenuItem(createImageProcessingAction(name, imgproc, revert));
 		item.setName(name);
 		return item;
 	}
@@ -631,8 +624,7 @@ public class FilterToolGuiOpenCv {
 					if (chooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
 						File dir = chooser.getSelectedFile();
 						lastFile = dir;
-						MatFilter filter = (myFilter != null) ? myFilter
-								: _LastFilter;
+						MatFilter filter = (myFilter != null) ? myFilter : _LastFilter;
 						FilterView.showDirectory(dir, filter);
 					}
 
@@ -674,8 +666,7 @@ public class FilterToolGuiOpenCv {
 					}
 				} catch (IOException ex) {
 					String msg = "Failed to get image from: " + _Url;
-					JOptionPane.showMessageDialog(frame, msg,
-							"Failed to Grab Image", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(frame, msg, "Failed to Grab Image", JOptionPane.ERROR_MESSAGE);
 				} finally {
 					frame.setCursor(Cursor.getDefaultCursor());
 				}
@@ -837,13 +828,11 @@ public class FilterToolGuiOpenCv {
 
 					// If mouse pointer over pixel in image, update ratio and
 					// color
-					if ((iw > 0) && (ih > 0) && (x < iw) && (y < ih)
-							&& (y >= 0) && (x >= 0)) {
+					if ((iw > 0) && (ih > 0) && (x < iw) && (y < ih) && (y >= 0) && (x >= 0)) {
 						xRatio = x / ((double) iw);
 						yRatio = y / ((double) ih);
 						double[] channelVals = _Image.get(y, x);
-						channelStr = "  "
-								+ Conversion.channelsToString(channelVals);
+						channelStr = "  " + Conversion.channelsToString(channelVals);
 					}
 				}
 				String fmtStr = "%4d (%.3f)";
@@ -959,10 +948,7 @@ public class FilterToolGuiOpenCv {
 		String fileMenu = "File";
 		addMenuItem(fileMenu, new JMenuItem(createOpenImageAction()));
 		addMenuItem(fileMenu, new JMenuItem(createGrabImageAction()));
-		addMenuItem(
-				fileMenu,
-				new JMenuItem(createBatchProcessAction("Batch Last Filter",
-						null)));
+		addMenuItem(fileMenu, new JMenuItem(createBatchProcessAction("Batch Last Filter", null)));
 		addMenuItem(fileMenu, new JMenuItem(createRevertImageAction()));
 		addMenuItem(fileMenu, new JMenuItem(createSaveImageAction()));
 		addMenuItem(fileMenu, new JMenuItem(createPreferencesAction()));
@@ -976,63 +962,45 @@ public class FilterToolGuiOpenCv {
 		String colorSpaceName = "Color Space";
 		JMenu colorSpace = new JMenu(colorSpaceName);
 		addMenuItem(editName, colorSpace);
-		colorSpace.add(createImageProcessingMenuItem("BGR->HSV",
-				ColorSpace.createBGRtoHSV()));
-		colorSpace.add(createImageProcessingMenuItem("HSV->BGR",
-				ColorSpace.createHSVtoBGR()));
-		colorSpace.add(createImageProcessingMenuItem("RGB->HSV",
-				ColorSpace.createRGBtoHSV()));
-		colorSpace.add(createImageProcessingMenuItem("HSV->RGB",
-				ColorSpace.createHSVtoRGB()));
-		colorSpace.add(createImageProcessingMenuItem("BGR->XYZ",
-				ColorSpace.createBGRtoXYZ()));
-		colorSpace.add(createImageProcessingMenuItem("XYZ->BGR",
-				ColorSpace.createXYZtoBGR()));
-		colorSpace.add(createImageProcessingMenuItem("RGB->XYZ",
-				ColorSpace.createRGBtoXYZ()));
-		colorSpace.add(createImageProcessingMenuItem("XYZ->RGB",
-				ColorSpace.createXYZtoRGB()));
+		colorSpace.add(createImageProcessingMenuItem("BGR->HSV", ColorSpace.createBGRtoHSV()));
+		colorSpace.add(createImageProcessingMenuItem("HSV->BGR", ColorSpace.createHSVtoBGR()));
+		colorSpace.add(createImageProcessingMenuItem("RGB->HSV", ColorSpace.createRGBtoHSV()));
+		colorSpace.add(createImageProcessingMenuItem("HSV->RGB", ColorSpace.createHSVtoRGB()));
+		colorSpace.add(createImageProcessingMenuItem("BGR->XYZ", ColorSpace.createBGRtoXYZ()));
+		colorSpace.add(createImageProcessingMenuItem("XYZ->BGR", ColorSpace.createXYZtoBGR()));
+		colorSpace.add(createImageProcessingMenuItem("RGB->XYZ", ColorSpace.createRGBtoXYZ()));
+		colorSpace.add(createImageProcessingMenuItem("XYZ->RGB", ColorSpace.createXYZtoRGB()));
 
 		addMenuItem(editName, new JMenuItem(getColorRangeAction()));
 
-		addMenuItem(editName,
-				createImageProcessingMenuItem("Negative", new Negative()));
+		addMenuItem(editName, createImageProcessingMenuItem("Negative", new Negative()));
 
 		JMenu contrast = new JMenu("Contrast");
 		addMenuItem(editName, contrast);
-		double[] contrastVals = { 0.25, 0.5, .75, .9, 1.1, 1.25, 1.5, 2.0, 5.0,
-				10.0 };
+		double[] contrastVals = { 0.25, 0.5, .75, .9, 1.1, 1.25, 1.5, 2.0, 5.0, 10.0 };
 		for (int i = 0; i < contrastVals.length; i++) {
 			double gain = contrastVals[i];
-			contrast.add(createImageProcessingMenuItem("" + gain,
-					new ContrastBrightness(gain, 0)));
+			contrast.add(createImageProcessingMenuItem("" + gain, new ContrastBrightness(gain, 0)));
 		}
 
 		JMenu brightness = new JMenu("Brightness");
 		addMenuItem(editName, brightness);
-		double[] brightnessVals = { -50, -25, -10, -5, -1, +1, +5, +10, +25,
-				+50 };
+		double[] brightnessVals = { -50, -25, -10, -5, -1, +1, +5, +10, +25, +50 };
 		for (int i = 0; i < brightnessVals.length; i++) {
 			double bias = brightnessVals[i];
-			brightness.add(createImageProcessingMenuItem("" + bias,
-					new ContrastBrightness(1.0, bias)));
+			brightness.add(createImageProcessingMenuItem("" + bias, new ContrastBrightness(1.0, bias)));
 		}
 
-		colorSpace.add(createImageProcessingMenuItem("BGR->HSV",
-				ColorSpace.createBGRtoHSV()));
-		colorSpace.add(createImageProcessingMenuItem("HSV->BGR",
-				ColorSpace.createHSVtoBGR()));
-		colorSpace.add(createImageProcessingMenuItem("RGB->HSV",
-				ColorSpace.createRGBtoHSV()));
-		colorSpace.add(createImageProcessingMenuItem("HSV->RGB",
-				ColorSpace.createHSVtoRGB()));
+		colorSpace.add(createImageProcessingMenuItem("BGR->HSV", ColorSpace.createBGRtoHSV()));
+		colorSpace.add(createImageProcessingMenuItem("HSV->BGR", ColorSpace.createHSVtoBGR()));
+		colorSpace.add(createImageProcessingMenuItem("RGB->HSV", ColorSpace.createRGBtoHSV()));
+		colorSpace.add(createImageProcessingMenuItem("HSV->RGB", ColorSpace.createHSVtoRGB()));
 
 		String chanRemoveName = "Remove Channels";
 		JMenu chanRemove = new JMenu(chanRemoveName);
 		addMenuItem(editName, chanRemove);
 		for (int i = 0; i < 3; i++) {
-			JMenuItem item = createImageProcessingMenuItem("Channel " + i,
-					new FillChannel(i));
+			JMenuItem item = createImageProcessingMenuItem("Channel " + i, new FillChannel(i));
 			chanRemove.add(item);
 		}
 
@@ -1040,15 +1008,11 @@ public class FilterToolGuiOpenCv {
 		addMenuItem(editName, blur);
 		for (int i = 1; i <= 10; i++) {
 			String label = "" + i + "x" + i;
-			blur.add(createImageProcessingMenuItem(label, new Blur(new Size(i,
-					i))));
+			blur.add(createImageProcessingMenuItem(label, new Blur(new Size(i, i))));
 		}
 
-		addMenuItem(editName,
-				createImageProcessingMenuItem("Gray Scale", new GrayScale()));
-		addMenuItem(
-				editName,
-				createImageProcessingMenuItem("Black & White", new BlackWhite()));
+		addMenuItem(editName, createImageProcessingMenuItem("Gray Scale", new GrayScale()));
+		addMenuItem(editName, createImageProcessingMenuItem("Black & White", new BlackWhite()));
 
 		JMenu erode = new JMenu("Erode");
 		JMenu dilate = new JMenu("Dilate");
@@ -1060,11 +1024,9 @@ public class FilterToolGuiOpenCv {
 			dilate.add(createImageProcessingAction(label, new Dilate(i)));
 		}
 
-		addMenuItem(editName,
-				createImageProcessingMenuItem("Contours", new Contours()));
+		addMenuItem(editName, createImageProcessingMenuItem("Contours", new Contours()));
 
-		addMenuItem(overlayName,
-				createImageProcessingMenuItem("Cross Hair", new CrossHair()));
+		addMenuItem(overlayName, createImageProcessingMenuItem("Cross Hair", new CrossHair()));
 
 		JMenu fovMenu = new JMenu("FOV");
 		String fovPrefs = "defaultFov";
@@ -1176,8 +1138,7 @@ public class FilterToolGuiOpenCv {
 		for (int i = 0; i <= n; i++) {
 			String stepLabel = "Stage " + i;
 			MatFilter filter = seqFilter.createStepFilter(i);
-			JMenuItem menuItem = createImageProcessingMenuItem(stepLabel,
-					filter, true);
+			JMenuItem menuItem = createImageProcessingMenuItem(stepLabel, filter, true);
 			addMenuItem(label, menuItem);
 		}
 	}
@@ -1303,16 +1264,14 @@ public class FilterToolGuiOpenCv {
 	protected Mat openImage(File imgFile) {
 		final String path = imgFile.getAbsolutePath();
 		final Mat newImage = Highgui.imread(path);
-		if ((newImage != null) && (newImage.width() > 0)
-				&& (newImage.height() > 0)) {
+		if ((newImage != null) && (newImage.width() > 0) && (newImage.height() > 0)) {
 			_Config.setLastOpenedFile(path);
 			lastFile = imgFile;
 			_LastLoadedImage = newImage;
 			setImage(newImage);
 			return newImage;
 		} else {
-			showMessageDialog(frame, "Cannot open image file: " + path,
-					frame.getTitle(), ERROR_MESSAGE);
+			showMessageDialog(frame, "Cannot open image file: " + path, frame.getTitle(), ERROR_MESSAGE);
 			return null;
 		}
 	}
@@ -1491,34 +1450,59 @@ public class FilterToolGuiOpenCv {
 	}
 
 	/**
-	 * Builds a action handler to displays a color range editor to allow the
-	 * user to quickly see the impact of adjusting the color ranges.
-	 *
+	 * Builds a action handler to displays a color range editor for the default
+	 * color range filter.
+	 * 
 	 * @return Action that can be assigned to a button or menu item.
 	 */
-	private Action getColorRangeAction() { // TODO save values
+	private Action getColorRangeAction() {
 		if (_ColorRange == null) {
 			int[] minVals = { 0, 0, 0 };
 			int[] maxVals = { 255, 255, 255 };
 			_ColorRange = new ColorRange(minVals, maxVals, true);
-			_ColorRange.addListener(new ChangeListener() {
-				@Override
-				public void stateChanged(ChangeEvent e) {
-					// If some other filter applied, then reset our base image
-					// for applying
-					// color range tweaks
-					if (_LastColorRangeImage != _Image) {
-						_ColorRangeImage = _Image.clone();
-					}
-					_LastColorRangeImage = _ColorRange.process(_ColorRangeImage
-							.clone());
-					setImage(_LastColorRangeImage);
-				}
-			});
 		}
 
-		Action action = new AbstractAction("Color Range") {
+		return getColorRangeAction("Color Range", "default", _ColorRange);
+	}
+
+	/**
+	 * Builds a action handler to displays a color range editor to allow the
+	 * user to quickly see the impact of adjusting the color ranges.
+	 *
+	 * @param Name
+	 *            The ASCII name to associate with the color range set.
+	 * @param colorRange
+	 *            The ColorRange object to load/set values from.
+	 * @param defCfgName
+	 *            The default configuration name (like: "pink") to use when user
+	 *            presses save defaults or load defaults.
+	 * @return Action that can be assigned to a button or menu item.
+	 */
+	public Action getColorRangeAction(String name, String defCfgName, final ColorRange colorRange) {
+
+		Action action = new AbstractAction(name) {
 			private static final long serialVersionUID = 1L;
+
+			private JPanel createColorRangeEditor() {
+				final ColorRangeEditor cre = new ColorRangeEditor(colorRange.getColorRangeValues());
+				cre.setDefaultCfgName(defCfgName);
+				cre.addListener(new ChangeListener() {
+					@Override
+					public void stateChanged(ChangeEvent e) {
+						// If some other filter applied, then reset our base
+						// image
+						// for applying
+						// color range tweaks
+						colorRange.setColorRangeValues(cre.getValues());
+						if (_LastColorRangeImage != _Image) {
+							_ColorRangeImage = _Image.clone();
+						}
+						_LastColorRangeImage = colorRange.process(_ColorRangeImage.clone());
+						setImage(_LastColorRangeImage);
+					}
+				});
+				return cre;
+			}
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -1526,12 +1510,12 @@ public class FilterToolGuiOpenCv {
 				// and then display GUI tool to dynamically update the color
 				// range
 				_ColorRangeImage = getImage().clone();
-				_LastColorRangeImage = _ColorRange.process(getImage().clone());
+				_LastColorRangeImage = colorRange.process(getImage().clone());
 				setImage(_LastColorRangeImage);
-				JFrame frame = new JFrame("Color Range");
+				JFrame frame = new JFrame(name);
 				frame.setMinimumSize(new Dimension(480, 200));
 				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				frame.setContentPane(_ColorRange.createPreferencesPanel());
+				frame.setContentPane(createColorRangeEditor());
 				frame.pack();
 				frame.setVisible(true);
 			}
