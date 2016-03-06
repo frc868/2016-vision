@@ -3,8 +3,11 @@ package com.techhounds.imgcv.pinksquare;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.Action;
+
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
 import org.opencv.core.Point3;
 import org.opencv.imgproc.Imgproc;
 
@@ -42,16 +45,15 @@ public class FindPinkRectangleFilter implements MatFilter {
 
 	private final MatFilter _ColorSpace = ColorSpace.createBGRtoHSV();
 
-	private int[] colorFilterMin = { 140, 120, 150 };
+	private int[] colorFilterMin = { 140, 80, 100 };
 
-	private int[] colorFilterMax = { 180, 240, 255 };
+	private int[] colorFilterMax = { 200, 240, 255 };
 
-	private final MatFilter _ColorRange = new ColorRange(colorFilterMin,
-			colorFilterMax, true);
+	private ColorRange _ColorRange = new ColorRange(colorFilterMin, colorFilterMax, true);
 
-	private final MatFilter _Dilate1 = new Dilate(2);
-	private final MatFilter _Erode = new Erode(5);
-	private final MatFilter _Dilate2 = new Dilate(4);
+	// private final MatFilter _Dilate1 = new Dilate(6);
+	private final MatFilter _Erode = new Erode(8);
+	private final MatFilter _Dilate2 = new Dilate(8);
 
 	private boolean _Debug;
 
@@ -64,8 +66,37 @@ public class FindPinkRectangleFilter implements MatFilter {
 		_Found = false;
 		_Debug = false;
 		_Filter = createSequence();
-		_Finder = new RectangularTarget(22, 20.125, 640, 480, 44.136 /* 56.75 */);
+		// For Lenovo Web Cam
+		// _Finder = new RectangularTarget(22, 20.125, 640, 480, 44.136 /* 56.75
+		// */);
+		_Finder = new RectangularTarget(22, 20.125, 640, 480, 31.638 /* 56.75 */);
 		_Finder.setCameraLocation(new Point3(-9.0, 12, 11));
+		// Let vertical lines be off as much as 10% of width
+		_Finder.setVerticalLineTolerance(0.1);
+	}
+
+	/**
+	 * Static method which makes adjustments to default construction to so the
+	 * tool can be used to locate the 2016 target.
+	 * 
+	 * @return A image filter tuned for the 2016 FRC reflective target below the
+	 *         goals.
+	 */
+	public static FindPinkRectangleFilter createFor2016Target() {
+		FindPinkRectangleFilter filter = new FindPinkRectangleFilter();
+		int[] minVals = { 40, 40, 40 };
+		int[] maxVals = { 130, 210, 255 };
+		filter._ColorRange = new ColorRange(minVals, maxVals, true);
+		filter._Filter = filter.createSequence();
+
+		RectangularTarget finder = new RectangularTarget(20, 14, 800, 600,
+				51 /* 56.75 */);
+		finder.setCameraLocation(new Point3(-9.0, 12, 12));
+		// Let vertical lines be off as much as 10% of width
+		finder.setVerticalLineTolerance(0.1);
+		filter._Finder = finder;
+
+		return filter;
 	}
 
 	/**
@@ -80,10 +111,23 @@ public class FindPinkRectangleFilter implements MatFilter {
 		Sequence s = new Sequence();
 		s.addFilter(_ColorSpace);
 		s.addFilter(_ColorRange);
-		s.addFilter(_Dilate1);
+		// s.addFilter(_Dilate1);
 		s.addFilter(_Erode);
 		s.addFilter(_Dilate2);
 		return s;
+	}
+
+	/**
+	 * Provides an action to allow you to adjust the color range settings.
+	 * 
+	 * @param label
+	 *            The text to associate with the action (like: "Color Range").
+	 *            This is what will appear on buttons or in menus.
+	 * 
+	 * @return Color range editor.
+	 */
+	public Action createColorRangeEditor(String label) {
+		return _ColorRange.createColorRangeAction(label);
 	}
 
 	/**
@@ -106,8 +150,7 @@ public class FindPinkRectangleFilter implements MatFilter {
 		float maxWidth = -1;
 
 		Mat heirarchy = new Mat();
-		Imgproc.findContours(d1, contours, heirarchy, Imgproc.RETR_LIST,
-				Imgproc.CHAIN_APPROX_SIMPLE);
+		Imgproc.findContours(d1, contours, heirarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 		int n = contours.size();
 		for (int i = 0; i < n; i++) {
 			MatOfPoint contour = contours.get(i);
@@ -121,24 +164,37 @@ public class FindPinkRectangleFilter implements MatFilter {
 			float distFromTop = poly.getMinY();
 			float distFromMid = imgMid - (distFromTop + h);
 
-			if ((w > 10) && (h > 10) && (hw > 50) && (hw < 300) && (pts >= 4)) {
-				polygons.add(poly);
-				_Found = true;
-				if (w > maxWidth) {
-					maxWidth = w;
-				}
-				if (_Debug) {
-					System.out.println("Accepted: sides: " + pts + " ("
-							+ poly.getWidth() + ", " + poly.getHeight()
-							+ ")  H/W: " + hw + "  distFromTop: " + distFromTop
-							+ "  distFromMid: " + distFromMid);
+			if ((w > 10) && (h > 10) && (hw > 50) && (hw < 300) && (pts >= 4) && (pts <= 16)) {
+				Point leftBot = new Point();
+				Point leftTop = new Point();
+				poly.findLeftEdge(leftBot, leftTop, 0.75);
+
+				Point rightBot = new Point();
+				Point rightTop = new Point();
+				poly.findRightEdge(rightBot, rightTop, 0.75);
+
+				double leftHeight = Math.abs(leftTop.y - leftBot.y);
+				double rightHeight = Math.abs(rightTop.y - rightBot.y);
+				double heightRatio = (leftHeight > 1) ? rightHeight / leftHeight : 0;
+				if (leftHeight >= 10 && rightHeight >= 10 && (heightRatio > 0.75) && (heightRatio < 1.25)) {
+					polygons.add(poly);
+					_Found = true;
+					if (w > maxWidth) {
+						maxWidth = w;
+					}
+					if (_Debug) {
+						System.out.println("Accepted: sides: " + pts + " (" + poly.getWidth() + ", " + poly.getHeight()
+								+ ")  H/W: " + hw + "  distFromTop: " + distFromTop + "  distFromMid: " + distFromMid);
+					}
+				} else {
+					if (_Debug) {
+						System.out.println("Rejected: left height: " + leftHeight + "  right height: " + rightHeight);
+					}
 				}
 
 			} else if (_Debug) {
-				System.out.println("Rejected: sides: " + pts + " ("
-						+ poly.getWidth() + ", " + poly.getHeight()
-						+ ")  H/W: " + hw + "  distFromTop: " + distFromTop
-						+ "  distFromMid: " + distFromMid);
+				System.out.println("Rejected: sides: " + pts + " (" + poly.getWidth() + ", " + poly.getHeight()
+						+ ")  H/W: " + hw + "  distFromTop: " + distFromTop + "  distFromMid: " + distFromMid);
 			}
 		}
 

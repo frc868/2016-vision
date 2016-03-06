@@ -2,6 +2,8 @@ package com.techhounds.imgcv.pinksquare;
 
 import java.awt.HeadlessException;
 
+import javax.swing.JMenuItem;
+
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
 
 /**
@@ -13,6 +15,7 @@ import com.techhounds.imgcv.FilterToolGuiOpenCv;
 public final class PinkStill extends FilterToolGuiOpenCv {
 
 	private FindPinkRectangleFilter filter;
+	private FindPinkRectangleFilter target2016;
 
 	/**
 	 * The constructor pretty much just needs to set the title line for your
@@ -25,6 +28,7 @@ public final class PinkStill extends FilterToolGuiOpenCv {
 	protected PinkStill() throws HeadlessException {
 		super("Image Filter Tool");
 		filter = new FindPinkRectangleFilter();
+		target2016 = FindPinkRectangleFilter.createFor2016Target();
 	}
 
 	/**
@@ -38,6 +42,7 @@ public final class PinkStill extends FilterToolGuiOpenCv {
 		addSeparator();
 		// Apply pink rectangle filter to original
 		addImageProcessingButton("Pink Rect", filter, true);
+		addImageProcessingButton("2016 Target", target2016, true);
 	}
 
 	/**
@@ -50,11 +55,16 @@ public final class PinkStill extends FilterToolGuiOpenCv {
 		// You can add to the menu (last parameter indicates if you want to
 		// revert or not)
 		addMenuItem(
-				"Filter",
+				"Pink Filter",
 				createImageProcessingMenuItem("Pink Rectangle", filter, true));
-
+		addMenuItem("Pink Filter", new JMenuItem(filter.createColorRangeEditor("Color Range")));
+		addMenuItem(
+				"2016 Filter",
+				createImageProcessingMenuItem("2016 Target", target2016, true));
+		addMenuItem("2016 Filter", new JMenuItem(target2016.createColorRangeEditor("Color Range")));
 		// Adding a sequence filter allows you to view each step of the sequence
 		addSequence("Pink Steps", filter.createSequence());
+		addSequence("2016 Steps", target2016.createSequence());
 	}
 
 	/**

@@ -25,11 +25,16 @@
  */
 package com.techhounds.imgcv.filters;
 
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -310,6 +315,40 @@ public final class ColorRange implements MatFilter {
 		}
 
 		return widget;
+	}
+	
+	/**
+	 * Builds a action handler to displays a color range editor to allow the
+	 * user to quickly see the impact of adjusting the color ranges.
+	 * 
+	 * @param label
+	 *            The text to associate with the action (like: "Color Range").
+	 *            This is what will appear on buttons or in menus. Pass null for
+	 *            default label.
+	 * 
+	 * @return Action that can be assigned to a button or menu item.
+	 */
+	public Action createColorRangeAction(String label) {
+		if (label == null) {
+			label = "Color Range";
+		}
+		Action action = new AbstractAction(label) {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// When button is pressed, get copy of current image as base
+				// and then display GUI tool to dynamically update the color
+				// range
+				JFrame frame = new JFrame("Color Range");
+				frame.setMinimumSize(new Dimension(480, 200));
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				frame.setContentPane(createPreferencesPanel());
+				frame.pack();
+				frame.setVisible(true);
+			}
+		};
+		return action;
 	}
 
 	/**

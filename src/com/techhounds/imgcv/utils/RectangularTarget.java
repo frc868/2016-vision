@@ -623,4 +623,13 @@ public class RectangularTarget {
 		}
 	}
 
+	/**
+	 * Set the tolerance of how vertical the right and left edge lines must be in order to be considered valid.
+	 * 
+	 * @param tolerance The tolerance in the range 0.0 (completely vertical) to 1.0 (way off of vertical).
+	 */
+	public void setVerticalLineTolerance(double tolerance) {
+		this.vertLineTolerance = tolerance;
+	}
+
 }
