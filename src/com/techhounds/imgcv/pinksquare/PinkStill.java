@@ -19,7 +19,7 @@ public final class PinkStill extends FilterToolGuiOpenCv {
 	private FindPinkRectangleFilter findPink;
 	
 	// Filter to locate 2016 FRC target
-	private FindPinkRectangleFilter target2016;
+	private FindPinkRectangleFilter frc2016;
 
 	/**
 	 * The constructor pretty much just needs to set the title line for your
@@ -32,7 +32,7 @@ public final class PinkStill extends FilterToolGuiOpenCv {
 	protected PinkStill() throws HeadlessException {
 		super("Image Filter Tool");
 		findPink = new FindPinkRectangleFilter();
-		target2016 = FindPinkRectangleFilter.createFor2016Target();
+		frc2016 = FindPinkRectangleFilter.createFor2016Target();
 	}
 
 	/**
@@ -45,8 +45,8 @@ public final class PinkStill extends FilterToolGuiOpenCv {
 
 		addSeparator();
 		// Apply pink rectangle filter to original
-		addImageProcessingButton("Pink Rect", findPink, true);
-		addImageProcessingButton("2016 Target", target2016, true);
+		addImageProcessingButton(findPink.getId(), findPink, true);
+		addImageProcessingButton(frc2016.getId(), frc2016, true);
 	}
 
 	/**
@@ -58,20 +58,22 @@ public final class PinkStill extends FilterToolGuiOpenCv {
 
 		// You can add to the menu (last parameter indicates if you want to
 		// revert or not)
+		String pinkId = findPink.getId();
 		addMenuItem(
-				"Pink Filter",
-				createImageProcessingMenuItem("Pink Rectangle", findPink, true));
-		Action pca = getColorRangeAction("Color Ranges", "pink", findPink.getColorRangeFilter());
-		addMenuItem("Pink Filter", new JMenuItem(pca));
+				pinkId,
+				createImageProcessingMenuItem("Find Target", findPink, true));
+		Action pca = getColorRangeAction("Color Ranges", pinkId, findPink.getColorRangeFilter());
+		addMenuItem(pinkId, new JMenuItem(pca));
 
+		String frc2016id = frc2016.getId();
 		addMenuItem(
-				"2016 Filter",
-				createImageProcessingMenuItem("2016 Target", target2016, true));
-		Action t2016ca = getColorRangeAction("Color Ranges", "2016-target", target2016.getColorRangeFilter());
-		addMenuItem("2016 Filter", new JMenuItem(t2016ca));
+				frc2016id,
+				createImageProcessingMenuItem("Find Target", frc2016, true));
+		Action t2016ca = getColorRangeAction("Color Ranges", frc2016id, frc2016.getColorRangeFilter());
+		addMenuItem(frc2016id, new JMenuItem(t2016ca));
 		// Adding a sequence filter allows you to view each step of the sequence
-		addSequence("Pink Steps", findPink.createSequence());
-		addSequence("2016 Steps", target2016.createSequence());
+		addSequence(pinkId + " Steps", findPink.createSequence());
+		addSequence(frc2016id + " Steps", frc2016.createSequence());
 	}
 
 	/**

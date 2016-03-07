@@ -1471,11 +1471,11 @@ public class FilterToolGuiOpenCv {
 	 *
 	 * @param Name
 	 *            The ASCII name to associate with the color range set.
-	 * @param colorRange
-	 *            The ColorRange object to load/set values from.
 	 * @param defCfgName
 	 *            The default configuration name (like: "pink") to use when user
 	 *            presses save defaults or load defaults.
+	 * @param colorRange
+	 *            The ColorRange object to load/set values from.
 	 * @return Action that can be assigned to a button or menu item.
 	 */
 	public Action getColorRangeAction(String name, String defCfgName, final ColorRange colorRange) {
@@ -1523,10 +1523,22 @@ public class FilterToolGuiOpenCv {
 		return action;
 	}
 
+	/**
+	 * Allows derived classes access to the window frame.
+	 * 
+	 * @return The main window frame.
+	 */
 	protected JFrame getFrame() {
 		return frame;
 	}
 
+	/**
+	 * Allows derived classes access to the color range filter (typically for
+	 * the purpose of saving values).
+	 * 
+	 * @return Reference to the generic color range filter used by the GUI when
+	 *         the standard menu items are included.
+	 */
 	protected ColorRange getColorRange() {
 		return _ColorRange;
 	}

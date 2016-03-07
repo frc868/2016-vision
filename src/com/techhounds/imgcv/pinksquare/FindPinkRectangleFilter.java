@@ -43,19 +43,21 @@ public class FindPinkRectangleFilter implements MatFilter {
 
 	// filter instances
 
-	private final MatFilter _ColorSpace = ColorSpace.createBGRtoHSV();
+	// Converts BGR to HSV
+	private final MatFilter _ColorSpace;
 
-	private int[] colorFilterMin = { 140, 80, 100 };
-
-	private int[] colorFilterMax = { 200, 240, 255 };
-
-	private ColorRange _ColorRange = new ColorRange(colorFilterMin, colorFilterMax, true);
+	// Looks for specific colors in HSV space
+	private ColorRange _ColorRange;
 
 	// private final MatFilter _Dilate1 = new Dilate(6);
-	private final MatFilter _Erode = new Erode(8);
-	private final MatFilter _Dilate2 = new Dilate(8);
+	private final MatFilter _Erode;
+	private final MatFilter _Dilate2;
 
+	// Set to true for more diagnostic output to console
 	private boolean _Debug;
+
+	// ID of how filter is being used as this filter is fairly adjustable
+	private String _Id;
 
 	/**
 	 * Constructs a new instance of the filter for a pink rectangle that is 22
@@ -65,6 +67,16 @@ public class FindPinkRectangleFilter implements MatFilter {
 	public FindPinkRectangleFilter() {
 		_Found = false;
 		_Debug = false;
+		_Id = "pink";
+
+		_ColorSpace = ColorSpace.createBGRtoHSV();
+		_Erode = new Erode(8);
+		_Dilate2 = new Dilate(8);
+
+		int[] colorFilterMin = { 140, 80, 100 };
+		int[] colorFilterMax = { 200, 240, 255 };
+		_ColorRange = new ColorRange(colorFilterMin, colorFilterMax, true);
+
 		_Filter = createSequence();
 		// For Lenovo Web Cam
 		// _Finder = new RectangularTarget(22, 20.125, 640, 480, 44.136 /* 56.75
@@ -73,7 +85,7 @@ public class FindPinkRectangleFilter implements MatFilter {
 		_Finder.setCameraLocation(new Point3(-9.0, 12, 11));
 		// Let vertical lines be off as much as 10% of width
 		_Finder.setVerticalLineTolerance(0.1);
-		loadColorRanges("pink");
+		loadColorRanges(_Id);
 	}
 
 	/**
@@ -85,11 +97,13 @@ public class FindPinkRectangleFilter implements MatFilter {
 	 */
 	public static FindPinkRectangleFilter createFor2016Target() {
 		FindPinkRectangleFilter filter = new FindPinkRectangleFilter();
+		filter._Id = "frc-2016";
+
 		int[] minVals = { 40, 40, 40 };
 		int[] maxVals = { 130, 210, 255 };
 		filter._ColorRange = new ColorRange(minVals, maxVals, true);
-		filter.loadColorRanges("2016-target");
-		
+		filter.loadColorRanges(filter._Id);
+
 		filter._Filter = filter.createSequence();
 
 		RectangularTarget finder = new RectangularTarget(20, 14, 800, 600,
@@ -103,9 +117,21 @@ public class FindPinkRectangleFilter implements MatFilter {
 	}
 
 	/**
+	 * Returns short ASCII ID (like "pink" or "frc-2016") used for loading
+	 * configuration and saving images.
+	 * 
+	 * @return A short ASCII ID set at time of construction.
+	 */
+	public final String getId() {
+		return _Id;
+	}
+
+	/**
 	 * Helper method to load color range values in from a file (if present).
 	 * 
-	 * @param cfgName Simple name (like "pink") of the default configuration to load.
+	 * @param cfgName
+	 *            Simple name (like "pink") of the default configuration to
+	 *            load.
 	 */
 	private void loadColorRanges(String cfgName) {
 		try {
@@ -136,7 +162,7 @@ public class FindPinkRectangleFilter implements MatFilter {
 		s.addFilter(_Dilate2);
 		return s;
 	}
-	
+
 	/**
 	 * Get direct access to the color range filter.
 	 * 
