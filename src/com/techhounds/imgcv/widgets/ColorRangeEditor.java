@@ -416,6 +416,7 @@ public class ColorRangeEditor extends JPanel {
 		try {
 			ColorRangeValues crv = getValues();
 			crv.loadSettings(f);
+			setValues(crv);
 			lastFile = f;
 			return true;
 		} catch (Exception e) {
