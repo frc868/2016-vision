@@ -236,6 +236,25 @@ public class LiveViewGui {
 			return 0;
 		}
 	}
+	
+	/**
+	 * Helper method which tells the frame grabber to start saving raw images to
+	 * a directory (useful to enable during a robot's autonomous period).
+	 * 
+	 * <p>Hint: Look for files under: $HOME/Desktop/captured-images/PREFIX-YYYYMMDD-HHMMSS.</p>
+	 * 
+	 * @param prefix
+	 *            The prefix to put in front of the directory name (like "pink",
+	 *            "2016-target", etc).
+	 * @param total
+	 *            The total number of images to capture.
+	 * @param howOften
+	 *            How often (1 every frame, 2 every other frame, etc).
+	 */	
+	public void enableSave(String prefix, int totalFrames, int howOften) {
+		File outDir = FrameGrabber.createSaveDir(prefix);
+		_FrameGrabber.enableSave(outDir, totalFrames, howOften);
+	}
 
 	/**
 	 * Set the image filter to apply to each received frame.
@@ -352,12 +371,47 @@ public class LiveViewGui {
 				System.exit(0);
 			}
 		}));
+		
+		String capMenu = "Capture";
+		addMenuItem(capMenu, new JMenuItem(createCaptureAction("Capture 10 at 10", "live", 10, 10)));
+		addMenuItem(capMenu, new JMenuItem(createCaptureAction("Capture 100 at 10", "live", 100, 10)));
+		addMenuItem(capMenu, new JMenuItem(createCaptureAction("Capture 10 at 100", "live", 10, 100)));
 
 		addFilter("Raw Feed", new DoNothingFilter());
 		addFilter("Gray Scale", new GrayScale());
 		addFilter("HSV", ColorSpace.createBGRtoHSV());
 		addFilter("Cross Hair", new CrossHair());
 	}
+
+	/**
+	 * Helper method which tells the frame grabber to start saving raw images to
+	 * a directory (useful to enable during a robot's autonomous period).
+	 * 
+	 * <p>Hint: Look for files under: $HOME/Desktop/captured-images/PREFIX-YYYYMMDD-HHMMSS.</p>
+	 * 
+	 * @param label
+	 * 			  The label to associate with the action (what you see in the menu).
+	 * @param prefix
+	 *            The prefix to put in front of the directory name (like "pink",
+	 *            "2016-target", etc).
+	 * @param totalFrames
+	 *            The total number of images to capture.
+	 * @param howOften
+	 *            How often (1 every frame, 2 every other frame, etc).
+	 */	
+	public Action createCaptureAction(final String label, final String prefix, final int totalFrames, final int howOften) {
+		@SuppressWarnings("serial")
+		Action action = new AbstractAction(label) {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				enableSave(prefix, totalFrames, howOften);
+			}
+			
+		};
+		return action;
+	}
+	
 
 	/**
 	 * Method used to add filters to the set of choices in the live view window.
