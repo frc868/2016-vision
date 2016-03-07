@@ -6,6 +6,7 @@ import javax.swing.Action;
 import javax.swing.JMenuItem;
 
 import com.techhounds.imgcv.FilterToolGuiOpenCv;
+import com.techhounds.imgcv.filters.CameraUntilt;
 
 /**
  * Example of extending the {@link FilterToolGuiOpenCv} class to make your own
@@ -45,8 +46,11 @@ public final class PinkStill extends FilterToolGuiOpenCv {
 
 		addSeparator();
 		// Apply pink rectangle filter to original
-		addImageProcessingButton(findPink.getId(), findPink, true);
-		addImageProcessingButton(frc2016.getId(), frc2016, true);
+		addImageProcessingButton(findPink.getId(), findPink, false);
+		addImageProcessingButton(frc2016.getId(), frc2016, false);
+		
+		addImageProcessingButton("Untilt Pink", new CameraUntilt(-0.08), false);
+		addImageProcessingButton("Untilt FRC", new CameraUntilt(0.275), false);
 	}
 
 	/**

@@ -70,7 +70,7 @@ public class FindPinkRectangleFilter implements MatFilter {
 		_Id = "pink";
 
 		_ColorSpace = ColorSpace.createBGRtoHSV();
-		_Erode = new Erode(8);
+		_Erode = new Erode(6);
 		_Dilate2 = new Dilate(8);
 
 		int[] colorFilterMin = { 140, 80, 100 };
