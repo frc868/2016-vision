@@ -372,7 +372,7 @@ public class FrameGrabber {
 	public static File createSaveDir(String prefix) {
 		File dir = new File(System.getProperty("user.home"), "Desktop");
 		dir = new File(dir, "captured-images");
-		SimpleDateFormat df = new SimpleDateFormat("%y%m%d-%h%m%s");
+		SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd-HHmmss");
 		dir = new File(dir, prefix + "-" + df.format(new Date()));
 		if (dir.isDirectory() || dir.mkdirs()) {
 			return dir;
