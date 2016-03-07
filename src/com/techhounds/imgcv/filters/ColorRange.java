@@ -25,13 +25,23 @@
  */
 package com.techhounds.imgcv.filters;
 
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
 import java.util.Arrays;
+
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 
 import com.techhounds.imgcv.utils.ColorRangeValues;
+import com.techhounds.imgcv.widgets.ColorRangeEditor;
 
 /**
  * A image filter which keeps/removes pixels which fall within a specific color
@@ -262,4 +272,49 @@ public final class ColorRange implements MatFilter {
 	public int[] getMinVals() {
 		return _Values.getMin();
 	}
+	
+
+	/**
+	 * Builds a action handler to displays a color range editor to allow the
+	 * user to quickly see the impact of adjusting the color ranges.
+	 *
+	 * @param Name
+	 *            The ASCII name to associate with the color range set.
+	 * @param defCfgName
+	 *            The default configuration name (like: "pink") to use when user
+	 *            presses save defaults or load defaults.
+	 * @return Action that can be assigned to a button or menu item.
+	 */
+	public Action getColorRangeAction(final String name, final String defCfgName) {
+
+		Action action = new AbstractAction(name) {
+			private static final long serialVersionUID = 1L;
+
+			private JPanel createColorRangeEditor() {
+				final ColorRangeEditor cre = new ColorRangeEditor(getColorRangeValues());
+				cre.setDefaultCfgName(defCfgName);
+				cre.addListener(new ChangeListener() {
+					@Override
+					public void stateChanged(ChangeEvent e) {
+						// Transfer values to filter as user adjusts them
+						setColorRangeValues(cre.getValues());
+					}
+				});
+				return cre;
+			}
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// When action occurs, create and display editor
+				JFrame frame = new JFrame(name);
+				frame.setMinimumSize(new Dimension(480, 200));
+				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				frame.setContentPane(createColorRangeEditor());
+				frame.pack();
+				frame.setVisible(true);
+			}
+		};
+		return action;
+	}
+
 }
