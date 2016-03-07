@@ -1,5 +1,9 @@
 package com.techhounds.imgcv;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import org.opencv.core.Mat;
 import org.opencv.highgui.Highgui;
 import org.opencv.highgui.VideoCapture;
@@ -14,6 +18,18 @@ public class FrameGrabber {
 
 	/** Background thread that reads in images from capture device. */
 	private CaptureThread _CaptureThread;
+
+	/** Will be non-null if auto file save has been enabled. */
+	private File _SaveDir;
+
+	/** Counter used while auto save is enabled. */
+	private int _SaveCnt;
+
+	/** How often we save (number of frames to skip). */
+	private int _HowOften;
+
+	/** The end count when we need to disable saving. */
+	private int _SaveLastCnt;
 
 	/**
 	 * Construct a new instance in a a disconnected state (not running until you
@@ -64,7 +80,7 @@ public class FrameGrabber {
 		CaptureThread ct = _CaptureThread;
 		return (ct == null) ? null : ct._FrameCount;
 	}
-	
+
 	/**
 	 * The frame rate retrieved from the source computed since started.
 	 * 
@@ -103,8 +119,7 @@ public class FrameGrabber {
 			if (vc.isOpened()) {
 				System.err.println("Starting IP camera feed from: " + url);
 			} else {
-				System.err.println("Failed to start IP camera feed from: "
-						+ url);
+				System.err.println("Failed to start IP camera feed from: " + url);
 				vc = null;
 			}
 		} else {
@@ -115,11 +130,9 @@ public class FrameGrabber {
 					vc.set(Highgui.CV_CAP_PROP_FRAME_HEIGHT, height);
 				}
 
-				System.err.println("Starting Video Feed using Web Cam: "
-						+ devId);
+				System.err.println("Starting Video Feed using Web Cam: " + devId);
 			} else {
-				System.err.println("Failed to start Video Feed using Web Cam: "
-						+ devId);
+				System.err.println("Failed to start Video Feed using Web Cam: " + devId);
 				vc = null;
 			}
 		}
@@ -171,9 +184,8 @@ public class FrameGrabber {
 			 * (t.isAlive()) { return; } } catch (InterruptedException e) {
 			 * System.err.println("Capture thread failed to shutdown cleanly");
 			 * } t.interrupt(); try { t.wait(100); } catch (InterruptedException
-			 * e) {
-			 * System.err.println("Capture thread failed to shutdown cleanly");
-			 * } }
+			 * e) { System.err.println(
+			 * "Capture thread failed to shutdown cleanly"); } }
 			 */
 		}
 	}
@@ -250,19 +262,43 @@ public class FrameGrabber {
 								_FirstFrameTime = _LastFrameTime;
 							}
 							_FrameCount++;
+
+							// See if we need to save the image
+							saveCheck(img);
 						}
 					}
 					/*
-					if (_FrameCount % 100 == 0) {
-						System.err.println("FPS from camera: " + getFps());
-					}
-					*/
+					 * if (_FrameCount % 100 == 0) { System.err.println(
+					 * "FPS from camera: " + getFps()); }
+					 */
 				}
 			}
 			System.err.println("Video Capture thread is stopping");
 			_FrameCount = 0;
 			_LastFrameTime = _FirstFrameTime = 0;
 			vc.release();
+		}
+
+		/**
+		 * Helper method that writes out raw images capture when the
+		 * "enable save" feature is active.
+		 * 
+		 * @param img
+		 *            The image to write out.
+		 */
+		private void saveCheck(Mat img) {
+			File saveDir = _SaveDir;
+			if ((saveDir != null) && (_SaveCnt < _SaveLastCnt)) {
+				if ((_SaveCnt % _HowOften) == 0) {
+					File imgFile = new File(saveDir, Long.toString(_FrameCount) + ".jpg");
+					String path = imgFile.getAbsolutePath();
+					Highgui.imwrite(path, img);
+				}
+				_SaveCnt++;
+				if (_SaveCnt >= _SaveLastCnt) {
+					_SaveDir = null;
+				}
+			}
 		}
 
 		@Override
@@ -296,4 +332,52 @@ public class FrameGrabber {
 			return sb.toString();
 		}
 	}
+
+	/**
+	 * Helper method which tells the frame grabber to start saving raw images to
+	 * a directory (useful to enable during a robot's autonomous period).
+	 * 
+	 * @param dir
+	 *            The directory you want images stored under (hint, use
+	 *            {@link #createSaveDir(String)}).
+	 * @param total
+	 *            The total number of images to capture.
+	 * @param howOften
+	 *            How often (1 every frame, 2 every other frame, etc).
+	 */
+	public void enableSave(File dir, int total, int howOften) {
+		_SaveDir = dir.isDirectory() ? dir : null;
+		_SaveCnt = 0;
+		_SaveLastCnt = total * howOften;
+		_HowOften = howOften;
+	}
+	
+	/**
+	 * Disables the "auto saving" of images (turns it off early).
+	 */
+	public void disableSave() {
+		_SaveLastCnt = 0;
+	}
+
+	/**
+	 * Creates an output save directory for captured images under:
+	 * $HOME/Desktop/captured-images/PREFIX-YYYYMMDD-HHMMSS.
+	 * 
+	 * @param prefix
+	 *            The prefix to put in front of the directory name (like "pink",
+	 *            "2016-target", etc).
+	 * @return A File object of the created directory or null if the directory
+	 *         did not exist and we were unable to create it.
+	 */
+	public static File createSaveDir(String prefix) {
+		File dir = new File(System.getProperty("user.home"), "Desktop");
+		dir = new File(dir, "captured-images");
+		SimpleDateFormat df = new SimpleDateFormat("%y%m%d-%h%m%s");
+		dir = new File(dir, prefix + "-" + df.format(new Date()));
+		if (dir.isDirectory() || dir.mkdirs()) {
+			return dir;
+		}
+		return null;
+	}
+
 }
