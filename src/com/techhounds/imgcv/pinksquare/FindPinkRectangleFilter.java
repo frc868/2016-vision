@@ -254,7 +254,9 @@ public class FindPinkRectangleFilter implements MatFilter {
 
 				_Finder.setImageSize(wImg, hImg);
 				if (_Finder.computeSolution(p)) {
-					System.out.println(_Finder);
+					if (_Debug) {
+						System.out.println(_Finder);
+					}
 					_Finder.drawVerticalLines(output);
 					_Finder.drawCrossHair(output);
 					_Finder.drawCamInfo(output);

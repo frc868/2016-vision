@@ -462,11 +462,13 @@ public class RectangularTarget {
 				double dx = p1.x - p0.x;
 				double dy = p1.y - p0.y;
 				wallAngle = Math.toDegrees(Math.atan(dy / dx));
+				/*
 				double targetWidthEst = Math.sqrt(dx * dx + dy * dy);
 				System.out.println("p0: " + p0);
 				System.out.println("p1: " + p1);
 				System.out.println("dx: " + dx + "  dy: " + dy
 						+ "  targetWidthEst: " + targetWidthEst);
+						*/
 			}
 		}
 
