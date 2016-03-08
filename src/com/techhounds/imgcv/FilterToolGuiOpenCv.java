@@ -27,6 +27,7 @@ package com.techhounds.imgcv;
 
 import com.techhounds.imgcv.filters.BlackWhite;
 import com.techhounds.imgcv.filters.Blur;
+import com.techhounds.imgcv.filters.CameraUntilt;
 import com.techhounds.imgcv.filters.ColorRange;
 import com.techhounds.imgcv.filters.ColorSpace;
 import com.techhounds.imgcv.filters.Contours;
@@ -38,6 +39,7 @@ import com.techhounds.imgcv.filters.FillChannel;
 import com.techhounds.imgcv.filters.FovOverlay;
 import com.techhounds.imgcv.filters.GrayScale;
 import com.techhounds.imgcv.filters.MatFilter;
+import com.techhounds.imgcv.filters.Morphology;
 import com.techhounds.imgcv.filters.Negative;
 import com.techhounds.imgcv.filters.Sequence;
 import com.techhounds.imgcv.widgets.ColorRangeEditor;
@@ -70,6 +72,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.highgui.Highgui;
+import org.opencv.imgproc.Imgproc;
 
 /**
  * A base class that allows you to quickly build a test tool for the purpose of
@@ -1016,15 +1019,41 @@ public class FilterToolGuiOpenCv {
 
 		JMenu erode = new JMenu("Erode");
 		JMenu dilate = new JMenu("Dilate");
+		JMenu morph = new JMenu("Morph");
 		addMenuItem(editName, dilate);
 		addMenuItem(editName, erode);
+		addMenuItem(editName, morph);
+		int[] morphModes = { Imgproc.MORPH_OPEN, Imgproc.MORPH_CLOSE, Imgproc.MORPH_BLACKHAT, Imgproc.MORPH_TOPHAT, Imgproc.MORPH_GRADIENT };
+		JMenu[] morphMenus = { new JMenu("Open"), new JMenu("Close"), new JMenu("Black Hat"), new JMenu("Top Hat"), new JMenu("Gradient") };
+		for (int i = 0; i < morphMenus.length; i++) {
+			morph.add(morphMenus[i]);
+		}
+		
 		for (int i = 2; i <= 10; i++) {
 			String label = "" + i + "x" + i;
 			erode.add(createImageProcessingAction(label, new Erode(i)));
 			dilate.add(createImageProcessingAction(label, new Dilate(i)));
+			
+			int msize = i * 2 + 1;
+			label = "" + msize + "x" + msize;
+			for (int j = 0; j < morphModes.length; j++) {
+				int mode = morphModes[j];
+				JMenu m = morphMenus[j];
+				m.add(createImageProcessingAction(label, new Morphology(mode, Imgproc.MORPH_RECT, i)));
+			}
 		}
+		
+		JMenu untilt = new JMenu("Untilt");
+		addMenuItem(editName, untilt);
+		untilt.add(createImageProcessingAction("-0.25", new CameraUntilt(-0.25)));
+		untilt.add(createImageProcessingAction("-0.10", new CameraUntilt(-0.10)));
+		untilt.add(createImageProcessingAction("-0.05", new CameraUntilt(-0.05)));
+		untilt.add(createImageProcessingAction("+0.05", new CameraUntilt(0.05)));
+		untilt.add(createImageProcessingAction("+0.10", new CameraUntilt(0.10)));
+		untilt.add(createImageProcessingAction("+0.25", new CameraUntilt(0.25)));
 
-		addMenuItem(editName, createImageProcessingMenuItem("Contours", new Contours()));
+
+		addMenuItem(overlayName, createImageProcessingMenuItem("Contours", new Contours()));
 
 		addMenuItem(overlayName, createImageProcessingMenuItem("Cross Hair", new CrossHair()));
 

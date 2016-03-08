@@ -14,9 +14,8 @@ import org.opencv.imgproc.Imgproc;
 import com.techhounds.imgcv.PolygonCv;
 import com.techhounds.imgcv.filters.ColorRange;
 import com.techhounds.imgcv.filters.ColorSpace;
-import com.techhounds.imgcv.filters.Dilate;
-import com.techhounds.imgcv.filters.Erode;
 import com.techhounds.imgcv.filters.MatFilter;
+import com.techhounds.imgcv.filters.Morphology;
 import com.techhounds.imgcv.filters.Sequence;
 import com.techhounds.imgcv.utils.*;
 
@@ -50,8 +49,9 @@ public class FindPinkRectangleFilter implements MatFilter {
 	private ColorRange _ColorRange;
 
 	// private final MatFilter _Dilate1 = new Dilate(6);
-	private final MatFilter _Erode;
-	private final MatFilter _Dilate2;
+	//private final MatFilter _Erode;
+	//private final MatFilter _Dilate2;
+	private MatFilter _Morph;
 
 	// Set to true for more diagnostic output to console
 	private boolean _Debug;
@@ -66,12 +66,13 @@ public class FindPinkRectangleFilter implements MatFilter {
 	 */
 	public FindPinkRectangleFilter() {
 		_Found = false;
-		_Debug = false;
+		_Debug = true;
 		_Id = "pink";
 
 		_ColorSpace = ColorSpace.createBGRtoHSV();
-		_Erode = new Erode(6);
-		_Dilate2 = new Dilate(8);
+		//_Erode = new Erode(6);
+		//_Dilate2 = new Dilate(8);
+		_Morph = new Morphology(4);
 
 		int[] colorFilterMin = { 140, 80, 100 };
 		int[] colorFilterMax = { 200, 240, 255 };
@@ -103,6 +104,9 @@ public class FindPinkRectangleFilter implements MatFilter {
 		int[] maxVals = { 130, 210, 255 };
 		filter._ColorRange = new ColorRange(minVals, maxVals, true);
 		filter.loadColorRanges(filter._Id);
+
+		Morphology morph = new Morphology(3);
+		filter._Morph = morph;
 
 		filter._Filter = filter.createSequence();
 
@@ -158,8 +162,9 @@ public class FindPinkRectangleFilter implements MatFilter {
 		s.addFilter(_ColorSpace);
 		s.addFilter(_ColorRange);
 		// s.addFilter(_Dilate1);
-		s.addFilter(_Erode);
-		s.addFilter(_Dilate2);
+		//s.addFilter(_Erode);
+		//s.addFilter(_Dilate2);
+		s.addFilter(_Morph);
 		return s;
 	}
 
@@ -183,8 +188,11 @@ public class FindPinkRectangleFilter implements MatFilter {
 		int imgMid = hImg / 2;
 		Mat output = srcImage;
 
-		Mat d1 = srcImage.clone();
-		_Filter.process(d1);
+		Mat copy = srcImage.clone();
+		Mat d1 = _Filter.process(copy);
+		
+		// Uncomment to use BW image as output to draw on
+		//Imgproc.cvtColor(d1, output, Imgproc.COLOR_GRAY2BGR);
 
 		List<MatOfPoint> contours = new ArrayList<>();
 		List<PolygonCv> polygons = new ArrayList<>();
@@ -198,7 +206,7 @@ public class FindPinkRectangleFilter implements MatFilter {
 			MatOfPoint contour = contours.get(i);
 			// Hmmm, can we do a quick check on contour height/width before
 			// trying to extract polygon?
-			PolygonCv poly = PolygonCv.fromContour(contour, 8.0);
+			PolygonCv poly = PolygonCv.fromContour(contour, 6.0);
 			int pts = poly.size();
 			float h = poly.getHeight();
 			float w = poly.getWidth();
@@ -209,11 +217,11 @@ public class FindPinkRectangleFilter implements MatFilter {
 			if ((w > 10) && (h > 10) && (hw > 50) && (hw < 300) && (pts >= 4) && (pts <= 16)) {
 				Point leftBot = new Point();
 				Point leftTop = new Point();
-				poly.findLeftEdge(leftBot, leftTop, 0.75);
+				poly.findLeftEdge(leftBot, leftTop, 0.15);
 
 				Point rightBot = new Point();
 				Point rightTop = new Point();
-				poly.findRightEdge(rightBot, rightTop, 0.75);
+				poly.findRightEdge(rightBot, rightTop, 0.15);
 
 				double leftHeight = Math.abs(leftTop.y - leftBot.y);
 				double rightHeight = Math.abs(rightTop.y - rightBot.y);
@@ -249,19 +257,19 @@ public class FindPinkRectangleFilter implements MatFilter {
 			PolygonCv p = pArr[i];
 			float w = p.getWidth();
 			if (w == maxWidth) {
-				p.draw(output, ScalarColors.GREEN, 3);
+				p.draw(output, ScalarColors.GREEN, 1);
 				p.drawInfo(output, ScalarColors.GREEN);
 
 				_Finder.setImageSize(wImg, hImg);
 				if (_Finder.computeSolution(p)) {
-					if (_Debug) {
-						System.out.println(_Finder);
-					}
 					_Finder.drawVerticalLines(output);
 					_Finder.drawCrossHair(output);
 					_Finder.drawCamInfo(output);
 					_Finder.drawRobotInfo(output);
 					_Finder.drawWallInfo(output);
+				}
+				if (_Debug) {
+					System.out.println(_Finder);
 				}
 			} else {
 				p.draw(output, ScalarColors.BLUE, 1);
