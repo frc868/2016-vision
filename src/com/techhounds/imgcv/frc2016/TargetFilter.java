@@ -72,6 +72,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 	private final PolygonRender   _BestTarget   = new PolygonRender(ScalarColors.RED,  Render.OUTLINE_THICKNESS);
 	private final RectangleRender _Reticle      = new RectangleRender(ScalarColors.RED, -1); //-1 is filled
 	private final RectangleRender _BoundingBox  = new RectangleRender(ScalarColors.GREEN, Render.BOX_THICKNESS);
+	private final RectangleRender _RectReticle  = new RectangleRender(ScalarColors.BLUE, Render.BOX_THICKNESS);
 	
 	//should be set by constructor based on stage value (via switch)
 		
@@ -122,6 +123,16 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
         		_BoundingBox.setSize(bestTarget.getHeight() / 2, bestTarget.getWidth() / 2);
         		_BoundingBox.process(workingImage);
         	}
+        	
+        	if(stage == 5) {
+        		_RectReticle.setCenter(Camera.RESOLUTION_X_PIXELS/2, Camera.RESOLUTION_Y_PIXELS/2);
+        		_RectReticle.setSize(50, 50);
+        		_RectReticle.process(workingImage);
+        		
+        		_Reticle.setCenter(bestTarget.getCenterX(), bestTarget.getMaxY());
+        		_Reticle.setSize(Render.RETICLE_SIZE, Render.RETICLE_SIZE);
+        		_Reticle.process(workingImage);
+        	}
         }
 		
 		_CrossHair.process(workingImage);
@@ -129,11 +140,12 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		return workingImage;
 	}
 	
+	@SuppressWarnings("unused")
 	private void targetAnalysis(PolygonCv foundTarget) { //tells the robo info about the target
         double offsetXDegrees, offsetXDegreesIdeal,
         	targetDistanceInches, baseDistanceInches, 
-        	cameraAngleElevationRadians, targetAngleRadians,
-        	targetAngleFactor; 
+        	targetAngleRadians, targetAngleFactor,
+        	cameraAngleElevationRadians; 
             	
         //calculates how far off center the target is from the center of the camera
         //offsetXDegrees = Math.atan((400 - foundTarget.getCenterX()) * Math.tan(Camera.FOV_X_RADIANS/2) / (Camera.RESOLUTION_X_PIXELS/2));

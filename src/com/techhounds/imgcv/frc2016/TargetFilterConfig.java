@@ -24,7 +24,7 @@ public interface TargetFilterConfig {
 	
 	interface Camera {
 		public final double OFFSET_Y_INCHES     = 12; //amount above ground
-		public final double OFFSET_X_INCHES     = 0;  //negative is to left
+		public final double OFFSET_X_INCHES     = 9;  //negative is to left
 		public final double FOV_X_DEGREES       = 67; 
 		public final double FOV_Y_DEGREES       = 51;
 		public final double FOV_X_RADIANS       = Math.toRadians(FOV_X_DEGREES);

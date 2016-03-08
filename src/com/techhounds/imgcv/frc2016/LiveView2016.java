@@ -71,6 +71,7 @@ public final class LiveView2016 extends LiveViewGui {
     	addFilterCategory("2016", "Color Filter",    new TargetFilter(1));
     	addFilterCategory("2016", "Classic Filter",  new TargetFilter(3));
     	addFilterCategory("2016", "Bounding Filter", new TargetFilter(4));
+    	addFilterCategory("2016", "Cube Reticle",    new TargetFilter(5));
     	
     	addMenuItem("File", new JMenuItem(createLoadConfigAction()));
     }
