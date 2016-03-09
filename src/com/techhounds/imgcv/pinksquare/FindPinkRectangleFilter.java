@@ -83,7 +83,7 @@ public class FindPinkRectangleFilter implements MatFilter {
 	 */
 	public FindPinkRectangleFilter() {
 		_Found = false;
-		_Debug = true;
+		_Debug = false;
 		_Id = "pink";
 		_DrawTool = new DrawTool();
 
