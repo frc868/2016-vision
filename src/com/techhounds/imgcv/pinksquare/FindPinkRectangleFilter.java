@@ -9,6 +9,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Point3;
+import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 import com.techhounds.imgcv.PolygonCv;
@@ -49,8 +50,8 @@ public class FindPinkRectangleFilter implements MatFilter {
 	private ColorRange _ColorRange;
 
 	// private final MatFilter _Dilate1 = new Dilate(6);
-	//private final MatFilter _Erode;
-	//private final MatFilter _Dilate2;
+	// private final MatFilter _Erode;
+	// private final MatFilter _Dilate2;
 	private MatFilter _Morph;
 
 	// Set to true for more diagnostic output to console
@@ -58,6 +59,22 @@ public class FindPinkRectangleFilter implements MatFilter {
 
 	// ID of how filter is being used as this filter is fairly adjustable
 	private String _Id;
+
+	// Will be non-null if we should draw a rectangular targeting outline
+	// where we want the target to appear
+	private Point goodMinPoint;
+	private Point goodMaxPoint;
+	private Point goodTopMid;
+	private Point goodBotMid;
+
+	// Used for drawing markers and indicators on image
+	private DrawTool _DrawTool;
+
+
+	// Used to draw "target region" based on whether target is in "good" area of screen
+	private static final Scalar IN_REGION_COLOR = new Scalar(100, 255, 100);
+	private static final Scalar OUT_REGION_COLOR = new Scalar(150, 100, 50);
+	private static final Scalar CENTER_REGION_COLOR = new Scalar(100, 100, 100);
 
 	/**
 	 * Constructs a new instance of the filter for a pink rectangle that is 22
@@ -68,10 +85,11 @@ public class FindPinkRectangleFilter implements MatFilter {
 		_Found = false;
 		_Debug = true;
 		_Id = "pink";
+		_DrawTool = new DrawTool();
 
 		_ColorSpace = ColorSpace.createBGRtoHSV();
-		//_Erode = new Erode(6);
-		//_Dilate2 = new Dilate(8);
+		// _Erode = new Erode(6);
+		// _Dilate2 = new Dilate(8);
 		_Morph = new Morphology(4);
 
 		int[] colorFilterMin = { 140, 80, 100 };
@@ -116,6 +134,8 @@ public class FindPinkRectangleFilter implements MatFilter {
 		// Let vertical lines be off as much as 10% of width
 		finder.setVerticalLineTolerance(0.1);
 		filter._Finder = finder;
+		
+		filter.setGoodRegion(new Point(280, 40), new Point(435, 500));
 
 		return filter;
 	}
@@ -162,8 +182,8 @@ public class FindPinkRectangleFilter implements MatFilter {
 		s.addFilter(_ColorSpace);
 		s.addFilter(_ColorRange);
 		// s.addFilter(_Dilate1);
-		//s.addFilter(_Erode);
-		//s.addFilter(_Dilate2);
+		// s.addFilter(_Erode);
+		// s.addFilter(_Dilate2);
 		s.addFilter(_Morph);
 		return s;
 	}
@@ -190,9 +210,9 @@ public class FindPinkRectangleFilter implements MatFilter {
 
 		Mat copy = srcImage.clone();
 		Mat d1 = _Filter.process(copy);
-		
+
 		// Uncomment to use BW image as output to draw on
-		//Imgproc.cvtColor(d1, output, Imgproc.COLOR_GRAY2BGR);
+		// Imgproc.cvtColor(d1, output, Imgproc.COLOR_GRAY2BGR);
 
 		List<MatOfPoint> contours = new ArrayList<>();
 		List<PolygonCv> polygons = new ArrayList<>();
@@ -253,20 +273,18 @@ public class FindPinkRectangleFilter implements MatFilter {
 		polygons.toArray(pArr);
 
 		// Not searching for pairs, just add contours for all of the polygons
+		PolygonCv good = null;
+
 		for (int i = 0; i < pCnt; i++) {
 			PolygonCv p = pArr[i];
 			float w = p.getWidth();
-			if (w == maxWidth) {
+			if ((w == maxWidth) && (good == null)) {
 				p.draw(output, ScalarColors.GREEN, 1);
 				p.drawInfo(output, ScalarColors.GREEN);
 
 				_Finder.setImageSize(wImg, hImg);
 				if (_Finder.computeSolution(p)) {
-					_Finder.drawVerticalLines(output);
-					_Finder.drawCrossHair(output);
-					_Finder.drawCamInfo(output);
-					_Finder.drawRobotInfo(output);
-					_Finder.drawWallInfo(output);
+					good = p;
 				}
 				if (_Debug) {
 					System.out.println(_Finder);
@@ -276,7 +294,75 @@ public class FindPinkRectangleFilter implements MatFilter {
 			}
 		}
 
+		// Draw target region (if enabled)
+		if (isTargetRegionEnabled()) {
+			_DrawTool.setImage(output);
+			_DrawTool.setThickness(3);
+			_DrawTool.setColor(inGoodRegion(good) ? IN_REGION_COLOR : OUT_REGION_COLOR);
+			_DrawTool.drawRectangle(goodMinPoint, goodMaxPoint);
+			_DrawTool.setThickness(1);
+			_DrawTool.setColor(CENTER_REGION_COLOR);
+			_DrawTool.drawLine(goodTopMid, goodBotMid);
+		}
+
+		// Draw details about target (if found)
+		if (good != null) {
+			_Finder.drawVerticalLines(output);
+			_Finder.drawCrossHair(output);
+			_Finder.drawCamInfo(output);
+			_Finder.drawRobotInfo(output);
+			_Finder.drawWallInfo(output);
+		}
+
 		return output;
+	}
+
+	/**
+	 * Defines a region on the image where the target should be if it is in a
+	 * "GOOD" position.
+	 * 
+	 * @param pt1
+	 *            Corner point of good region.
+	 * @param pt2
+	 *            Opposite corner point.
+	 */
+	public void setGoodRegion(Point pt1, Point pt2) {
+		double x1 = pt1.x;
+		double x2 = pt2.x;
+		double y1 = pt1.y;
+		double y2 = pt2.y;
+		double xMid = (x1 + x2) / 2;
+		goodMinPoint = new Point(Math.min(x1, x2), Math.min(y1, y2));
+		goodMaxPoint = new Point(Math.max(x1, x2), Math.max(y1, y2));
+		goodTopMid = new Point(xMid, goodMinPoint.y);
+		goodBotMid = new Point(xMid, goodMaxPoint.y);		
+	}
+	
+	/**
+	 * Indicates whether the "good region" has been defined.
+	 * 
+	 * @return true if a "good region" has been set on the filter.
+	 */
+	public boolean isTargetRegionEnabled() {
+		return (goodMaxPoint != null) && (goodMinPoint != null);
+	}
+
+	/**
+	 * Determine whether or not polygon found falls within the "good region" (if
+	 * defined).
+	 * 
+	 * @param poly
+	 *            The polygon to check (if you pass null we return false).
+	 * @return true if "good region" defined and polygon is within it, otherwise
+	 *         false.
+	 */
+	private boolean inGoodRegion(PolygonCv poly) {
+		if (poly == null || !isTargetRegionEnabled()) {
+			return false;
+		}
+
+		return (poly.getMinY() >= goodMinPoint.y) && (poly.getMaxY() <= goodMaxPoint.y)
+				&& (poly.getMinX() >= goodMinPoint.x) && (poly.getMaxX() <= goodMaxPoint.x);
 	}
 
 	/**

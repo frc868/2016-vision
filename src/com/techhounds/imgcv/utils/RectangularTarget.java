@@ -484,12 +484,13 @@ public class RectangularTarget {
 	 */
 	public void drawVerticalLines(Mat output) {
 		if (hasSolution()) {
+			drawTool.setImage(output);
 			drawTool.setColor(vertColors);
 			drawTool.setThickness(vertThickness);
 
-			drawTool.drawLine(output, leftBot, leftTop);
-			drawTool.drawLine(output, rightBot, rightTop);
-			drawTool.drawLine(output, midBot, midTop);
+			drawTool.drawLine(leftBot, leftTop);
+			drawTool.drawLine(rightBot, rightTop);
+			drawTool.drawLine(midBot, midTop);
 		}
 
 	}
@@ -503,18 +504,19 @@ public class RectangularTarget {
 	 */
 	public void drawCrossHair(Mat output) {
 		if (hasSolution()) {
+			drawTool.setImage(output);
 			drawTool.setColor(crossHairColor);
 			drawTool.setThickness(crossHairThickness);
 			double cx = (midBot.x + midTop.x) / 2;
 			double cy = (midBot.y + midTop.y) / 2;
 			Point p0 = new Point(cx - crossHairSize, cy);
 			Point p1 = new Point(cx + crossHairSize, cy);
-			drawTool.drawLine(output, p0, p1);
+			drawTool.drawLine(p0, p1);
 
 			p0.x = p1.x = cx;
 			p0.y = cy - crossHairSize;
 			p1.y = cy + crossHairSize;
-			drawTool.drawLine(output, p0, p1);
+			drawTool.drawLine(p0, p1);
 		}
 	}
 
@@ -543,7 +545,8 @@ public class RectangularTarget {
 			y = (int) (imageHeightPx - lineHeight - y);
 		}
 
-		drawTool.drawTextTopLeft(img, text, 0, y);
+		drawTool.setImage(img);
+		drawTool.drawTextTopLeft(text, 0, y);
 	}
 
 	/**
