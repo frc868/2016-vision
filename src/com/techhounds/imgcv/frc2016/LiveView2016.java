@@ -49,8 +49,10 @@ import edu.wpi.first.wpilibj.networktables.NetworkTable;
  * @author pkb
  */
 public final class LiveView2016 extends LiveViewGui {
-	
-    TargetFilter filter = new TargetFilter(4); //default filter to be set
+	// Network Table key used to signal that the USB camera is active
+    private static final String USB_CAMERA_ENABLED_KEY = "usbCameraEnabled";
+
+	TargetFilter filter = new TargetFilter(4); //default filter to be set
     
     protected JLabel _CameraFps = new JLabel("-");
     protected JLabel _FilterFps = new JLabel("-");
@@ -150,18 +152,28 @@ public final class LiveView2016 extends LiveViewGui {
         NetworkTable.setIPAddress("10.8.68.2");
         NetworkTable.initialize();
         netTable = NetworkTable.getTable("SmartDashboard");
-        while(!netTable.getBoolean("cameraEnable", true)) { //hangs when NOT cameraEnable
-        	frame.stopVideoFeed();
+
+        frame.filter.setNetworkTable(netTable);        
+        frame.main();
+        
+        boolean lastState = false;
+        while(true) { //hangs when NOT cameraEnable
+        	boolean enable = !netTable.getBoolean(USB_CAMERA_ENABLED_KEY, false);
+        	if (enable != lastState) {
+        		lastState = enable;
+        		if (enable) {
+            		frame.startVideoFeed();
+        		} else {
+                	frame.stopVideoFeed();       			
+        		}
+        		System.out.println("Camera feed toggled to: " + enable);
+        	}
+
         	try{
         		Thread.sleep(10);
         	} catch (Exception e) {	
         	}
-        	if(netTable.getBoolean("cameraEnable", false)) {
-        		frame.startVideoFeed();
-        	} //TODO fix disable-disconnect-enable hang
         }
-        frame.filter.setNetworkTable(netTable);        
-        frame.main();
         
         //frame.startVideoFeed(); //starts from incorrect source
     }
