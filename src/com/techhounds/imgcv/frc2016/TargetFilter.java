@@ -14,7 +14,6 @@ import com.techhounds.imgcv.PolygonCv;
 import com.techhounds.imgcv.filters.BlackWhite;
 import com.techhounds.imgcv.filters.ColorRange;
 import com.techhounds.imgcv.filters.ColorSpace;
-import com.techhounds.imgcv.filters.CrossHair;
 import com.techhounds.imgcv.filters.Dilate;
 import com.techhounds.imgcv.filters.Erode;
 import com.techhounds.imgcv.filters.GrayScale;
@@ -228,7 +227,10 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     		networkTable.putNumber("OffCenterDegreesX", offsetXDegrees);
     	    	
     	//writes calculated data to network tables
-    	networkTable.putNumber("DistanceToBase",  baseDistanceInches);
+    	
+    	baseDistanceInches = ((targetDistanceInches / 10) * 15) + 50; //approximation based on distance value table
+    	
+    	networkTable.putNumber("DistanceToBase",  baseDistanceInches);    	
     	networkTable.putNumber("DistanceToTarget", targetDistanceInches);  	
     }
 
