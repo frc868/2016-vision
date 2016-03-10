@@ -33,23 +33,30 @@ public class DrawTool {
 	 */
 	private int[] baseline;
 
+	/** The image we draw on. */
+	private Mat img;
+
 	/**
 	 * Constructs a new instance with the default settings (green lines, black
 	 * fill, 1 pixel thick lines and some default font).
 	 */
 	public DrawTool() {
-		this(ScalarColors.GREEN, 1);
+		this(null, ScalarColors.GREEN, 1);
 	}
 
 	/**
 	 * Construct a new instance with specific color and line thickness values.
 	 * 
+	 * @param img
+	 *            The image to draw on (or pass null now and use
+	 *            {@link #setImage(Mat)} later).
 	 * @param color
 	 *            Foreground (line) color to use (should not be null).
 	 * @param thickness
 	 *            How thick the lines should be (in pixels).
 	 */
-	public DrawTool(Scalar color, int thickness) {
+	public DrawTool(Mat img, Scalar color, int thickness) {
+		this.img = img;
 		this.color = color;
 		this.thickness = thickness;
 		this.bg = null;
@@ -59,17 +66,34 @@ public class DrawTool {
 	}
 
 	/**
+	 * Set the image to draw on.
+	 * 
+	 * @param img
+	 *            The matrix to use for drawing operations.
+	 */
+	public void setImage(Mat img) {
+		this.img = img;
+	}
+
+	/**
+	 * Returns a reference to the image we are currently drawing on.
+	 * 
+	 * @return The matrix used for drawing operations.
+	 */
+	public Mat getImage() {
+		return img;
+	}
+
+	/**
 	 * Draws a line between two points using the current color and line
 	 * thickness.
 	 * 
-	 * @param img
-	 *            The image to draw on.
 	 * @param p0
 	 *            The starting point of the line.
 	 * @param p1
 	 *            The ending point of the line.
 	 */
-	public void drawLine(Mat img, Point p0, Point p1) {
+	public void drawLine(Point p0, Point p1) {
 		Core.line(img, p0, p1, color, thickness);
 	}
 
@@ -143,8 +167,7 @@ public class DrawTool {
 	 * @return A size in pixels required to draw the text.
 	 */
 	public Size getTextSize(String text) {
-		Size size = Core.getTextSize(text, fontFace, fontScale, thickness,
-				baseline);
+		Size size = Core.getTextSize(text, fontFace, fontScale, thickness, baseline);
 		return size;
 	}
 
@@ -156,8 +179,6 @@ public class DrawTool {
 	 * rectangle containing the text will be filled prior to drawing the text.
 	 * </p>
 	 * 
-	 * @param img
-	 *            The image to draw the text on.
 	 * @param text
 	 *            The text to draw.
 	 * @param x
@@ -165,16 +186,42 @@ public class DrawTool {
 	 * @param y
 	 *            The top anchor point for placing the text.
 	 */
-	public void drawTextTopLeft(Mat img, String text, int x, int y) {
+	public void drawTextTopLeft(String text, int x, int y) {
 		Size size = getTextSize(text);
 		Point botLeft = new Point(x, y + size.height);
-		Point topRight = new Point(x + size.width, y);
 
 		if (bg != null) {
-			Core.rectangle(img, botLeft, topRight, bg, Core.FILLED);
+			Point topRight = new Point(x + size.width, y);
+			fillRectangle(botLeft, topRight);
 		}
 
 		Core.putText(img, text, botLeft, fontFace, fontScale, color);
+	}
+
+	/**
+	 * Draws the outline of a rectangle having defined by two points using the
+	 * current color and thickness.
+	 * 
+	 * @param p1
+	 *            First corner point.
+	 * @param p2
+	 *            Opposite corner point.
+	 */
+	public void drawRectangle(Point p1, Point p2) {
+		Core.rectangle(img, p1, p2, color, thickness);
+	}
+
+	/**
+	 * Fills a rectangular area defined by two points using the current
+	 * background color.
+	 * 
+	 * @param p1
+	 *            First corner point.
+	 * @param p2
+	 *            Opposite corner point.
+	 */
+	public void fillRectangle(Point p1, Point p2) {
+		Core.rectangle(img, p1, p2, bg, Core.FILLED);
 	}
 
 }

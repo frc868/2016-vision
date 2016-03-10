@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
 
 import com.techhounds.imgcv.PolygonCv;
 import com.techhounds.imgcv.filters.BlackWhite;
@@ -54,7 +56,9 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		targetSidesIdeal  = 8;    targetSidesWeight  = 100;
 		targetRatioIdeal  = 1.5;  targetRatioWeight  = 1000;
 		targetAreaIdeal   = 5000; targetAreaWeight   = 0.03;
-	
+		double x = (topLeft.x + bottomRight.x)/2;
+		lineTop = new Point(x , 0);
+		lineBottom = new Point(x , 599);
 	}
 	
 	private int stage;
@@ -67,12 +71,19 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 	private final MatFilter _Dilate       = new Dilate(Imgproc.DILATE_FACTOR);
 	private final MatFilter _GrayScale    = new GrayScale();
 	private final MatFilter _BlackWhite   = new BlackWhite(Imgproc.BLACKWHITE_THRESH, 255, true);
-	private final MatFilter _CrossHair    = new CrossHair();
+	//private final MatFilter _CrossHair    = new CrossHair();
 	private final PolyArrayRender _OtherTargets = new PolyArrayRender(ScalarColors.BLUE, Render.OUTLINE_THICKNESS);
 	private final PolygonRender   _BestTarget   = new PolygonRender(ScalarColors.RED,  Render.OUTLINE_THICKNESS);
 	private final RectangleRender _Reticle      = new RectangleRender(ScalarColors.RED, -1); //-1 is filled
 	private final RectangleRender _BoundingBox  = new RectangleRender(ScalarColors.GREEN, Render.BOX_THICKNESS);
 	private final RectangleRender _RectReticle  = new RectangleRender(ScalarColors.BLUE, Render.BOX_THICKNESS);
+
+	private Point topLeft = new Point(375, 50);
+	private Point bottomRight = new Point(525, 400);
+	private Scalar targetRectangleColor = new Scalar(18, 120, 255);
+	private Point lineTop;
+	private Point lineBottom;
+	private Scalar targetLineColor = new Scalar(20, 133, 255);
 	
 	//should be set by constructor based on stage value (via switch)
 		
@@ -95,6 +106,8 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		
 		targets = findTargets(workingImage);
 		workingImage = srcImage.clone();
+		
+		addTargetingRectangle(workingImage);
 		
 		if(targets.size() > 0) {
         	bestTarget = findBestTarget(targets);
@@ -135,11 +148,24 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
         	}
         }
 		
-		_CrossHair.process(workingImage);
+		//_CrossHair.process(workingImage);
         		
 		return workingImage;
 	}
 	
+	private void addTargetingRectangle(Mat workingImage) {
+		DrawTool draw = new DrawTool();
+		draw.setImage(workingImage);
+		draw.setThickness(12);
+		draw.setColor(targetRectangleColor);
+		draw.drawRectangle(topLeft, bottomRight);
+		draw.setThickness(1);
+		draw.setColor(targetLineColor);
+		draw.drawLine(lineTop, lineBottom);
+		// TODO Auto-generated method stub
+		
+	}
+
 	@SuppressWarnings("unused")
 	private void targetAnalysis(PolygonCv foundTarget) { //tells the robo info about the target
         double offsetXDegrees, offsetXDegreesIdeal,
