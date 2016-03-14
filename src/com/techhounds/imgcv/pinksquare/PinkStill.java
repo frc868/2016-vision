@@ -34,6 +34,7 @@ public final class PinkStill extends FilterToolGuiOpenCv {
 		super("Image Filter Tool");
 		findPink = new FindPinkRectangleFilter();
 		frc2016 = FindPinkRectangleFilter.createFor2016Target();
+		frc2016.setDebug(true);
 	}
 
 	/**

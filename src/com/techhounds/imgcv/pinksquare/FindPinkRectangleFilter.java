@@ -90,7 +90,7 @@ public class FindPinkRectangleFilter implements MatFilter {
 		_ColorSpace = ColorSpace.createBGRtoHSV();
 		// _Erode = new Erode(6);
 		// _Dilate2 = new Dilate(8);
-		_Morph = new Morphology(4);
+		_Morph = new Morphology(2);
 
 		int[] colorFilterMin = { 140, 80, 100 };
 		int[] colorFilterMax = { 200, 240, 255 };
@@ -101,7 +101,7 @@ public class FindPinkRectangleFilter implements MatFilter {
 		// _Finder = new RectangularTarget(22, 20.125, 640, 480, 44.136 /* 56.75
 		// */);
 		_Finder = new RectangularTarget(22, 20.125, 640, 480, 31.638 /* 56.75 */);
-		_Finder.setCameraLocation(new Point3(-9.0, 12, 11));
+		_Finder.setCameraLocation(new Point3(-8.5, 12, 11));
 		// Let vertical lines be off as much as 10% of width
 		_Finder.setVerticalLineTolerance(0.1);
 		loadColorRanges(_Id);
@@ -128,16 +128,30 @@ public class FindPinkRectangleFilter implements MatFilter {
 
 		filter._Filter = filter.createSequence();
 
-		RectangularTarget finder = new RectangularTarget(20, 14, 800, 600,
-				51 /* 56.75 */);
-		finder.setCameraLocation(new Point3(-9.0, 12, 12));
+		// Axis camera has 
+		//final double FOV_AXIS_M1018_X_DEGREES       = 67; 
+		final double FOV_AXIS_M1018_Y_DEGREES       = 51;
+		double projHt = 14 * Math.cos(Math.toRadians(40));
+		RectangularTarget finder = new RectangularTarget(20, projHt, 800, 600,
+				FOV_AXIS_M1018_Y_DEGREES /* 56.75 */);
+		// Camera offset on robot
+		finder.setCameraLocation(new Point3(-9.0, 12.5, 12));
 		// Let vertical lines be off as much as 10% of width
 		finder.setVerticalLineTolerance(0.1);
 		filter._Finder = finder;
 		
-		filter.setGoodRegion(new Point(280, 40), new Point(435, 500));
+		filter.setGoodRegion(new Point(375, 50), new Point(525, 400));
 
 		return filter;
+	}
+	
+	/**
+	 * Enable debug (diagnostic output) to system.out.
+	 * 
+	 * @param enable Pass true to enable, false to disable.
+	 */
+	public void setDebug(boolean enable) {
+		_Debug = enable;
 	}
 
 	/**
