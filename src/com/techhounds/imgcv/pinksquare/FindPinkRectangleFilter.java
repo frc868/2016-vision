@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
@@ -225,6 +226,9 @@ public class FindPinkRectangleFilter implements MatFilter {
 		Mat copy = srcImage.clone();
 		Mat d1 = _Filter.process(copy);
 
+		// Keep a clean copy of binary 1/0 matrix as find contours does the other stuff
+		Mat binary = d1.clone();
+
 		// Uncomment to use BW image as output to draw on
 		// Imgproc.cvtColor(d1, output, Imgproc.COLOR_GRAY2BGR);
 
@@ -269,6 +273,43 @@ public class FindPinkRectangleFilter implements MatFilter {
 					if (_Debug) {
 						System.out.println("Accepted: sides: " + pts + " (" + poly.getWidth() + ", " + poly.getHeight()
 								+ ")  H/W: " + hw + "  distFromTop: " + distFromTop + "  distFromMid: " + distFromMid);
+						
+						//
+						// Example of checking how many pixels are "white" in a subregion
+						// of the polygon's bounding box
+						//
+						
+						// Figure out bounds in image of the portion of the polygon's bounding
+						// box that we want to check
+						int begRow = (int) (poly.getMinY() + (0.0 * h));
+						int endRow = (int) (poly.getMaxY() - (0.5 * h));
+						int begCol = (int) (poly.getMinX() + (0.25 * w));
+						int endCol = (int) (poly.getMaxX() - (0.25 * w));
+						
+						// NOTE: We want to grab the pixels from a "clean" binary image
+						// (state of binary image before looking for contours/polygons
+						// as they corrupt the data during processing)
+						Mat bboxPixels = binary.submat(begRow, endRow, begCol, endCol);
+						
+						// Compute total number of white pixels possible
+						int hBbox = bboxPixels.rows();
+						int wBbox = bboxPixels.cols();
+						double totalPixels = wBbox * hBbox;
+						
+						// See how many white pixels we actually have
+						Scalar sum = Core.sumElems(bboxPixels);
+						// White pixels have value of 255 in binary images (0xff) 
+						// Black pixels have a value of 0 (0x00)
+						double whitePixels = sum.val[0] / 255;
+						int percentWhite = (int) Math.round(100 * whitePixels / totalPixels);
+
+						// Sanity check that all values are 0 or 1
+						boolean allInRange = Core.checkRange(bboxPixels, true, 0, 2);
+						System.out.println("Cutout Check: (" + wBbox + "x" + hBbox
+								+ ")  total: " + totalPixels
+								+ "  white: " + whitePixels + " ("
+								+ percentWhite + "%)  binary: " + allInRange);
+						
 					}
 				} else {
 					if (_Debug) {

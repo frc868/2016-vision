@@ -33,6 +33,7 @@ public final class PinkStill extends FilterToolGuiOpenCv {
 	protected PinkStill() throws HeadlessException {
 		super("Image Filter Tool");
 		findPink = new FindPinkRectangleFilter();
+		findPink.setDebug(true);
 		frc2016 = FindPinkRectangleFilter.createFor2016Target();
 		frc2016.setDebug(true);
 	}
