@@ -81,7 +81,10 @@ public abstract class Filter {
         	   currentTarget.getWidth()               < targetWidthMax  &&
         	   currentTarget.size()                   < targetSidesMax  &&
         	   currentTarget.getBoundingAspectRatio() < targetRatioMax  &&
-        	   currentTarget.getBoundingArea()        < targetAreaMax) {
+        	   currentTarget.getBoundingArea()        < targetAreaMax   &&
+        	   
+        	   currentTarget.getMinY()             > 50 &&
+        	   currentTarget.getMaxY()             < 720) {
         		
         		targets.add(currentTarget); //if within range, add to list of potential targets
         	}

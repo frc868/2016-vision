@@ -33,6 +33,10 @@ import com.techhounds.imgcv.utils.*;
 
 public class TargetFilter extends Filter implements MatFilter, TargetFilterConfig {
 			
+	private FovCalculator fovCalc;
+
+	private double robotAngleOffset;
+
 	public TargetFilter(int input) {
 		
 		stage = input;
@@ -59,6 +63,10 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		double x = (topLeft.x + bottomRight.x)/2;
 		lineTop = new Point(x , 0);
 		lineBottom = new Point(x , 599);
+		
+		fovCalc = new FovCalculator(Camera.FOV_X_DEGREES, Camera.RESOLUTION_X_PIXELS, 100.0);
+		double centerLine = (topLeft.x + bottomRight.x) / 2 - (Camera.RESOLUTION_X_PIXELS / 2);
+		robotAngleOffset = fovCalc.pixelFromCenterToDeg(centerLine);
 	}
 	
 	private int stage;
@@ -202,14 +210,19 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     	/* gets 'ideal' target off center angle - because camera is to the side,
     	 * a perfectly zeroed robot will be slightly off from the camera
     	 */
-    	if(Camera.OFFSET_X_INCHES != 0) {
-    		offsetXDegreesIdeal = Math.toDegrees(Math.atan(targetDistanceInches / Camera.OFFSET_X_INCHES)); 
-    	} else { 								//will be positive if cameraCenterOffset is negative
-    		offsetXDegreesIdeal = 0;
-    	}
+    	//if(Camera.OFFSET_X_INCHES != 0) {
+    		//offsetXDegreesIdeal = Math.toDegrees(Math.atan(targetDistanceInches / Camera.OFFSET_X_INCHES)); 
+    	//} else { 								//will be positive if cameraCenterOffset is negative
+    	//	offsetXDegreesIdeal = 0;
+    	//}
     	
     	//compensates for Ideal angle offset
-    	offsetXDegrees = offsetXDegrees - offsetXDegreesIdeal; 
+    	//offsetXDegrees = offsetXDegrees - offsetXDegreesIdeal; 
+    	
+    	double camAngle = fovCalc.pixelFromCenterToDeg(foundTarget.getCenterX() - (Camera.RESOLUTION_X_PIXELS/2));
+    	double rot = -(robotAngleOffset - camAngle);
+    	
+    	offsetXDegrees = rot; //TODO temporary substitution
     	
     	//determines if angle values are reasonable
     	if(offsetXDegrees < (Camera.FOV_X_DEGREES/2) && offsetXDegrees > (-Camera.FOV_X_DEGREES/2)) 

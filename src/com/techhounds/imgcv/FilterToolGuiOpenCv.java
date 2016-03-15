@@ -566,7 +566,41 @@ public class FilterToolGuiOpenCv {
 	 *
 	 * @return A Action object you can then associate with a GUI control (like a
 	 *         JButton).
+	 *         
+	 *         
 	 */
+	
+	/*protected Action createSaveBulkImageAction() {
+		
+		final Action saveBulkImageAction() {
+			
+			public void actionPerformed(final ActionEvent e) {
+				int fileNumberID = 0;
+				String defaultPath = "C:\\BulkImages\\";
+				
+				while(true) {
+					frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+					try {
+						Mat image = Conversion.urlToMat(_Url);
+						if (image != null) {
+							_LastLoadedImage = image;
+							setImage(image);
+						}
+					} catch (IOException ex) {
+						String msg = "Failed to get image from: " + _Url;
+						JOptionPane.showMessageDialog(frame, msg, "Failed to Grab Image", JOptionPane.ERROR_MESSAGE);
+					} finally {
+						frame.setCursor(Cursor.getDefaultCursor());
+					}
+					
+					Highgui.imwrite(defaultPath + fileNumberID + ".png", _Image);
+					
+					Thread.sleep(5000);
+				}
+			}
+		}
+	}*/
+	
 	protected Action createOpenImageAction() {
 
 		// Action performed when "Open Image" button is pressed
