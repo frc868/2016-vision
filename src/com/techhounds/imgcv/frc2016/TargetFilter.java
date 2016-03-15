@@ -14,7 +14,6 @@ import com.techhounds.imgcv.PolygonCv;
 import com.techhounds.imgcv.filters.BlackWhite;
 import com.techhounds.imgcv.filters.ColorRange;
 import com.techhounds.imgcv.filters.ColorSpace;
-import com.techhounds.imgcv.filters.CrossHair;
 import com.techhounds.imgcv.filters.Dilate;
 import com.techhounds.imgcv.filters.Erode;
 import com.techhounds.imgcv.filters.GrayScale;
@@ -79,11 +78,12 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 	private final MatFilter _Dilate       = new Dilate(Imgproc.DILATE_FACTOR);
 	private final MatFilter _GrayScale    = new GrayScale();
 	private final MatFilter _BlackWhite   = new BlackWhite(Imgproc.BLACKWHITE_THRESH, 255, true);
-	private final MatFilter _CrossHair    = new CrossHair();
+	//private final MatFilter _CrossHair    = new CrossHair();
 	private final PolyArrayRender _OtherTargets = new PolyArrayRender(ScalarColors.BLUE, Render.OUTLINE_THICKNESS);
 	private final PolygonRender   _BestTarget   = new PolygonRender(ScalarColors.RED,  Render.OUTLINE_THICKNESS);
 	private final RectangleRender _Reticle      = new RectangleRender(ScalarColors.RED, -1); //-1 is filled
 	private final RectangleRender _BoundingBox  = new RectangleRender(ScalarColors.GREEN, Render.BOX_THICKNESS);
+	private final RectangleRender _RectReticle  = new RectangleRender(ScalarColors.BLUE, Render.BOX_THICKNESS);
 
 	private Point topLeft = new Point(375, 50);
 	private Point bottomRight = new Point(525, 400);
@@ -143,6 +143,16 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
         		_BoundingBox.setSize(bestTarget.getHeight() / 2, bestTarget.getWidth() / 2);
         		_BoundingBox.process(workingImage);
         	}
+        	
+        	if(stage == 5) {
+        		_RectReticle.setCenter(Camera.RESOLUTION_X_PIXELS/2, Camera.RESOLUTION_Y_PIXELS/2);
+        		_RectReticle.setSize(50, 50);
+        		_RectReticle.process(workingImage);
+        		
+        		_Reticle.setCenter(bestTarget.getCenterX(), bestTarget.getMaxY());
+        		_Reticle.setSize(Render.RETICLE_SIZE, Render.RETICLE_SIZE);
+        		_Reticle.process(workingImage);
+        	}
         }
 		
 		//_CrossHair.process(workingImage);
@@ -163,11 +173,12 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		
 	}
 
+	@SuppressWarnings("unused")
 	private void targetAnalysis(PolygonCv foundTarget) { //tells the robo info about the target
         double offsetXDegrees, offsetXDegreesIdeal,
         	targetDistanceInches, baseDistanceInches, 
-        	cameraAngleElevationRadians, targetAngleRadians,
-        	targetAngleFactor; 
+        	targetAngleRadians, targetAngleFactor,
+        	cameraAngleElevationRadians; 
             	
         //calculates how far off center the target is from the center of the camera
         //offsetXDegrees = Math.atan((400 - foundTarget.getCenterX()) * Math.tan(Camera.FOV_X_RADIANS/2) / (Camera.RESOLUTION_X_PIXELS/2));
@@ -229,7 +240,10 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     		networkTable.putNumber("OffCenterDegreesX", offsetXDegrees);
     	    	
     	//writes calculated data to network tables
-    	networkTable.putNumber("DistanceToBase",  baseDistanceInches);
+    	
+    	baseDistanceInches = ((targetDistanceInches / 10) * 15) + 50; //approximation based on distance value table
+    	
+    	networkTable.putNumber("DistanceToBase",  baseDistanceInches);    	
     	networkTable.putNumber("DistanceToTarget", targetDistanceInches);  	
     }
 

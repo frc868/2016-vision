@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
@@ -70,8 +71,15 @@ public class FindPinkRectangleFilter implements MatFilter {
 	// Used for drawing markers and indicators on image
 	private DrawTool _DrawTool;
 
+	// Fields used to enable "hole checking" on each potential polygon found
+	private boolean _HoleCheckEnabled;
+	private double _HoleLeft;
+	private double _HoleRight;
+	private double _HoleTop;
+	private double _HoleBottom;
 
-	// Used to draw "target region" based on whether target is in "good" area of screen
+	// Used to draw "target region" based on whether target is in "good" area of
+	// screen
 	private static final Scalar IN_REGION_COLOR = new Scalar(100, 255, 100);
 	private static final Scalar OUT_REGION_COLOR = new Scalar(150, 100, 50);
 	private static final Scalar CENTER_REGION_COLOR = new Scalar(100, 100, 100);
@@ -86,11 +94,12 @@ public class FindPinkRectangleFilter implements MatFilter {
 		_Debug = false;
 		_Id = "pink";
 		_DrawTool = new DrawTool();
+		_HoleCheckEnabled = false;
 
 		_ColorSpace = ColorSpace.createBGRtoHSV();
 		// _Erode = new Erode(6);
 		// _Dilate2 = new Dilate(8);
-		_Morph = new Morphology(4);
+		_Morph = new Morphology(2);
 
 		int[] colorFilterMin = { 140, 80, 100 };
 		int[] colorFilterMax = { 200, 240, 255 };
@@ -101,7 +110,7 @@ public class FindPinkRectangleFilter implements MatFilter {
 		// _Finder = new RectangularTarget(22, 20.125, 640, 480, 44.136 /* 56.75
 		// */);
 		_Finder = new RectangularTarget(22, 20.125, 640, 480, 31.638 /* 56.75 */);
-		_Finder.setCameraLocation(new Point3(-9.0, 12, 11));
+		_Finder.setCameraLocation(new Point3(-8.5, 12, 11));
 		// Let vertical lines be off as much as 10% of width
 		_Finder.setVerticalLineTolerance(0.1);
 		loadColorRanges(_Id);
@@ -128,16 +137,34 @@ public class FindPinkRectangleFilter implements MatFilter {
 
 		filter._Filter = filter.createSequence();
 
-		RectangularTarget finder = new RectangularTarget(20, 14, 800, 600,
-				51 /* 56.75 */);
-		finder.setCameraLocation(new Point3(-9.0, 12, 12));
+		// Axis camera has
+		// final double FOV_AXIS_M1018_X_DEGREES = 67;
+		final double FOV_AXIS_M1018_Y_DEGREES = 51;
+		double projHt = 14 * Math.cos(Math.toRadians(40));
+		RectangularTarget finder = new RectangularTarget(20, projHt, 800, 600,
+				FOV_AXIS_M1018_Y_DEGREES /* 56.75 */);
+		// Camera offset on robot
+		finder.setCameraLocation(new Point3(-9.0, 12.5, 12));
 		// Let vertical lines be off as much as 10% of width
 		finder.setVerticalLineTolerance(0.1);
 		filter._Finder = finder;
-		
-		filter.setGoodRegion(new Point(280, 40), new Point(435, 500));
+
+		filter.setGoodRegion(new Point(375, 50), new Point(525, 400));
+
+		// 2016 target is U shaped, should have hole in top/middle area
+		filter.enableHoleCheck(0, .5, .25, .25);
 
 		return filter;
+	}
+
+	/**
+	 * Enable debug (diagnostic output) to system.out.
+	 * 
+	 * @param enable
+	 *            Pass true to enable, false to disable.
+	 */
+	public void setDebug(boolean enable) {
+		_Debug = enable;
 	}
 
 	/**
@@ -211,16 +238,22 @@ public class FindPinkRectangleFilter implements MatFilter {
 		Mat copy = srcImage.clone();
 		Mat d1 = _Filter.process(copy);
 
+		// Keep a clean copy of binary 1/0 matrix as find contours does the
+		// other stuff
+		Mat binary = d1.clone();
+
 		// Uncomment to use BW image as output to draw on
 		// Imgproc.cvtColor(d1, output, Imgproc.COLOR_GRAY2BGR);
 
 		List<MatOfPoint> contours = new ArrayList<>();
 		List<PolygonCv> polygons = new ArrayList<>();
+		List<PolygonCv> rejects = new ArrayList<>();
 
 		float maxWidth = -1;
 
 		Mat heirarchy = new Mat();
-		Imgproc.findContours(d1, contours, heirarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+		Imgproc.findContours(d1, contours, heirarchy, Imgproc.RETR_LIST,
+				Imgproc.CHAIN_APPROX_SIMPLE);
 		int n = contours.size();
 		for (int i = 0; i < n; i++) {
 			MatOfPoint contour = contours.get(i);
@@ -234,7 +267,8 @@ public class FindPinkRectangleFilter implements MatFilter {
 			float distFromTop = poly.getMinY();
 			float distFromMid = imgMid - (distFromTop + h);
 
-			if ((w > 10) && (h > 10) && (hw > 50) && (hw < 300) && (pts >= 4) && (pts <= 16)) {
+			if ((w > 10) && (h > 10) && (hw > 50) && (hw < 300) && (pts >= 4)
+					&& (pts <= 16)) {
 				Point leftBot = new Point();
 				Point leftTop = new Point();
 				poly.findLeftEdge(leftBot, leftTop, 0.15);
@@ -245,32 +279,55 @@ public class FindPinkRectangleFilter implements MatFilter {
 
 				double leftHeight = Math.abs(leftTop.y - leftBot.y);
 				double rightHeight = Math.abs(rightTop.y - rightBot.y);
-				double heightRatio = (leftHeight > 1) ? rightHeight / leftHeight : 0;
-				if (leftHeight >= 10 && rightHeight >= 10 && (heightRatio > 0.75) && (heightRatio < 1.25)) {
+				double heightRatio = (leftHeight > 1) ? rightHeight
+						/ leftHeight : 0;
+				if (leftHeight >= 10 && rightHeight >= 10
+						&& (heightRatio > 0.75) && (heightRatio < 1.25)
+						&& holeCheck(binary, poly)) {
 					polygons.add(poly);
 					_Found = true;
 					if (w > maxWidth) {
 						maxWidth = w;
 					}
 					if (_Debug) {
-						System.out.println("Accepted: sides: " + pts + " (" + poly.getWidth() + ", " + poly.getHeight()
-								+ ")  H/W: " + hw + "  distFromTop: " + distFromTop + "  distFromMid: " + distFromMid);
+						System.out
+								.println("Accepted: sides: " + pts + " ("
+										+ poly.getWidth() + ", "
+										+ poly.getHeight() + ")  H/W: " + hw
+										+ "  distFromTop: " + distFromTop
+										+ "  distFromMid: " + distFromMid);
+
 					}
 				} else {
 					if (_Debug) {
-						System.out.println("Rejected: left height: " + leftHeight + "  right height: " + rightHeight);
+						rejects.add(poly);
+
+						System.out
+								.println("Rejected: left height: " + leftHeight
+										+ "  right height: " + rightHeight);
 					}
 				}
 
 			} else if (_Debug) {
-				System.out.println("Rejected: sides: " + pts + " (" + poly.getWidth() + ", " + poly.getHeight()
-						+ ")  H/W: " + hw + "  distFromTop: " + distFromTop + "  distFromMid: " + distFromMid);
+				rejects.add(poly);
+
+				System.out.println("Rejected: sides: " + pts + " ("
+						+ poly.getWidth() + ", " + poly.getHeight()
+						+ ")  H/W: " + hw + "  distFromTop: " + distFromTop
+						+ "  distFromMid: " + distFromMid);
 			}
 		}
 
 		int pCnt = polygons.size();
 		PolygonCv[] pArr = new PolygonCv[pCnt];
 		polygons.toArray(pArr);
+
+		// If debugging, draw all of the rejected polygons
+		if (_Debug) {
+			for (PolygonCv p : rejects) {
+				p.draw(output, ScalarColors.YELLOW, 1);
+			}
+		}
 
 		// Not searching for pairs, just add contours for all of the polygons
 		PolygonCv good = null;
@@ -290,7 +347,7 @@ public class FindPinkRectangleFilter implements MatFilter {
 					System.out.println(_Finder);
 				}
 			} else {
-				p.draw(output, ScalarColors.BLUE, 1);
+				p.draw(output, ScalarColors.ORANGE, 1);
 			}
 		}
 
@@ -298,7 +355,8 @@ public class FindPinkRectangleFilter implements MatFilter {
 		if (isTargetRegionEnabled()) {
 			_DrawTool.setImage(output);
 			_DrawTool.setThickness(3);
-			_DrawTool.setColor(inGoodRegion(good) ? IN_REGION_COLOR : OUT_REGION_COLOR);
+			_DrawTool.setColor(inGoodRegion(good) ? IN_REGION_COLOR
+					: OUT_REGION_COLOR);
 			_DrawTool.drawRectangle(goodMinPoint, goodMaxPoint);
 			_DrawTool.setThickness(1);
 			_DrawTool.setColor(CENTER_REGION_COLOR);
@@ -315,6 +373,91 @@ public class FindPinkRectangleFilter implements MatFilter {
 		}
 
 		return output;
+	}
+
+	/**
+	 * Enable check to make sure there is a hole (all black pixels in binary
+	 * image) at a certain location within each polygon's bounding box.
+	 * 
+	 * @param top
+	 *            How far down from the top side of the polygon's bounding box
+	 *            (ratio of height in range of [0, 1.0]).
+	 * @param bot
+	 *            How far up from the bottom side of the polygon's bounding box
+	 *            (ratio of height in range of [0, 1.0]).
+	 * @param left
+	 *            How far in from the left side of the polygon's bounding box
+	 *            (ratio of width in range of [0, 1.0]).
+	 * @param right
+	 *            How far in from the right side of the polygon's bounding box
+	 *            (ratio of width in range of [0, 1.0]).
+	 */
+	public void enableHoleCheck(double top, double bot, double left,
+			double right) {
+		_HoleLeft = left;
+		_HoleRight = right;
+		_HoleTop = top;
+		_HoleBottom = bot;
+		_HoleCheckEnabled = true;
+	}
+
+	/**
+	 * Returns true if the pixels within a region of the polygon's bounding box
+	 * are all black.
+	 * 
+	 * @param binary
+	 *            The full binary image (values of 0 or 255 for each pixel) the
+	 *            polygon comes from.
+	 * @param poly
+	 *            The polygon to check.
+	 * @return true if hole checking has been disabled, or we find a hole within
+	 *         the {@link #enableHoleCheck(double, double, double, double)}
+	 *         region (accept polygon), false if hole checking is enabled but we
+	 *         did not find the expected hole (reject polygon).
+	 */
+	private boolean holeCheck(Mat binary, PolygonCv poly) {
+		if (_HoleCheckEnabled != true) {
+			// Just indicate things are OK if hole check has not been enabled.
+			return true;
+		}
+
+		float h = poly.getHeight();
+		float w = poly.getWidth();
+
+		// Figure out bounds in image of the portion of the polygon's bounding
+		// box that we want to check
+		int begRow = (int) (poly.getMinY() + (_HoleTop * h));
+		int endRow = (int) (poly.getMaxY() - (_HoleBottom * h));
+		int begCol = (int) (poly.getMinX() + (_HoleLeft * w));
+		int endCol = (int) (poly.getMaxX() - (_HoleRight * w));
+
+		// NOTE: We want to grab the pixels from a "clean" binary image
+		// (state of binary image before looking for contours/polygons
+		// as they corrupt the data during processing)
+		Mat bboxPixels = binary.submat(begRow, endRow, begCol, endCol);
+
+		// Compute total number of white pixels possible
+		int hBbox = bboxPixels.rows();
+		int wBbox = bboxPixels.cols();
+		double totalPixels = wBbox * hBbox;
+
+		// See how many white pixels we actually have
+		Scalar sum = Core.sumElems(bboxPixels);
+		// White pixels have value of 255 in binary images (0xff)
+		// Black pixels have a value of 0 (0x00)
+		double whitePixels = sum.val[0] / 255;
+		int percentWhite = (int) Math.round(100 * whitePixels / totalPixels);
+
+		// Sanity check that all values are 0 or 1
+		boolean allInRange = Core.checkRange(bboxPixels, true, 0, 2);
+		if (_Debug) {
+			System.out.println("Cutout Check: (" + wBbox + "x" + hBbox
+					+ ")  total: " + totalPixels + "  white: " + whitePixels
+					+ " (" + percentWhite + "%)  binary: " + allInRange);
+		}
+
+		// Found hole if none of the black/white pixels were white.
+		return (whitePixels == 0);
 	}
 
 	/**
@@ -335,9 +478,9 @@ public class FindPinkRectangleFilter implements MatFilter {
 		goodMinPoint = new Point(Math.min(x1, x2), Math.min(y1, y2));
 		goodMaxPoint = new Point(Math.max(x1, x2), Math.max(y1, y2));
 		goodTopMid = new Point(xMid, goodMinPoint.y);
-		goodBotMid = new Point(xMid, goodMaxPoint.y);		
+		goodBotMid = new Point(xMid, goodMaxPoint.y);
 	}
-	
+
 	/**
 	 * Indicates whether the "good region" has been defined.
 	 * 
@@ -361,8 +504,10 @@ public class FindPinkRectangleFilter implements MatFilter {
 			return false;
 		}
 
-		return (poly.getMinY() >= goodMinPoint.y) && (poly.getMaxY() <= goodMaxPoint.y)
-				&& (poly.getMinX() >= goodMinPoint.x) && (poly.getMaxX() <= goodMaxPoint.x);
+		return (poly.getMinY() >= goodMinPoint.y)
+				&& (poly.getMaxY() <= goodMaxPoint.y)
+				&& (poly.getMinX() >= goodMinPoint.x)
+				&& (poly.getMaxX() <= goodMaxPoint.x);
 	}
 
 	/**

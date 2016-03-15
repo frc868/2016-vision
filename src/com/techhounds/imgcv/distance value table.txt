@@ -1,0 +1,9 @@
+Actual Distance(inches) : Reported Distance(inches)
+110:214
+120:230
+130:244
+
+(x/10)*15 + 50
+
+140:262
+150:273
