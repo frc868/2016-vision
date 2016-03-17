@@ -49,6 +49,7 @@ import javax.swing.*;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
@@ -844,6 +845,35 @@ public class FilterToolGuiOpenCv {
 		cursor.add(new JLabel("y:"));
 		cursor.add(_PointerY);
 		addInfo(cursor);
+		
+		imageView.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int x = e.getX();
+				int y = e.getY();
+
+				if (_Image != null) {
+					int ih = _Image.rows();
+					int h = imageView.getHeight();
+					if (h > ih) {
+						y -= (h - ih) / 2;
+					}
+					int iw = _Image.cols();
+
+					// If mouse pointer over pixel in image open color chooser initialized
+					// to pixel color
+					if ((iw > 0) && (ih > 0) && (x < iw) && (y < ih) && (y >= 0) && (x >= 0)) {
+						double[] channelVals = _Image.get(y, x);
+						int channels = channelVals.length;
+						int b = (int) channelVals[0];
+						int g = (channels >= 2) ? (int) channelVals[1] : b;
+						int r = (channels >= 3) ? (int) channelVals[2] : b;
+						Color pixelColor = new Color(r, g, b);
+						JColorChooser.showDialog(null, "Pixel Color", pixelColor);
+					}
+				}
+			}			
+		});
 
 		imageView.addMouseMotionListener(new MouseMotionListener() {
 
@@ -1027,11 +1057,6 @@ public class FilterToolGuiOpenCv {
 			double bias = brightnessVals[i];
 			brightness.add(createImageProcessingMenuItem("" + bias, new ContrastBrightness(1.0, bias)));
 		}
-
-		colorSpace.add(createImageProcessingMenuItem("BGR->HSV", ColorSpace.createBGRtoHSV()));
-		colorSpace.add(createImageProcessingMenuItem("HSV->BGR", ColorSpace.createHSVtoBGR()));
-		colorSpace.add(createImageProcessingMenuItem("RGB->HSV", ColorSpace.createRGBtoHSV()));
-		colorSpace.add(createImageProcessingMenuItem("HSV->RGB", ColorSpace.createHSVtoRGB()));
 
 		String chanRemoveName = "Remove Channels";
 		JMenu chanRemove = new JMenu(chanRemoveName);
