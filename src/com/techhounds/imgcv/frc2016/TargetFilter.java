@@ -51,7 +51,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		
 		targetHeightMax   = 120;
 		targetWidthMax    = 200;
-		targetSidesMax    = 10;
+		targetSidesMax    = 12;
 		targetRatioMax    = 2.5;
 		targetAreaMax     = 15000;
 		

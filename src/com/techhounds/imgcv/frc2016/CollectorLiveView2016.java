@@ -57,6 +57,7 @@ public final class CollectorLiveView2016 extends LiveViewGui {
 
 	// Network Table key used to signal that the USB camera is active
     static final String COLLECTOR_CAMERA_ENABLED_KEY = "CollectorCameraEnabled";
+    
 
     private static NetworkTable netTable;
 	

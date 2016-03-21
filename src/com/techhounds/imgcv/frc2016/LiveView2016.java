@@ -51,19 +51,23 @@ import edu.wpi.first.wpilibj.networktables.NetworkTable;
 public final class LiveView2016 extends LiveViewGui {
 	
     
+	private static final String GAME_STATE = "GameState";
 
 	TargetFilter filter = new TargetFilter(4); //default filter to be set
-    
+	static final String SHOOTER_CAMERA_ENABLED_KEY = "ShooterCameraEnabled";
     protected JLabel _CameraFps = new JLabel("-");
     protected JLabel _FilterFps = new JLabel("-");
     protected JLabel _Distance = new JLabel("-");
     protected JLabel _Angle = new JLabel("-");
+
+    private String gameState;
     
     private static NetworkTable netTable;
     
     public LiveView2016(String title) throws HeadlessException {
 		super(title);
-		setFilter(filter); //set default filter here 
+		setFilter(filter); //set default filter here
+		gameState = "Unknown";
 	}
     
     protected void addMenuItems() { //sets menu items
@@ -159,7 +163,7 @@ public final class LiveView2016 extends LiveViewGui {
         
         boolean lastState = false;
         while(true) { //hangs when NOT cameraEnable
-        	boolean enable = !netTable.getBoolean(CollectorLiveView2016.COLLECTOR_CAMERA_ENABLED_KEY, false);
+        	boolean enable = !netTable.getBoolean(SHOOTER_CAMERA_ENABLED_KEY, false);
         	if (enable != lastState) {
         		lastState = enable;
         		if (enable) {
@@ -168,6 +172,15 @@ public final class LiveView2016 extends LiveViewGui {
                 	frame.stopVideoFeed();       			
         		}
         		System.out.println("Camera feed toggled to: " + enable);
+        	}
+        	
+        	String curGameState = netTable.getString(GAME_STATE, frame.gameState);
+        	if (!curGameState.equals(frame.gameState)) {
+        		frame.gameState = curGameState;
+        		if (curGameState.equals("auton")) {
+        			// When we enter auton start archiving 50 frames (5 frames apart)
+        			frame.enableSave("2016-frc", 100, 5);
+        		}
         	}
 
         	try{
