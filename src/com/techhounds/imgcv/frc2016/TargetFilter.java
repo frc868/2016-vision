@@ -37,6 +37,8 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 
 	private double robotAngleOffset;
 
+	private RotationEstimator rotEst;
+
 	public TargetFilter(int input) {
 		
 		stage = input;
@@ -67,6 +69,11 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		fovCalc = new FovCalculator(Camera.FOV_X_DEGREES, Camera.RESOLUTION_X_PIXELS, 100.0);
 		double centerLine = (topLeft.x + bottomRight.x) / 2 - (Camera.RESOLUTION_X_PIXELS / 2);
 		robotAngleOffset = fovCalc.pixelFromCenterToDeg(centerLine);
+		
+		// Rotation estimator where robot's center of rotation is 9 in to right
+		// and 12 in back of camera center (set to null to disable)
+		// rotEst = new RotationEstimator(9, 12);
+		rotEst = null;
 	}
 	
 	private int stage;
@@ -227,6 +234,14 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     	
     	double camAngle = fovCalc.pixelFromCenterToDeg(foundTarget.getCenterX() - (Camera.RESOLUTION_X_PIXELS/2));
     	double rot = -(robotAngleOffset - camAngle);
+    	
+    	// If rotation estimator enabled, use it as a better guess as how much to rotate
+    	if (rotEst != null) {
+    		// Guess at camera position somewhere between 75 and 120 inches from plane
+    		// containing target
+    		double distEst = (75 + 120) / 2;
+    		rot = rotEst.computeRotation(camAngle, distEst);
+    	}
     	
     	offsetXDegrees = rot; //TODO temporary substitution
     	
