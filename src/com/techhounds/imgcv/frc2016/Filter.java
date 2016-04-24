@@ -79,7 +79,8 @@ public abstract class Filter {
         
         for(int i = 0; i < contours.size(); i++) {            
         	currentTarget = PolygonCv.fromContour(contours.get(i), polygonEpsilon); 
-        	        	
+        	System.out.println(currentTarget.getBoundingArea());
+        	
         	if(currentTarget.getHeight()              > targetHeightMin &&
         	   currentTarget.getWidth()               > targetWidthMin  &&
         	   currentTarget.size() 		          > targetSidesMin  && 
@@ -211,7 +212,7 @@ public abstract class Filter {
 		}
 
 		// Found hole if none of the black/white pixels were black.
-		return (percentWhite >= 90);
+		return (percentWhite <= 10);
 	}
 	//Static Methods
 }

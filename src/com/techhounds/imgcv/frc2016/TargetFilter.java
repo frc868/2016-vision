@@ -52,7 +52,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		targetHeightMax   = 120;
 		targetWidthMax    = 200;
 		targetSidesMax    = 12;
-		targetRatioMax    = 2.5;
+		targetRatioMax    = 3;
 		targetAreaMax     = 15000;
 		
 		targetHeightIdeal = 80;   targetHeightWeight = 1;
@@ -61,8 +61,8 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		targetRatioIdeal  = 1.5;  targetRatioWeight  = 1000;
 		targetAreaIdeal   = 5000; targetAreaWeight   = 0.03;
 		double x = (topLeft.x + bottomRight.x)/2;
-		lineTop = new Point(x , 0);
-		lineBottom = new Point(x , 599);
+		lineTop = new Point(800/2 - 172 , 0);
+		lineBottom = new Point(800/2 - 20 , 599);
 		
 		fovCalc = new FovCalculator(Camera.FOV_X_DEGREES, Camera.RESOLUTION_X_PIXELS, 100.0);
 		double centerLine = (topLeft.x + bottomRight.x) / 2 - (Camera.RESOLUTION_X_PIXELS / 2);
@@ -106,8 +106,8 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		_ColorRange.process(workingImage);
 		_Erode.process(workingImage);     
 		_Dilate.process(workingImage);
-		_GrayScale.process(workingImage);
-		_BlackWhite.process(workingImage);
+//		_GrayScale.process(workingImage);
+//		_BlackWhite.process(workingImage);
 		
 		if(stage == 1) return workingImage;
 		
@@ -122,7 +122,8 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
         	if(networkTable != null) { 
         		targetAnalysis(bestTarget); //no return as it simply writes data to netTables 
         		networkTable.putNumber("FrameCount", frameCount++); 
-        	}	
+        	}
+        	targetAnalysis(bestTarget, false);
         	
         	if(stage == 2) return workingImage; //commandline, so don't bother drawing anything
         	
@@ -139,6 +140,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
         	}
         	
         	if(stage == 4) {
+        		
         		_BoundingBox.setCenter(bestTarget.getCenterX(), bestTarget.getCenterY());
         		_BoundingBox.setSize(bestTarget.getHeight() / 2, bestTarget.getWidth() / 2);
         		_BoundingBox.process(workingImage);
@@ -162,8 +164,11 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
 		// TODO Auto-generated method stub
 		
 	}
+	public void targetAnalysis(PolygonCv foundTarget){
+		targetAnalysis(foundTarget, true);
+	}
 
-	private void targetAnalysis(PolygonCv foundTarget) { //tells the robo info about the target
+	private void targetAnalysis(PolygonCv foundTarget, boolean printToNetWorkTable) { //tells the robo info about the target
         double offsetXDegrees, offsetXDegreesIdeal,
         	targetDistanceInches, baseDistanceInches, 
         	cameraAngleElevationRadians, targetAngleRadians,
@@ -194,6 +199,7 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     	//ye olde algorithm
 /*    	targetDistanceInches = (Target.TAPE_WIDTH_INCHES / 2) / Math.tan((Target.TAPE_WIDTH_INCHES / Camera.RESOLUTION_X_PIXELS) * (Camera.FOV_X_RADIANS / 2));
 */
+    	
     	//new old algo
     	double dpx = (Camera.RESOLUTION_X_PIXELS/2) / Math.tan(Camera.FOV_X_RADIANS/2);
     	double tta = (foundTarget.getWidth()/2) / dpx;
@@ -225,13 +231,69 @@ public class TargetFilter extends Filter implements MatFilter, TargetFilterConfi
     	offsetXDegrees = rot; //TODO temporary substitution
     	
     	//determines if angle values are reasonable
-    	if(offsetXDegrees < (Camera.FOV_X_DEGREES/2) && offsetXDegrees > (-Camera.FOV_X_DEGREES/2)) 
-    		networkTable.putNumber("OffCenterDegreesX", offsetXDegrees);
+    	if(offsetXDegrees < (Camera.FOV_X_DEGREES/2) && offsetXDegrees > (-Camera.FOV_X_DEGREES/2) && printToNetWorkTable) {
+    		networkTable.putNumber("OffCenterDegreesX", -Math.toDegrees(distanceOffset(foundTarget.getCenterX(), foundTarget.getCenterY())));
+    		
+    	}
+    		
+    	System.out.println("Angle: " + offsetXDegrees);
     	    	
     	//writes calculated data to network tables
+    	System.out.println("Distance: " + baseDistanceInches);
+    	if(printToNetWorkTable){
     	networkTable.putNumber("DistanceToBase",  baseDistanceInches);
     	networkTable.putNumber("DistanceToTarget", targetDistanceInches);  	
+    	}
+    	
+    	//Newest Algorithm
+    	distanceOffset(foundTarget.getCenterX(), foundTarget.getCenterY());
     }
+	
+	//+x is right
+	//+y is down
+	public double distanceOffset(double x,double y) {
+	  //Image height (px)
+	  double ih = Camera.RESOLUTION_Y_PIXELS;
+	  //Image width (px)
+	  double iw = Camera.RESOLUTION_X_PIXELS;
+	  //Signed distance from center, in y direction (px)
+	  double hv = y - ih/2;
+	  //signed distance from center, in x direction (px)
+	  double xv = iw/2 - x;
+
+	  //Field of view (rad)
+	  double fov = Camera.FOV_Y_RADIANS;
+	  //Distance to virtual image plane (px)
+	  double dv = (1.0 * ih) / (2 * Math.tan(fov/2));
+
+	  //Height from camera to goal (in)
+	  double hr = 77.75;
+	  //Angle of inclination of the camera (rad)
+	  double ac = 41 * Math.PI / 180;
+
+	  //Distance offset from camera to center of rotation (in)
+	  double od = 12;
+	  //Horizontal offset from camera to center of rotation (in)
+	  double ox = 9.25;
+
+	  //Real distance from center of rotation to goal (in)
+	  double dr = hr / Math.tan(ac - Math.atan(hv/dv)) + od;
+
+	  //Real offset from center of rotation to goal (in)
+	  double xr = dr * xv / dv + ox;
+	  
+	  //Angle from center of rotation to goal (rad)
+	  double a = Math.atan(xr/dr);
+	  
+	  //Distance from center of rotation to goal (in)
+	  double d = Math.hypot(dr, xr);
+	  
+	  System.out.println("Real Angle: " + a * 180 / Math.PI);
+	  System.out.println("Real dist:  " + d);
+
+	  return a;
+	}
+
 
 	public void setColorRangeConfig(File configFile) {
 		try {
