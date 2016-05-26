@@ -4,7 +4,7 @@ This project is designed to allow one to quickly create, test and adjust image p
 * Create a new Tool to test your filter on an individual frame basis.
 * Create a new View to test your filter on a stream of images.
 
-To run under Eclipse, you will need to define a User Library named OpenCV-2 and add the OpenCV JAR file to it (the native OpenCV libraries also need to be available).
+To run under Eclipse, you will need to define a User Library named OpenCV-2 and add the OpenCV JAR file to it (the native OpenCV libraries also need to be available). A NetworkTables library should also be declared (add the OutlineViewer.jar as an external JAR file to this library.
 
 To run under NetBeans, you need to define an OpenCv library.
 
